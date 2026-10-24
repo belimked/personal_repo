@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人知识库 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:260px"><div class="row" style="justify-content:space-between"><b>存储空间</b><span class="small muted" id="quota-text"></span></div><div class="progress" style="margin-top:6px" id="quota-bar"><div></div></div></div>
+      <button class="btn" id="history">上传记录</button>
+      <button class="btn primary" id="up">⬆ 上传文件</button>
+    </div>
+    <div class="hint" style="margin-top:8px" id="limits"></div>
+  </div>
+  <div class="files-layout">
+    <div>
+      <div class="tree" id="tree"></div>
+      <div class="hint" style="padding:8px 4px">文件夹由<b>文件管理模型</b>自动生成，是逻辑分类，不会移动实际存储的文件。</div>
+    </div>
+    <div>
+      <div class="row" style="margin-bottom:10px">
+        <input class="input inline" id="kw" placeholder="按文件名筛选" style="width:200px">
+        <div id="cats"></div>
+        <span class="spacer"></span>
+        <span class="hint">内容查询请在 <a href="home.html">助手</a> 中直接提问</span>
+      </div>
+      <div class="table-wrap"><table class="table nowrap" id="tbl"></table></div>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "files", title: "个人知识库", narrow: false })) {
+  const { state, esc, save, fmtSize, toast, log } = PA;
+  let folder = "";
+  const catSel = PA.multiSelect(document.getElementById("cats"), Object.entries(PA.CAT_LABEL).map(([value, label]) => ({ value, label })), "全部类型");
+  document.getElementById("up").onclick = () => PA.pickFiles();
+  document.getElementById("history").onclick = PA.showUploadPanel;
+  const c = state.config.upload;
+  limits.textContent = `单次最多 ${c.maxCount} 个文件、合计 ≤ ${c.maxBatchMB}MB；单个文件 ≤ ${c.maxFileMB}MB；可上传类型由管理员配置（${state.fileTypes.length} 种）。`;
+
+  function renderQuota() {
+    const used = PA.usedBytes(), q = PA.quotaBytes(), pct = Math.min(100, (used / q) * 100);
+    document.getElementById("quota-text").textContent = `已用 ${fmtSize(used)} / ${fmtSize(q)}（含待办附件；转写等派生文本不计入）`;
+    const bar = document.getElementById("quota-bar");
+    bar.className = "progress" + (pct > 90 ? " danger" : pct > 75 ? " warn" : "");
+    bar.firstElementChild.style.width = pct + "%";
+  }
+  function renderTree() {
+    const counts = {};
+    state.files.forEach((f) => { const [a, b] = f.folder.split("/"); counts[a] = (counts[a] || 0) + 1; counts[a + "/" + b] = (counts[a + "/" + b] || 0) + 1; });
+    const tops = [...new Set(state.files.map((f) => f.folder.split("/")[0]))].sort();
+    tree.innerHTML = `<div class="tree-item ${folder === "" ? "active" : ""}" data-f="">📚 全部文件<span class="n">${state.files.length}</span></div>` + tops.map((t) =>
+      `<div class="tree-item ${folder === t ? "active" : ""}" data-f="${esc(t)}">📂 ${esc(t)}<span class="n">${counts[t]}</span></div>` +
+      [...new Set(state.files.filter((f) => f.folder.startsWith(t + "/")).map((f) => f.folder))].sort().map((s) => `<div class="tree-item ${folder === s ? "active" : ""}" data-f="${esc(s)}" style="padding-left:28px">📁 ${esc(s.split("/")[1])}<span class="n">${counts[s]}</span></div>`).join("")).join("");
+    tree.querySelectorAll(".tree-item").forEach((el) => (el.onclick = () => { folder = el.dataset.f; render(); }));
+  }
+  function render() {
+    renderQuota(); renderTree();
+    const k = kw.value.trim(), cats = catSel.values();
+    const list = state.files.filter((f) => (!folder || f.folder === folder || f.folder.startsWith(folder + "/")) && (!k || f.name.includes(k)) && (!cats.length || cats.includes(f.cat))).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+    tbl.innerHTML = `<tr><th>文件名</th><th>类型</th><th>大小</th><th>文件夹</th><th>上传时间</th><th>状态</th><th>关联待办</th><th></th></tr>` + (list.map((f) => {
+      const links = PA.linkedTodos(f.id);
+      return `<tr data-row="${f.id}"><td style="white-space:normal;min-width:180px">${PA.fileIcon(f)} ${esc(f.name)}${f.meeting ? ' <span class="badge orange">会议</span>' : ""}</td><td>${PA.CAT_LABEL[f.cat]}</td><td>${fmtSize(f.size)}</td><td class="small">${esc(f.folder)}</td><td class="small">${esc(f.uploadedAt)}</td>
+        <td>${f.status === "indexed" ? '<span class="badge green">可检索</span>' : `<span class="badge red" title="${esc(f.failReason)}">处理失败</span> <a href="#" data-retry="${f.id}">重试</a>`}</td>
+        <td class="small">${links.length ? `<span title="${esc(links.map((t) => t.title).join("、"))}">🔗 ${links.length} 个</span>` : '<span class="muted">—</span>'}</td>
+        <td style="white-space:nowrap">${PA.canPreview(f) ? `<button class="btn sm" data-prev="${f.id}">预览</button> ` : ""}<button class="btn sm" data-dl="${f.id}">下载</button> <button class="btn sm ghost" data-link="${f.id}">关联待办</button> <button class="btn sm ghost" data-move="${f.id}">移动</button></td></tr>`;
+    }).join("") || '<tr><td colspan="8" class="empty">没有文件</td></tr>');
+    tbl.querySelectorAll("[data-prev]").forEach((b) => (b.onclick = () => PA.openPreview(b.dataset.prev)));
+    tbl.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => PA.download(PA.fileById(b.dataset.dl))));
+    tbl.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); const f = PA.fileById(b.dataset.retry); f.status = "indexed"; f.transcript = "（原型）重试后识别成功"; save(); toast("重新处理成功"); render(); }));
+    tbl.querySelectorAll("[data-link]").forEach((b) => (b.onclick = () => linkTodos(PA.fileById(b.dataset.link))));
+    tbl.querySelectorAll("[data-move]").forEach((b) => (b.onclick = () => moveFile(PA.fileById(b.dataset.move))));
+  }
+  function linkTodos(f) {
+    const todos = state.todos.filter((t) => t.status !== "archived");
+    PA.modal({ title: `关联待办 · ${f.name}`, body: `<div class="hint" style="margin-bottom:8px">同一个文件可以作为多个待办的附件。</div>${todos.map((t) => `<label class="row" style="padding:4px 0"><input type="checkbox" value="${t.id}" ${t.attachments.includes(f.id) ? "checked" : ""}> ${esc(t.title)} <span class="muted small">${PA.fmtDate(t.date, t.time)}</span></label>`).join("")}`,
+      actions: [{ label: "取消" }, { label: "保存", primary: true, onClick: (m) => {
+        m.querySelectorAll("input[type=checkbox]").forEach((c) => { const t = PA.todoById(c.value); const has = t.attachments.includes(f.id); if (c.checked && !has) t.attachments.push(f.id); if (!c.checked && has) t.attachments = t.attachments.filter((x) => x !== f.id); });
+        save(); log("手动更新待办", `${f.name} 关联待办已更新`); toast("已保存"); render();
+      } }] });
+  }
+  function moveFile(f) {
+    const folders = [...new Set(state.files.map((x) => x.folder))].sort();
+    PA.modal({ title: "移动到文件夹", body: `<div class="note warn">待确认：是否允许用户手动调整文件夹？原型中先提供此入口，需求确认时决定保留或去掉。</div>
+      <div class="field"><label>目标文件夹</label><select class="input" id="mv">${folders.map((x) => `<option ${x === f.folder ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></div>
+      <div class="field"><label>或新建（格式：一级/二级）</label><input class="input" id="mv-new" placeholder="例如：工作/合同"></div>`,
+      actions: [{ label: "取消" }, { label: "移动", primary: true, onClick: (m) => { const n = m.querySelector("#mv-new").value.trim(); if (n && !/^[^/]+\/[^/]+$/.test(n)) { toast("格式应为 一级/二级"); return false; } f.folder = n || m.querySelector("#mv").value; save(); toast("已移动（仅修改逻辑分类）"); render(); } }] });
+  }
+  kw.oninput = render;
+  document.getElementById("cats").addEventListener("change", render);
+  document.addEventListener("pa:files-changed", render);
+  render();
+  const fid = PA.qs("file");
+  if (fid) { const row = tbl.querySelector(`[data-row="${fid}"]`); if (row) { row.style.background = "var(--warn-weak)"; row.scrollIntoView({ block: "center" }); } }
+}
+</script>
+</body>
+</html>

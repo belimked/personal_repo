@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>待办事项 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="tabs" id="tabs"></div>
+  <div class="row" style="margin-bottom:14px">
+    <input class="input inline" id="kw" placeholder="按标题、地点、备注筛选" style="width:220px">
+    <div id="src"></div>
+    <span class="muted small">日期</span><input class="input inline" type="date" id="d1"><span class="muted">~</span><input class="input inline" type="date" id="d2">
+    <span class="spacer"></span>
+    <button class="btn primary" id="new">＋ 新建待办</button>
+  </div>
+  <div class="table-wrap"><table class="table nowrap" id="tbl"></table></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "todos", title: "待办事项" })) {
+  const { state, esc, save, fmtDate, toast, log } = PA;
+  let tab = PA.qs("tab") || "open";
+  const srcSel = PA.multiSelect(document.getElementById("src"), [{ value: "text", label: "文字输入" }, { value: "manual", label: "手动创建" }, { value: "meeting", label: "会议录音" }], "全部来源");
+  function renderTabs() {
+    const cnt = (s) => state.todos.filter((t) => s === "all" || t.status === s).length;
+    tabs.innerHTML = [["open", "未完成"], ["done", "已完成"], ["archived", "已归档"], ["all", "全部"]].map(([k, l]) => `<div class="tab ${tab === k ? "active" : ""}" data-k="${k}">${l}（${cnt(k)}）</div>`).join("");
+    tabs.querySelectorAll(".tab").forEach((el) => (el.onclick = () => { tab = el.dataset.k; render(); }));
+  }
+  function render() {
+    renderTabs();
+    const k = kw.value.trim(), srcs = srcSel.values();
+    const list = state.todos.filter((t) => (tab === "all" || t.status === tab) && (!k || [t.title, t.location, t.notes].join(" ").includes(k)) && (!srcs.length || srcs.includes(t.source)) && (!d1.value || (t.date && t.date >= d1.value)) && (!d2.value || (t.date && t.date <= d2.value)))
+      .sort((a, b) => (tab === "open" ? 1 : -1) * ((a.date || "9999") + (a.time || "")).localeCompare((b.date || "9999") + (b.time || "")));
+    tbl.innerHTML = `<tr><th></th><th>待办</th><th>日期时间</th><th>地点</th><th>来源</th><th>附件</th><th>状态</th><th></th></tr>` + (list.map((t) => `
+      <tr class="todo-row ${t.status !== "open" ? "todo-done" : ""}">
+        <td>${t.status === "archived" ? "" : `<input type="checkbox" data-chk="${t.id}" ${t.status === "done" ? "checked" : ""} title="${t.status === "done" ? "改回未完成" : "标记完成"}">`}</td>
+        <td style="white-space:normal;min-width:160px"><a class="todo-title" href="todo.html?id=${t.id}">${esc(t.title)}</a></td>
+        <td style="${t.status === "open" && t.date && t.date < PA.today() ? "color:var(--danger)" : ""}">${fmtDate(t.date, t.time)}</td>
+        <td>${esc(t.location) || '<span class="muted">—</span>'}</td>
+        <td><span class="badge ${t.source === "meeting" ? "orange" : t.source === "text" ? "blue" : ""}">${PA.SOURCE_LABEL[t.source]}</span></td>
+        <td>${t.attachments.length ? "📎 " + t.attachments.length : '<span class="muted">—</span>'}</td>
+        <td><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span></td>
+        <td><a href="todo.html?id=${t.id}">详情</a></td></tr>`).join("") || `<tr><td colspan="8" class="empty">没有符合条件的待办</td></tr>`);
+    tbl.querySelectorAll("[data-chk]").forEach((c) => (c.onchange = () => {
+      const t = PA.todoById(c.dataset.chk); t.status = c.checked ? "done" : "open"; save(); log("手动更新待办", `${t.title} → ${PA.STATUS_LABEL[t.status]}`); PA.updateBadges(); render();
+    }));
+  }
+  [kw, d1, d2].forEach((el) => (el.oninput = render));
+  document.getElementById("src").addEventListener("change", render);
+
+  document.getElementById("new").onclick = () => {
+    const files = state.files.filter((f) => f.status === "indexed");
+    PA.modal({
+      title: "新建待办", wide: true,
+      body: `<div class="field"><label>待办内容 <span class="req">*</span></label><input class="input" id="n-title"></div>
+        <div class="grid3"><div class="field"><label>日期</label><input class="input" type="date" id="n-date"></div><div class="field"><label>时间</label><input class="input" type="time" id="n-time"></div><div class="field"><label>地点</label><input class="input" id="n-loc"></div></div>
+        <div class="field"><label>备注</label><textarea class="input" id="n-notes" rows="2"></textarea></div>
+        <div class="field"><label>附件（可选）· 从个人知识库选择已有文件</label>
+          <div class="table-wrap" style="max-height:180px"><table class="table">${files.map((f) => `<tr><td style="width:30px"><input type="checkbox" value="${f.id}" class="n-att"></td><td>${PA.fileIcon(f)} ${esc(f.name)}</td><td class="muted small">${esc(f.folder)}</td><td class="muted small">${PA.fmtSize(f.size)}</td></tr>`).join("")}</table></div></div>
+        <label class="row" style="gap:6px"><input type="checkbox" id="n-upload"> 创建后上传新附件（新附件同时保存到个人知识库，占用存储配额）</label>`,
+      actions: [{ label: "取消" }, { label: "创建", primary: true, onClick: (m) => {
+        const title = m.querySelector("#n-title").value.trim();
+        if (!title) { toast("请填写待办内容"); return false; }
+        const t = { id: PA.uid("t"), title, date: m.querySelector("#n-date").value, time: m.querySelector("#n-time").value, location: m.querySelector("#n-loc").value.trim(), notes: m.querySelector("#n-notes").value.trim(), status: "open", source: "manual", attachments: [...m.querySelectorAll(".n-att:checked")].map((c) => c.value), createdAt: PA.nowStr() };
+        state.todos.push(t); save(); log("手动创建待办", title); PA.updateBadges();
+        if (m.querySelector("#n-upload").checked) { location.href = `todo.html?id=${t.id}&upload=1`; return; }
+        toast("已创建：" + title); render();
+      } }],
+    });
+  };
+  render();
+}
+</script>
+</body>
+</html>
