@@ -98,6 +98,14 @@
     { id: "t7", title: "预约体检复查", date: dayStr(-20), time: "", location: "", status: "archived", source: "manual", attachments: ["f4"], notes: "改为年底统一体检", createdAt: dayStr(-40) + " 10:00" },
     { id: "t8", title: "读完《原则》第三章", date: dayStr(-12), time: "", location: "", status: "done", source: "text", attachments: ["f2"], notes: "", createdAt: dayStr(-15) + " 22:00" },
     { id: "t9", title: "整理需求清单发给客户", date: dayStr(3), time: "", location: "", status: "open", source: "meeting", sourceFile: "f7", attachments: [], notes: "来自会议：产品评审会议", createdAt: dayStr(-2) + " 18:31" },
+    { id: "t10", title: "部门周会", date: dayStr(1), time: "10:00", location: "5 楼大会议室", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-5) + " 09:00" },
+    { id: "t11", title: "健身：力量训练", date: dayStr(1), time: "19:30", location: "公司楼下健身房", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-5) + " 09:05" },
+    { id: "t12", title: "和李总在星巴克见面", date: dayStr(4), time: "15:00", location: "星巴克（静安寺店）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 20:00" },
+    { id: "t13", title: "交水电费", date: dayStr(-3), time: "", location: "", status: "done", source: "manual", attachments: [], notes: "", createdAt: dayStr(-8) + " 12:00" },
+    { id: "t14", title: "银行办理转账", date: dayStr(0), time: "15:00", location: "招商银行（南京西路支行）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 21:00" },
+    { id: "t15", title: "整理家里的旧衣服", date: "", time: "", location: "", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-7) + " 22:00" },
+    { id: "t16", title: "研究新能源车的购车补贴", date: "", time: "", location: "", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-6) + " 22:30" },
+    { id: "t17", title: "预约年底体检", date: "", time: "", location: "", status: "open", source: "manual", attachments: ["f4"], notes: "", createdAt: dayStr(-4) + " 10:00" },
   ];
 
   const inbox = [

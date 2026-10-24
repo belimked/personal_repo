@@ -8,9 +8,9 @@
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.version === 3) return s;
+      if (s && s.version === 4) return s;
     } catch (e) {}
-    const s = clone({ version: 3, files: SEED.files, todos: SEED.todos, inbox: SEED.inbox, users: SEED.users, fileTypes: SEED.fileTypes, models: SEED.models, logs: SEED.logs, config: SEED.config, uploads: [], session: null, prefs: { tz: "UTC+8", dailyMail: true, mailTime: "08:00" } });
+    const s = clone({ version: 4, files: SEED.files, todos: SEED.todos, inbox: SEED.inbox, users: SEED.users, fileTypes: SEED.fileTypes, models: SEED.models, logs: SEED.logs, config: SEED.config, uploads: [], session: null, prefs: { tz: "UTC+8", dailyMail: true, mailTime: "08:00" } });
     localStorage.setItem(KEY, JSON.stringify(s));
     return s;
   }
