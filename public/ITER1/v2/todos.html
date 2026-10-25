@@ -228,12 +228,12 @@ if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
 
   let dragInfo = null, suppressClick = false;
   function ghost(col, a, b, prefix = "") {
-    let g = col.querySelector(".ghost");
-    if (!g) { g = document.createElement("div"); g.className = "ghost"; col.appendChild(g); }
+    let g = col.querySelector(".drag-ghost");
+    if (!g) { g = document.createElement("div"); g.className = "drag-ghost"; col.appendChild(g); }
     g.style.top = a + "px"; g.style.height = Math.max(15, b - a) - 1 + "px";
     g.textContent = `${prefix}${PA.toHM(a)}–${PA.toHM(b)} · ${PA.fmtDur(b - a)}`;
   }
-  const clearGhosts = () => document.querySelectorAll(".ghost").forEach((g) => g.remove());
+  const clearGhosts = () => document.querySelectorAll(".drag-ghost").forEach((g) => g.remove());
 
   function bindCal() {
     const root = document.getElementById("cal-view");
@@ -271,7 +271,7 @@ if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
         if (!dragInfo) return;
         e.preventDefault();
         const a = clamp(snap(yOf(e) - dragInfo.grab), 0, 1440 - dragInfo.dur);
-        root.querySelectorAll(".ghost").forEach((g) => g.parentElement !== col && g.remove());
+        root.querySelectorAll(".drag-ghost").forEach((g) => g.parentElement !== col && g.remove());
         ghost(col, a, a + dragInfo.dur);
       };
       col.ondragleave = (e) => { if (!col.contains(e.relatedTarget)) clearGhosts(); };
