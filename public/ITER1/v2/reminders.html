@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>近 3 天提醒 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card" id="mail-card"></div>
+  <div id="groups"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "reminders", title: "近 3 天提醒" })) {
+  const { state, esc, save, fmtDate, SEED } = PA;
+  const u = PA.me();
+  function renderMail() {
+    const p = state.prefs;
+    document.getElementById("mail-card").innerHTML = `<div class="row"><span style="font-size:22px">📧</span>
+      <div><b>每日邮件提醒：${p.dailyMail ? `已开启，每天 ${p.mailTime}（${p.tz}）发送到 ${esc(u.email)}` : "未开启"}</b>
+      <div class="hint">邮件内容：已逾期 + 今天 / 明天 / 后天的未完成待办。V1 收件邮箱为账号邮箱。</div></div>
+      <span class="spacer"></span><button class="btn" id="preview-mail">预览邮件</button><a class="btn" href="profile.html#reminder">修改设置</a></div>`;
+    document.getElementById("preview-mail").onclick = previewMail;
+  }
+  const open = () => state.todos.filter((t) => t.status === "open" && t.date);
+  function sections() {
+    const d0 = SEED.dayStr(0), d1 = SEED.dayStr(1), d2 = SEED.dayStr(2);
+    const sort = (a, b) => (a.date + (a.time || "99")).localeCompare(b.date + (b.time || "99"));
+    return [
+      ["已逾期", "未完成且日期已过", open().filter((t) => t.date < d0).sort(sort), true],
+      ["今天", fmtDate(d0), open().filter((t) => t.date === d0).sort(sort)],
+      ["明天", fmtDate(d1), open().filter((t) => t.date === d1).sort(sort)],
+      ["后天", fmtDate(d2), open().filter((t) => t.date === d2).sort(sort)],
+    ];
+  }
+  function render() {
+    groups.innerHTML = sections().map(([title, sub, list, overdue]) => (overdue && !list.length) ? "" : `
+      <div class="day-group"><div class="day-head"><h3 style="${overdue ? "color:var(--danger)" : ""}">${title}</h3><span class="muted small">${sub} · ${list.length} 项</span></div>
+      ${list.length ? list.map((t) => `<div class="rem-item ${overdue ? "overdue" : ""}"><div class="time">${t.time ? `${t.time}<div class="small muted" style="font-weight:400">至 ${PA.endOf(t)}</div>` : "全天"}</div>
+        <div class="body"><a href="todo.html?id=${t.id}" class="todo-title">${esc(t.title)}</a>
+        <div class="small muted">${overdue ? fmtDate(t.date) + " · " : ""}${t.location ? "📍 " + esc(t.location) + " · " : ""}${PA.SOURCE_LABEL[t.source]}${t.attachments.length ? " · 📎 " + t.attachments.length : ""}</div></div>
+        <button class="btn sm" data-done="${t.id}">✓ 完成</button></div>`).join("") : '<div class="muted small" style="padding:6px 2px 4px">没有待办 🎉</div>'}</div>`).join("");
+    groups.querySelectorAll("[data-done]").forEach((b) => (b.onclick = () => {
+      const t = PA.todoById(b.dataset.done); t.status = "done"; save(); PA.log("手动更新待办", `${t.title} 标记完成`); PA.updateBadges(); render();
+      PA.toast("已完成：" + t.title);
+    }));
+  }
+  function previewMail() {
+    const body = sections().filter(([, , l]) => l.length).map(([title, , list]) => `<h4 style="margin:12px 0 6px">${title}</h4><ul style="margin:0;padding-left:18px">${list.map((t) => `<li>${t.time ? PA.timeRange(t) : "全天"} ${esc(t.title)}${t.location ? "（" + esc(t.location) + "）" : ""}</li>`).join("")}</ul>`).join("");
+    PA.modal({ title: "邮件预览", wide: true, body: `<div class="small muted">发件人：${esc(state.config.mail.fromName)} &lt;${esc(state.config.mail.from)}&gt;<br>收件人：${esc(u.email)}<br>主题：【日常助手】最近 3 天待办提醒（${PA.today()}）</div><hr style="border:none;border-top:1px solid var(--border)"><div>你好 ${esc(u.name)}，以下是你最近 3 天的待办：</div>${body}<p class="small muted" style="margin-top:16px">不想再收到？请在“个人设置 → 每日提醒”中关闭。</p>`, actions: [{ label: "关闭" }] });
+  }
+  renderMail(); render();
+}
+</script>
+</body>
+</html>

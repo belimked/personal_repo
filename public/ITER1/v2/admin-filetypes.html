@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文件类型 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">这里是<b>全局</b>可上传类型。用户级的自定义类型只能是全局类型的子集（在“用户管理 → 编辑”中设置）。删除类型只影响之后的上传，<b>不影响已上传的文件</b>。</div>
+  <div class="card">
+    <div class="card-head"><h3>添加文件类型</h3></div>
+    <div class="row">
+      <input class="input inline" id="ext" placeholder="扩展名，如 heic" style="width:180px">
+      <select class="input inline" id="handler"></select>
+      <button class="btn primary" id="add">添加</button><span class="err" id="err"></span>
+    </div>
+  </div>
+  <div id="groups"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "admin-filetypes", title: "文件类型", admin: true })) {
+  const { state, esc, save, toast, log } = PA;
+  const H = {
+    text: ["纯文本", "直接读取文本 → 建立索引；可预览"],
+    ocr: ["图片 / PDF", "OCR 识别（PDF 先取文字层）+ 图片描述 → 建立索引；可预览"],
+    asr: ["音频 / 视频", "语音识别（视频直接交给 ASR）→ 判断是否会议 → 建立索引；V1 仅下载"],
+    pending: ["Office 文档", "待确认：V1 是否提取文本（需求中未明确）"],
+    store: ["仅存储", "不解析、不可检索，仅保存和下载"],
+  };
+  handler.innerHTML = Object.entries(H).map(([k, [l]]) => `<option value="${k}">${l}</option>`).join("");
+  function render() {
+    groups.innerHTML = Object.entries(H).map(([k, [l, d]]) => {
+      const list = state.fileTypes.filter((t) => t.handler === k);
+      return `<div class="card"><div class="card-head"><h3>${l}</h3><span class="badge">${list.length}</span><span class="hint">${d}</span></div>
+        <div class="chip-list">${list.map((t) => `<span class="chip">.${esc(t.ext)}<span class="x" data-del="${esc(t.ext)}" title="删除">×</span></span>`).join("") || '<span class="muted small">无</span>'}</div></div>`;
+    }).join("");
+    groups.querySelectorAll("[data-del]").forEach((x) => (x.onclick = () => PA.confirmBox("删除文件类型", `删除 <b>.${esc(x.dataset.del)}</b> 后，用户将不能再上传该类型的文件；已上传的文件不受影响。`, () => {
+      state.fileTypes = state.fileTypes.filter((t) => t.ext !== x.dataset.del); save(); log("删除文件类型", "删除 ." + x.dataset.del); toast("已删除"); render();
+    }, "删除", true)));
+  }
+  document.getElementById("add").onclick = () => {
+    const v = ext.value.trim().toLowerCase().replace(/^\.+/, "");
+    if (!/^[a-z0-9]{1,10}$/.test(v)) return (err.textContent = "扩展名只能包含字母和数字，1~10 位");
+    if (state.fileTypes.some((t) => t.ext === v)) return (err.textContent = `.${v} 已存在，不能重复添加`);
+    err.textContent = ""; state.fileTypes.push({ ext: v, handler: handler.value }); save(); log("添加文件类型", `添加 .${v}（${H[handler.value][0]}）`); toast("已添加 ." + v); ext.value = ""; render();
+  };
+  ext.onkeydown = (e) => { if (e.key === "Enter") document.getElementById("add").click(); };
+  render();
+}
+</script>
+</body>
+</html>

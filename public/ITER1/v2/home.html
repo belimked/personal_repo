@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>助手 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page" class="chat">
+  <div class="chat-msgs" id="msgs">
+    <div class="welcome" id="welcome">
+      <h1>有什么要我帮你记、帮你找的？</h1>
+      <div class="muted">一句话即可：新增 / 修改 / 完成 / 归档待办，或者查询你上传过的文件。</div>
+      <div class="row" style="justify-content:center;margin-top:14px" id="stats"></div>
+      <div class="card" style="margin-top:20px;text-align:left">
+        <div class="card-head"><h3>试试这些说法</h3><span class="spacer"></span><span class="hint">点击填入输入框</span></div>
+        <div class="chip-list" id="examples"></div>
+      </div>
+    </div>
+  </div>
+  <div class="composer">
+    <div class="composer-box">
+      <textarea id="input" placeholder="例如：明天下午3点在仁济医院做体检复查（Enter 发送，Shift+Enter 换行）"></textarea>
+      <div class="composer-bar">
+        <button class="btn sm" id="upload-btn" title="上传到个人知识库">📎 上传文件</button>
+        <button class="btn sm" disabled title="手机 App 版本支持语音输入">🎤 语音（App 版）</button>
+        <span class="spacer"></span>
+        <span class="hint">知识库查询只检索你本人上传的文件</span>
+        <button class="btn primary" id="send">发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "home", title: "助手", narrow: false })) {
+  const { state, esc, save, toast, log, fmtDate, SEED } = PA;
+  const EXAMPLES = [
+    "明天下午3点在仁济医院做体检复查",
+    "下周三上午10点和李总在星巴克见面，大概一个半小时",
+    "把牙医复诊改到后天下午三点",
+    "季度报告已经提交了，标记完成",
+    "给妈妈买礼物不用做了，归档",
+    "租房合同什么时候到期？",
+    "找一下去三亚旅行的照片",
+    "上次产品评审会议说了什么",
+    "整理一下",
+  ];
+  examples.innerHTML = EXAMPLES.map((e) => `<span class="chip">${esc(e)}</span>`).join("");
+  examples.querySelectorAll(".chip").forEach((c) => (c.onclick = () => { input.value = c.textContent; input.focus(); }));
+  const openCount = state.todos.filter((t) => t.status === "open" && t.date === PA.today()).length;
+  stats.innerHTML = `<a class="badge blue" href="reminders.html">今天待办 ${openCount} 项</a><a class="badge ${state.inbox.length ? "orange" : ""}" href="inbox.html">待确认会议 ${state.inbox.length} 个</a>`;
+  document.getElementById("upload-btn").onclick = () => PA.pickFiles();
+
+  // ---------- 解析工具（原型中模拟 LLM 的结构化输出） ----------
+  const CN = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 十一: 11, 十二: 12, 日: 0, 天: 0 };
+  const num = (s) => (/^\d+$/.test(s) ? +s : CN[s] ?? (s.startsWith("十") ? 10 + (CN[s.slice(1)] || 0) : NaN));
+  const addDays = (n) => SEED.dayStr(n);
+  function parseWhen(text) {
+    let date = "", time = "", used = [];
+    const now = new Date(); const dow = now.getDay();
+    let m;
+    if ((m = text.match(/大后天|后天|明天|今天/))) { date = addDays({ 今天: 0, 明天: 1, 后天: 2, 大后天: 3 }[m[0]]); used.push(m[0]); }
+    else if ((m = text.match(/(下下?)(?:周|星期|礼拜)([一二三四五六日天])/))) {
+      const target = num(m[2]) || 7;
+      date = addDays(8 - (dow || 7) + (target - 1) + 7 * (m[1].length - 1)); used.push(m[0]);
+    } else if ((m = text.match(/(?:周|星期|礼拜)([一二三四五六日天])/))) {
+      const target = num(m[1]) || 7; let diff = target - (dow || 7); if (diff < 0) diff += 7; date = addDays(diff); used.push(m[0]);
+    } else if ((m = text.match(/(\d{1,2})月(\d{1,2})[日号]/))) {
+      date = `${now.getFullYear()}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`; used.push(m[0]);
+    }
+    if ((m = text.match(/(上午|早上|中午|下午|晚上)?\s*(\d{1,2}|[一二两三四五六七八九十]{1,3})[点:：](半|(\d{1,2})分?)?/))) {
+      let h = num(m[2]); const min = m[3] === "半" ? 30 : m[4] ? +m[4] : 0;
+      if ((m[1] === "下午" || m[1] === "晚上") && h < 12) h += 12;
+      if (m[1] === "中午" && h < 11) h += 12;
+      if (!isNaN(h)) { time = `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`; used.push(m[0]); }
+    } else if ((m = text.match(/上午|下午|晚上/))) { used.push(m[0]); }
+    return { date, time, used };
+  }
+  function parseDur(text) {
+    let m = text.match(/(半个?小时)|(\d+|[一两二三四])个?半?(?:小时|钟头)|(\d+)\s*分钟/);
+    if (!m) return { min: 0, used: "" };
+    const n = (x) => ({ 一: 1, 两: 2, 二: 2, 三: 3, 四: 4 }[x] ?? +x);
+    const min = m[1] ? 30 : m[2] ? n(m[2]) * 60 + (m[0].includes("半") ? 30 : 0) : +m[3];
+    return { min: Math.min(min, 1440), used: m[0] };
+  }
+  function parseLocation(text) {
+    const m = text.match(/在([^，,。\s]{2,14}?)(?=做|开|见|参加|办理|吃|和|跟|与|，|,|。|$)/) || text.match(/(?:去|到)([^，,。\s]{2,10}?)(?=做|开|见|参加|办理|吃|买|拿|取|，|,|。|$)/);
+    return m ? m[1] : "";
+  }
+  const bigrams = (s) => { const c = s.replace(/[\s，。,.？?！!、:：“”"']/g, ""); const out = new Set(); for (let i = 0; i < c.length - 1; i++) out.add(c.slice(i, i + 2)); return out; };
+  const STOP = new Set(["一下", "什么", "时候", "上次", "说了", "找一", "帮我", "我的", "的照", "一个", "那个", "这个", "已经", "标记", "了，", "不用", "用做", "改到", "提交", "交了"]);
+  function matchTodos(text, statuses) {
+    const q = bigrams(text);
+    return state.todos.filter((t) => statuses.includes(t.status)).map((t) => {
+      let s = 0; bigrams(t.title).forEach((b) => { if (q.has(b) && !STOP.has(b)) s++; }); return { t, s };
+    }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+  }
+  const SYN = { 到期: ["租期", "至"], 旅行: ["三亚", "海边", "旅行"], 照片: ["照片", "图片"], 会议: ["会议", "评审", "报价"], 体检: ["体检", "血脂"], 销售: ["销售", "华东"], 报告: ["报告"] };
+  function searchFiles(text) {
+    const q = [...bigrams(text)].filter((b) => !STOP.has(b));
+    Object.entries(SYN).forEach(([k, arr]) => { if (text.includes(k)) q.push(...arr); });
+    const terms = [...new Set(q)];
+    return state.files.filter((f) => f.status === "indexed").map((f) => {
+      const hay = [f.name, f.content, f.ocr, f.desc, f.transcript].filter(Boolean).join("\n");
+      let s = 0; const hitTerms = [];
+      terms.forEach((t) => { if (hay.includes(t)) { s += t.length > 2 ? 2 : 1; hitTerms.push(t); } });
+      return { f, s, hitTerms, hay };
+    }).filter((x) => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 4);
+  }
+  function snippet(hay, terms) {
+    const parts = hay.split(/(?<=[。\n！？；])/).map((p) => p.trim()).filter(Boolean);
+    const best = parts.map((p) => ({ p, s: terms.filter((t) => p.includes(t)).length })).sort((a, b) => b.s - a.s)[0];
+    const text = (best?.p || parts[0] || "").replace(/^#+\s*/, "").slice(0, 120);
+    return PA.highlight(text, terms);
+  }
+
+  function detectIntent(text) {
+    if (/(查一下|查查|查询|查找|帮我查|找一下|找找|帮我找|搜|有没有|在哪|什么时候|说了什么|是多少|多少钱|哪份|哪个文件|[?？]$)/.test(text)) return "search";
+    if (/(归档|弃用|不做了|不用做|不需要做|取消)/.test(text)) return "archive";
+    if (/(完成了|做完|搞定|已完成|办完|标记完成|已经提交)/.test(text)) return "complete";
+    if (/(改到|改成|改为|推迟|延期|提前到|修改|调整到|换到|挪到|地点改)/.test(text)) return "update";
+    const w = parseWhen(text);
+    if (w.date || w.time || /(提醒我|记得|安排|预约|待办|要去|需要)/.test(text)) return "create";
+    return "unclear";
+  }
+  const INTENT_LABEL = { create: "新增待办", update: "更新待办", complete: "完成待办", archive: "归档待办", search: "知识库查询", unclear: "意图不明确" };
+
+  // ---------- 渲染 ----------
+  function addMsg(html, me = false) {
+    welcome.classList.add("hidden");
+    const d = document.createElement("div");
+    d.className = "msg" + (me ? " me" : "");
+    d.innerHTML = me ? `<div class="bubble">${html}</div>` : `<div class="who">🤖</div><div class="bubble">${html}</div>`;
+    msgs.appendChild(d);
+    d.scrollIntoView({ behavior: "smooth", block: "end" });
+    return d.querySelector(".bubble");
+  }
+  const intentTag = (k, extra = "") => `<div class="intent">识别意图：<span class="badge blue">${INTENT_LABEL[k]}</span>${extra}</div>`;
+  const todoLine = (t) => `<b>${esc(t.title)}</b> <span class="muted small">${fmtDate(t.date, PA.timeRange(t))}${t.location ? " · " + esc(t.location) : ""}</span>`;
+
+  function handle(text) {
+    addMsg(esc(text), true);
+    const thinking = addMsg('<span class="muted">正在理解…</span>');
+    setTimeout(() => {
+      const intent = detectIntent(text);
+      const start = performance.now();
+      ({ create: renderCreate, update: renderUpdate, complete: (b, t) => renderStatus(b, t, "complete"), archive: (b, t) => renderStatus(b, t, "archive"), search: renderSearch, unclear: renderUnclear })[intent](thinking, text);
+      thinking.parentElement.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 700);
+  }
+
+  function renderCreate(b, text) {
+    const w = parseWhen(text); const loc = parseLocation(text); const du = parseDur(text);
+    let title = text;
+    [...w.used, du.used].filter(Boolean).forEach((u) => (title = title.replace(u, "")));
+    if (loc) title = title.replace("在" + loc, "").replace("去" + loc, "").replace("到" + loc, "");
+    title = title.replace(/^(提醒我|记得|帮我|我要|要)/, "").replace(/[，,]?\s*(大概|大约|预计|约)?\s*$/, "").replace(/^[，,。\s]+|[，,。\s]+$/g, "").trim() || text;
+    b.innerHTML = intentTag("create", `<span class="small">时间按你的时区（${state.prefs.tz}）解析</span>`) + `
+      <div class="result-card">
+        <div class="field"><label>待办内容</label><input class="input" data-k="title" value="${esc(title)}"></div>
+        <div class="grid3"><div class="field"><label>日期</label><input class="input" type="date" data-k="date" value="${w.date}"></div>
+        <div class="field"><label>时间</label><input class="input" type="time" data-k="time" value="${w.time}"></div>
+        <div class="field"><label>地点</label><input class="input" data-k="location" value="${esc(loc)}" placeholder="未识别到"></div></div>
+        <div class="field"><label>时长${du.min ? '（已从输入中识别）' : ""}</label><div data-dur></div></div>
+        ${!w.date ? '<div class="hint">未识别到日期，可留空（无日期的待办不会出现在提醒中）。</div>' : ""}
+        <div class="actions"><button class="btn primary" data-a="ok">确认创建</button><button class="btn" data-a="no">取消</button></div>
+      </div>`;
+    const dp = PA.durationPicker(b.querySelector("[data-dur]"), { time: w.time, duration: du.min });
+    b.querySelector('[data-k="time"]').oninput = (e) => dp.setTime(e.target.value);
+    b.querySelector('[data-a="ok"]').onclick = () => {
+      const v = {}; b.querySelectorAll("[data-k]").forEach((i) => (v[i.dataset.k] = i.value.trim()));
+      v.duration = dp.value();
+      if (!v.title) { toast("待办内容不能为空"); return; }
+      const t = { id: PA.uid("t"), ...v, status: "open", source: "text", attachments: [], notes: "", createdAt: PA.nowStr() };
+      state.todos.push(t); save(); log("文字输入·新增待办", `“${text}” → ${v.title}`); PA.updateBadges();
+      b.querySelector(".result-card").innerHTML = `✅ 已创建待办：${todoLine(t)} <a href="todo.html?id=${t.id}">查看详情</a>`;
+    };
+    b.querySelector('[data-a="no"]').onclick = () => (b.querySelector(".result-card").innerHTML = '<span class="muted">已取消，未创建。</span>');
+  }
+
+  function pickTarget(b, text, statuses, intent, onPick) {
+    const list = matchTodos(text, statuses);
+    if (list.length === 1 || (list.length > 1 && list[0].s >= list[1].s + 2)) return onPick(list[0].t);
+    const cands = list.length ? list.slice(0, 4).map((x) => x.t) : state.todos.filter((t) => statuses.includes(t.status)).slice(0, 5);
+    const rn = "c" + Math.random().toString(36).slice(2);
+    b.innerHTML = intentTag(intent) + `<div>${list.length ? "找到多个可能的待办，请选择要操作的一个：" : "没有找到明确匹配的待办，请从最近的待办中选择："}</div>
+      <div class="result-card">${cands.map((t) => `<label class="row" style="padding:4px 0;cursor:pointer"><input type="radio" name="${rn}" value="${t.id}"> ${todoLine(t)}</label>`).join("")}
+      <div class="actions"><button class="btn primary" data-a="pick">下一步</button><button class="btn" data-a="no">取消</button></div></div>`;
+    b.querySelector('[data-a="pick"]').onclick = () => { const r = b.querySelector("input:checked"); if (!r) { toast("请先选择一个待办"); return; } onPick(PA.todoById(r.value)); };
+    b.querySelector('[data-a="no"]').onclick = () => (b.querySelector(".result-card").innerHTML = '<span class="muted">已取消。</span>');
+  }
+
+  function renderUpdate(b, text) {
+    pickTarget(b, text, ["open"], "update", (t) => {
+      const w = parseWhen(text); const loc = parseLocation(text.replace(/^.*?(改到|改成|改为|换到|挪到)/, "在"));
+      const changes = [];
+      if (w.date && w.date !== t.date) changes.push(["日期", t.date || "—", w.date, "date"]);
+      if (w.time && w.time !== t.time) changes.push(["时间", t.time || "—", w.time, "time"]);
+      if (loc && !w.used.some((u) => loc.includes(u)) && loc !== t.location) changes.push(["地点", t.location || "—", loc, "location"]);
+      b.innerHTML = intentTag("update", '<span class="small">待办在 SQLite 中按语义匹配，不走文件检索</span>') + `<div>目标待办：${todoLine(t)}</div>
+        <div class="result-card">${changes.length ? `<div class="diff">${changes.map(([k, o, n]) => `<span class="muted">${k}</span><span class="old">${esc(o)}</span><span>→</span><span class="new">${esc(n)}</span>`).join("")}</div>
+        <div class="actions"><button class="btn primary" data-a="ok">确认修改</button><button class="btn" data-a="no">取消</button><a class="btn ghost" href="todo.html?id=${t.id}">手动编辑</a></div>` : `<div class="muted">没有识别出要修改的内容，请说明要改成什么，或 <a href="todo.html?id=${t.id}">手动编辑</a>。</div>`}</div>`;
+      const ok = b.querySelector('[data-a="ok"]');
+      if (!ok) return;
+      ok.onclick = () => { changes.forEach(([, , n, k]) => (t[k] = n)); save(); log("文字输入·更新待办", `${t.title}：${changes.map((c) => c[0] + " " + c[1] + "→" + c[2]).join("，")}`); PA.updateBadges(); b.querySelector(".result-card").innerHTML = `✅ 已更新：${todoLine(t)}`; };
+      b.querySelector('[data-a="no"]').onclick = () => (b.querySelector(".result-card").innerHTML = '<span class="muted">已取消，未修改。</span>');
+    });
+  }
+
+  function renderStatus(b, text, kind) {
+    const statuses = kind === "complete" ? ["open"] : ["open", "done"];
+    pickTarget(b, text, statuses, kind, (t) => {
+      const label = kind === "complete" ? "标记为已完成" : "归档";
+      b.innerHTML = intentTag(kind) + `<div class="result-card">确定要将 ${todoLine(t)} ${label}吗？${kind === "archive" ? '<div class="hint">归档后不再出现在待办列表和提醒中，可在“待办事项 → 已归档”中查看和恢复。待办不会被删除。</div>' : ""}
+        <div class="actions"><button class="btn primary" data-a="ok">确认${label}</button><button class="btn" data-a="no">取消</button></div></div>`;
+      b.querySelector('[data-a="ok"]').onclick = () => {
+        t.status = kind === "complete" ? "done" : "archived"; save(); PA.updateBadges();
+        log(kind === "complete" ? "文字输入·完成待办" : "文字输入·归档待办", t.title);
+        b.querySelector(".result-card").innerHTML = `✅ 已${label}：${todoLine(t)} <a href="#" data-undo>撤销</a>`;
+        b.querySelector("[data-undo]").onclick = (e) => { e.preventDefault(); t.status = "open"; save(); PA.updateBadges(); b.querySelector(".result-card").innerHTML = '<span class="muted">已撤销。</span>'; };
+      };
+      b.querySelector('[data-a="no"]').onclick = () => (b.querySelector(".result-card").innerHTML = '<span class="muted">已取消。</span>');
+    });
+  }
+
+  function renderSearch(b, text) {
+    const hits = searchFiles(text);
+    log("文字输入·知识库查询", `“${text}” → 命中 ${hits.length} 个文件`, 900 + Math.floor(Math.random() * 1500));
+    if (!hits.length) { b.innerHTML = intentTag("search") + '<div>在你上传的文件中没有找到相关内容。可以换个说法，或先 <a href="files.html">上传文件</a>。</div>'; return; }
+    b.innerHTML = intentTag("search", `<span class="small">仅检索你本人上传的文件 · 语义 + 关键字</span>`) + `<div>找到 ${hits.length} 个相关文件：</div>` + hits.map(({ f, hitTerms, hay }) => {
+      const links = PA.linkedTodos(f.id);
+      const media = f.cat === "audio" || f.cat === "video";
+      return `<div class="hit">${f.img ? `<img class="thumb" src="${f.img}" alt="">` : PA.fileIcon(f)}
+        <div style="flex:1;min-width:0"><div class="row" style="gap:8px"><b>${esc(f.name)}</b><span class="badge">${PA.CAT_LABEL[f.cat]}</span><span class="small muted">📁 ${esc(f.folder)}</span></div>
+        <div class="snip">${f.cat === "image" || f.cat === "pdf" ? (f.ocr ? "OCR：" : "图片描述：") : media ? "转写：" : ""}${snippet(hay.replace(f.name, ""), hitTerms)}</div>
+        ${links.length ? `<div class="small muted">关联待办：${links.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、")}</div>` : ""}
+        <div class="actions" style="margin-top:6px;display:flex;gap:8px">${PA.canPreview(f) ? `<button class="btn sm" data-prev="${f.id}">预览</button>` : '<span class="hint">多媒体文件 V1 仅提供下载</span>'}<button class="btn sm" data-dl="${f.id}">下载</button></div></div></div>`;
+    }).join("");
+    b.querySelectorAll("[data-prev]").forEach((x) => (x.onclick = () => { const h = hits.find((h) => h.f.id === x.dataset.prev); PA.openPreview(x.dataset.prev, h.hitTerms); }));
+    b.querySelectorAll("[data-dl]").forEach((x) => (x.onclick = () => PA.download(PA.fileById(x.dataset.dl))));
+    const firstImg = hits.find((h) => h.f.cat === "image" || h.f.cat === "pdf");
+    if (firstImg) PA.openPreview(firstImg.f.id, firstImg.hitTerms);
+  }
+
+  function renderUnclear(b, text) {
+    b.innerHTML = intentTag("unclear") + `<div>我不太确定你想做什么，请选择：</div><div class="actions" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn sm" data-i="create">新增为待办</button><button class="btn sm" data-i="search">在知识库中查询</button><button class="btn sm" data-i="update">修改某个待办</button></div>`;
+    b.querySelectorAll("[data-i]").forEach((x) => (x.onclick = () => ({ create: renderCreate, search: renderSearch, update: renderUpdate })[x.dataset.i](b, text)));
+  }
+
+  const submit = () => { const v = input.value.trim(); if (!v) return; input.value = ""; handle(v); };
+  send.onclick = submit;
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); } });
+}
+</script>
+</body>
+</html>

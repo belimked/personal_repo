@@ -2,55 +2,49 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>登录 · 个人日常助手</title>
-<link rel="stylesheet" href="assets/app.css">
+<title>个人日常助手 · 原型版本</title>
+<link rel="stylesheet" href="ITER1/v2/assets/app.css">
+<style>
+  body { background: var(--bg); }
+  .wrap { max-width: 860px; margin: 40px auto; padding: 0 20px; }
+  .ver { display: flex; gap: 16px; align-items: flex-start; }
+  .ver .tag { font-size: 20px; font-weight: 700; color: var(--primary); width: 48px; }
+  .ver ul { margin: 6px 0 0; padding-left: 18px; color: #374151; }
+</style>
 </head>
 <body>
-<div class="login-page">
-  <form class="login-card" id="form" novalidate>
-    <h1>个人日常助手</h1>
-    <div class="muted" style="margin-bottom:20px">请登录。系统不开放注册，账号由管理员创建。</div>
-    <div class="field"><label>邮箱或手机号</label><input class="input" id="acct" autocomplete="username" placeholder="name@example.com / 13800000000"></div>
-    <div class="field"><label>密码</label><input class="input" id="pwd" type="password" autocomplete="current-password" placeholder="8~16 位"></div>
-    <div class="err" id="err" style="min-height:18px"></div>
-    <button class="btn primary" style="width:100%;justify-content:center;margin-top:6px" type="submit">登录</button>
-    <div class="row" style="margin-top:12px"><span class="spacer"></span><a href="forgot.html">忘记密码？</a></div>
-    <div class="demo-accts">
-      <b>原型演示账号</b>（密码均为 <code>demo1234</code>）<br>
-      管理员：<a data-acct="admin@demo.com">admin@demo.com</a>（也可用手机号 13800000001）<br>
-      一般用户：<a data-acct="lily@demo.com">lily@demo.com</a><br>
-      已禁用：<a data-acct="chen@demo.com">chen@demo.com</a>（演示禁用后无法登录）
+<div class="wrap">
+  <h1 style="font-size:22px;margin-bottom:4px">个人日常助手 · 原型版本</h1>
+  <div class="muted" style="margin-bottom:24px">每个版本单独保存、互不影响；已发布的版本不再修改，改动放进下一个版本。各版本的演示数据也是分开保存的。</div>
+
+  <h2 style="margin:0 0 10px">迭代一（ITER1）</h2>
+
+  <div class="card ver">
+    <div class="tag">v2</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v2</b><span class="badge green">最新</span><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn primary" href="ITER1/v2/">打开 v2</a></div>
+      <ul>
+        <li>日历周视图改为从今天起连续 7 天</li>
+        <li>待办增加时长：快捷选择 15 分钟 / 30 分钟 / 45 分钟 / 1 小时 / 2 小时（新建、右侧详情、详情页、助手新增卡片）</li>
+        <li>日历周/日视图：拖动待办下边缘调整时长、拖动上边缘调整开始时间；空白处按住拖动选择时间段来新建，单击空白默认 30 分钟；拖动时实时显示时间段，按 15 分钟吸附</li>
+        <li>助手能从输入中识别时长（如“大概一个半小时”）；会议录音确认后，时长取录音时长</li>
+        <li>各处时间显示为时间段（如 10:00–11:00）；登录页背景改为纯色</li>
+      </ul>
     </div>
-  </form>
+  </div>
+
+  <div class="card ver">
+    <div class="tag" style="color:var(--muted)">v1</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v1</b><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn" href="ITER1/v1/">打开 v1</a></div>
+      <ul>
+        <li>首版系统功能原型：登录、助手（文字输入）、提醒、待办、待确认会议、个人知识库、个人设置、管理员 6 页</li>
+        <li>待办事项：列表 / 日历（月、周、日、议程）、按日期分组、未排期侧栏、右侧详情</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hint">演示账号：admin@demo.com（管理员）、lily@demo.com（一般用户），密码均为 demo1234。</div>
 </div>
-<script src="assets/data.js"></script>
-<script src="assets/app.js"></script>
-<script>
-  const { state, save, log } = PA;
-  if (state.session) location.href = "home.html";
-  document.querySelectorAll("[data-acct]").forEach((a) => (a.onclick = () => { acct.value = a.dataset.acct; pwd.value = "demo1234"; }));
-  const fails = () => +sessionStorage.getItem("pa_fail") || 0;
-  form.onsubmit = (e) => {
-    e.preventDefault();
-    const sec = state.config.security;
-    const lockUntil = +sessionStorage.getItem("pa_lock_until") || 0;
-    if (sec.lockEnabled && Date.now() < lockUntil) { err.textContent = `登录失败次数过多，账号已锁定，请 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟后再试。`; return; }
-    const a = acct.value.trim(), p = pwd.value;
-    if (!a) { err.textContent = "请输入邮箱或手机号"; return; }
-    if (p.length < 8 || p.length > 16) { err.textContent = "密码长度应为 8~16 位"; return; }
-    const u = state.users.find((x) => x.email === a.toLowerCase() || (x.phone && x.phone === a));
-    if (!u || p !== (u.password || "demo1234")) {
-      const n = fails() + 1; sessionStorage.setItem("pa_fail", n);
-      if (sec.lockEnabled && n >= sec.lockAttempts) { sessionStorage.setItem("pa_lock_until", Date.now() + sec.lockMinutes * 60000); sessionStorage.setItem("pa_fail", 0); err.textContent = `连续 ${n} 次失败，账号已锁定 ${sec.lockMinutes} 分钟。`; return; }
-      err.textContent = "账号或密码错误" + (sec.lockEnabled ? `（再失败 ${sec.lockAttempts - n} 次将锁定）` : "");
-      return;
-    }
-    if (u.status !== "active") { err.textContent = "该账号已被管理员禁用，请联系管理员。"; return; }
-    sessionStorage.setItem("pa_fail", 0);
-    state.session = { email: u.email, role: u.role };
-    save(); log("登录", "登录成功");
-    location.href = "home.html";
-  };
-</script>
 </body>
 </html>

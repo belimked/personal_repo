@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用户管理 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="row" style="margin-bottom:14px">
+    <input class="input inline" id="kw" placeholder="按邮箱、手机号、姓名筛选" style="width:240px">
+    <select class="input inline" id="st"><option value="">全部状态</option><option value="active">正常</option><option value="disabled">已禁用</option><option value="pending_purge">待清除</option></select>
+    <span class="spacer"></span><span class="hint">系统不开放注册，用户由管理员添加</span>
+    <button class="btn primary" id="add">＋ 添加用户</button>
+  </div>
+  <div class="table-wrap"><table class="table nowrap" id="tbl"></table></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "admin-users", title: "用户管理", admin: true, narrow: false })) {
+  const { state, esc, save, toast, log, SEED } = PA;
+  const ST = { active: ["正常", "green"], disabled: ["已禁用", "orange"], pending_purge: ["待清除", "red"] };
+  function render() {
+    const k = kw.value.trim(), s = st.value;
+    const list = state.users.filter((u) => (!k || [u.email, u.phone, u.name].join(" ").includes(k)) && (!s || u.status === s));
+    tbl.innerHTML = `<tr><th>登录邮箱</th><th>手机号</th><th>姓名</th><th>角色</th><th>状态</th><th>存储用量 / 配额</th><th>可上传类型</th><th>时区</th><th>创建日期</th><th></th></tr>` + list.map((u) => {
+      const pct = Math.min(100, (u.used / u.quota) * 100), self = u.email === state.session.email;
+      return `<tr><td>${esc(u.email)}${self ? ' <span class="badge blue">我</span>' : ""}</td><td>${esc(u.phone) || '<span class="muted">—</span>'}</td><td>${esc(u.name)}</td>
+        <td>${u.role === "admin" ? '<span class="badge blue">管理员</span>' : "一般用户"}</td>
+        <td><span class="badge ${ST[u.status][1]}">${ST[u.status][0]}</span>${u.status === "pending_purge" ? `<div class="small muted">${u.purgeAt} 清除</div>` : ""}</td>
+        <td style="min-width:150px"><div class="small">${u.used}MB / ${u.quota}MB</div><div class="progress ${pct > 90 ? "danger" : pct > 75 ? "warn" : ""}"><div style="width:${pct}%"></div></div></td>
+        <td>${u.types === "global" ? "全局设置" : `<span class="badge orange">自定义 ${u.customTypes ? u.customTypes.length : 18} 种</span>`}</td><td>${esc(u.tz)}</td><td class="small">${u.createdAt}</td>
+        <td style="white-space:nowrap">${u.status === "pending_purge" ? `<button class="btn sm" data-a="restore" data-id="${u.id}">撤销删除</button>` : `
+          <button class="btn sm" data-a="edit" data-id="${u.id}">编辑</button>
+          <button class="btn sm" data-a="pwd" data-id="${u.id}">设置密码</button>
+          ${self ? "" : `<button class="btn sm" data-a="toggle" data-id="${u.id}">${u.status === "active" ? "禁用" : "启用"}</button><button class="btn sm danger" data-a="del" data-id="${u.id}">删除</button>`}`}</td></tr>`;
+    }).join("");
+    tbl.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => ACT[b.dataset.a](state.users.find((u) => u.id === b.dataset.id))));
+  }
+  const typeOptions = (sel = []) => state.fileTypes.map((t) => `<label style="display:inline-flex;gap:4px;margin:2px 10px 2px 0"><input type="checkbox" value="${t.ext}" ${sel.includes(t.ext) ? "checked" : ""}>.${t.ext}</label>`).join("");
+  function userForm(u) {
+    const isNew = !u; u = u || { email: "", phone: "", name: "", role: "user", quota: state.config.upload.defaultQuotaMB, types: "global", tz: "UTC+8" };
+    return `${isNew ? `<div class="grid2"><div class="field"><label>登录邮箱 <span class="req">*</span></label><input class="input" id="f-email"></div>
+      <div class="field"><label>手机号（可选，也可用于登录）</label><input class="input" id="f-phone"></div>
+      <div class="field"><label>姓名</label><input class="input" id="f-name"></div>
+      <div class="field"><label>初始密码 <span class="req">*</span>（8~16 位）</label><input class="input" id="f-pwd" type="text"></div></div>` : `<div class="note">${esc(u.email)}</div>`}
+      <div class="grid3"><div class="field"><label>角色</label><select class="input" id="f-role"><option value="user">一般用户</option><option value="admin" ${u.role === "admin" ? "selected" : ""}>管理员</option></select></div>
+      <div class="field"><label>存储配额（MB）</label><input class="input" type="number" min="1" id="f-quota" value="${u.quota}"></div>
+      <div class="field"><label>时区</label><input class="input" id="f-tz" value="${esc(u.tz)}"></div></div>
+      <div class="field"><label>可上传文件类型</label><div class="row"><label><input type="radio" name="f-types" value="global" ${u.types === "global" ? "checked" : ""}> 跟随全局设置</label><label><input type="radio" name="f-types" value="custom" ${u.types === "custom" ? "checked" : ""}> 自定义（只能从全局类型中选择）</label></div>
+        <div id="f-custom" class="${u.types === "custom" ? "" : "hidden"}" style="max-height:150px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;margin-top:6px">${typeOptions(u.customTypes || state.fileTypes.slice(0, 18).map((t) => t.ext))}</div></div>`;
+  }
+  const bindTypes = (m) => m.querySelectorAll('[name="f-types"]').forEach((r) => (r.onchange = () => m.querySelector("#f-custom").classList.toggle("hidden", r.value !== "custom" || !r.checked)));
+  const readCommon = (m, u) => {
+    const q = +m.querySelector("#f-quota").value;
+    if (!(q > 0)) { toast("配额必须为正数"); return false; }
+    u.role = m.querySelector("#f-role").value; u.quota = q; u.tz = m.querySelector("#f-tz").value.trim() || "UTC+8";
+    u.types = m.querySelector('[name="f-types"]:checked').value;
+    u.customTypes = u.types === "custom" ? [...m.querySelectorAll("#f-custom input:checked")].map((c) => c.value) : undefined;
+    return true;
+  };
+  const ACT = {
+    edit: (u) => PA.modal({ title: "编辑用户", wide: true, body: userForm(u), onMount: bindTypes, actions: [{ label: "取消" }, { label: "保存", primary: true, onClick: (m) => {
+      const oldQ = u.quota; if (!readCommon(m, u)) return false;
+      save(); log("修改用户配额", `${u.email} 配额 ${oldQ}MB → ${u.quota}MB，类型：${u.types === "global" ? "全局" : "自定义"}`); toast("已保存"); render(); } }] }),
+    pwd: (u) => PA.modal({ title: "设置密码 · " + u.email, body: `<div class="field"><label>新密码（8~16 位）</label><input class="input" id="np" type="text"></div><div class="hint">直接为该用户设置新密码，用户下次登录生效。此操作会记录到管理员操作日志。</div>`, actions: [{ label: "取消" }, { label: "设置", primary: true, onClick: (m) => {
+      const v = m.querySelector("#np").value; if (v.length < 8 || v.length > 16) { toast("密码长度应为 8~16 位"); return false; }
+      u.password = v; save(); log("设置用户密码", "为 " + u.email + " 设置新密码"); toast("密码已设置"); } }] }),
+    toggle: (u) => { u.status = u.status === "active" ? "disabled" : "active"; save(); log("禁用用户", `${u.email} → ${u.status === "active" ? "启用" : "禁用"}`); toast(u.status === "active" ? "已启用" : "已禁用，该用户无法登录"); render(); },
+    del: (u) => PA.confirmBox("删除用户", `删除 <b>${esc(u.email)}</b> 后：<ul><li>账号立即禁用，无法登录；</li><li>文件、待办保留 <b>${state.config.security.purgeDays}</b> 天后彻底清除（期间可撤销）；</li><li>操作日志永久保留。</li></ul>`, () => {
+      u.status = "pending_purge"; u.purgeAt = SEED.dayStr(state.config.security.purgeDays); save(); log("删除用户", u.email + " 标记为待清除"); toast("已标记为待清除"); render(); }, "删除", true),
+    restore: (u) => { u.status = "disabled"; delete u.purgeAt; save(); log("删除用户", u.email + " 撤销删除（恢复为禁用状态）"); toast("已撤销删除，账号为禁用状态，需要时请手动启用"); render(); },
+  };
+  document.getElementById("add").onclick = () => PA.modal({ title: "添加用户", wide: true, body: userForm(null), onMount: bindTypes, actions: [{ label: "取消" }, { label: "添加", primary: true, onClick: (m) => {
+    const email = m.querySelector("#f-email").value.trim().toLowerCase(), phone = m.querySelector("#f-phone").value.trim(), pwd = m.querySelector("#f-pwd").value;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast("请输入正确的邮箱"); return false; }
+    if (state.users.some((u) => u.email === email)) { toast("该邮箱已存在"); return false; }
+    if (phone && !/^1\d{10}$/.test(phone)) { toast("手机号格式不正确"); return false; }
+    if (phone && state.users.some((u) => u.phone === phone)) { toast("该手机号已被使用"); return false; }
+    if (pwd.length < 8 || pwd.length > 16) { toast("初始密码长度应为 8~16 位"); return false; }
+    const u = { id: PA.uid("u"), email, phone, name: m.querySelector("#f-name").value.trim() || email.split("@")[0], password: pwd, status: "active", used: 0, createdAt: PA.today() };
+    if (!readCommon(m, u)) return false;
+    state.users.push(u); save(); log("添加用户", `添加用户 ${email}（${u.role === "admin" ? "管理员" : "一般用户"}，配额 ${u.quota}MB）`); toast("已添加，可将初始密码告知用户"); render(); } }] });
+  kw.oninput = render; st.onchange = render;
+  render();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>待确认 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">上传的音频/视频被识别为<b>会议</b>后会出现在这里，不会打断上传过程。确认后：会议本身保存为一条<b>已完成</b>的待办，所有行动项写入它的备注；勾选的行动项会另外创建为<b>你自己的</b>待办。</div>
+  <div class="row" style="margin-bottom:12px"><span id="count" class="muted"></span><span class="spacer"></span><button class="btn" id="expand">全部展开</button><button class="btn primary" id="confirm-all">全部按默认确认</button></div>
+  <div id="list"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "inbox", title: "待确认 · 会议录音" })) {
+  const { state, esc, save, fmtDate, toast, log } = PA;
+  const opened = new Set(state.inbox.slice(0, 1).map((m) => m.id));
+  function render() {
+    count.textContent = `${state.inbox.length} 个会议录音待确认`;
+    document.getElementById("confirm-all").disabled = !state.inbox.length;
+    list.innerHTML = state.inbox.map((m) => `
+      <div class="mt-group ${opened.has(m.id) ? "open" : ""}" data-id="${m.id}">
+        <div class="mt-head"><span class="arrow">▶</span><span class="ficon audio">${esc(m.fileName.split(".").pop().slice(0, 3).toUpperCase())}</span>
+          <b>${esc(m.fileName)}</b><span class="muted small">${esc(m.duration)} · 上传于 ${esc(m.uploadedAt)}</span><span class="spacer"></span>
+          <span class="badge orange">${m.items.length} 个行动项</span><span class="badge blue">${m.items.filter((i) => i.owner === "我").length} 个属于我</span></div>
+        <div class="mt-body">
+          <div style="margin:12px 0"><b>会议摘要</b><div class="muted">${esc(m.summary)}</div><a href="#" class="small" data-tr>查看完整转写文本</a></div>
+          <div class="field"><label>会议时间（作为这条已完成待办的日期；有具体时间时，时长取录音时长 ${esc(m.duration)}）</label>
+            <div class="row">
+              ${m.dateFromAudio ? `<label><input type="radio" name="d-${m.id}" value="audio" checked> 录音中提到：${esc(m.dateFromAudio)}</label>` : ""}
+              <label><input type="radio" name="d-${m.id}" value="file" ${m.dateFromAudio ? "" : "checked"}> 文件修改时间：${esc(m.dateFromFile)}</label>
+              <label><input type="radio" name="d-${m.id}" value="upload"> 不填写（用上传日期，时间为空）</label>
+              <label><input type="radio" name="d-${m.id}" value="manual"> 手动：</label><input class="input inline" type="date" data-md><input class="input inline" type="time" data-mt>
+            </div></div>
+          <div class="field"><label>会议标题</label><input class="input" data-title value="${esc(m.fileName.replace(/\.\w+$/, "").replace(/[-_]\d+$/, ""))}"></div>
+          <b>行动项</b><span class="hint">（全部写入备注；勾选的同时创建为我的待办，默认勾选负责人为“我”的）</span>
+          ${m.items.map((it, i) => `<div class="ai-item"><input type="checkbox" data-i="${i}" ${it.owner === "我" ? "checked" : ""} title="转为我的待办">
+            <span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span><input class="input" data-txt="${i}" value="${esc(it.text)}" style="flex:1"><input class="input inline" type="date" data-due="${i}" title="截止日期（可选）"></div>`).join("")}
+          <div class="row" style="margin-top:12px"><button class="btn primary" data-ok>确认保存</button><button class="btn" data-not>不是会议（仅作为普通文件保存）</button></div>
+        </div>
+      </div>`).join("") || '<div class="card empty">没有待确认的会议录音。<br><span class="small">上传会议录音后，识别结果会出现在这里。</span></div>';
+    list.querySelectorAll(".mt-group").forEach((g) => {
+      const m = state.inbox.find((x) => x.id === g.dataset.id);
+      g.querySelector(".mt-head").onclick = () => { g.classList.toggle("open"); g.classList.contains("open") ? opened.add(m.id) : opened.delete(m.id); };
+      g.querySelector("[data-tr]").onclick = (e) => { e.preventDefault(); PA.modal({ title: "转写文本 · " + m.fileName, wide: true, body: `<pre style="white-space:pre-wrap">[00:00:03] 说话人1：好，我们开始吧，今天主要讨论 CRM 二期的需求。\n[00:00:15] 说话人2：客户这边最关心的是移动端审批……\n[00:12:40] 说话人1：报价方案张三来更新一下。\n[00:31:05] 说话人3：数据导出我这边评估一下技术方案。\n……\n（原型：真实系统显示 ASR 返回的完整转写，含说话人和时间戳）</pre>`, actions: [{ label: "关闭" }] }); };
+      g.querySelector("[data-ok]").onclick = () => { confirm(m, g); render(); };
+      g.querySelector("[data-not]").onclick = () => { state.inbox = state.inbox.filter((x) => x !== m); save(); PA.updateBadges(); toast("已作为普通文件保存，转写文本仍可被检索"); render(); };
+    });
+  }
+  function confirm(m, g) {
+    let date = "", time = "";
+    const choice = g ? g.querySelector(`input[name="d-${m.id}"]:checked`).value : m.dateFromAudio ? "audio" : "file";
+    if (choice === "audio") [date, time] = m.dateFromAudio.split(" ");
+    else if (choice === "file") [date, time] = m.dateFromFile.split(" ");
+    else if (choice === "upload") date = m.uploadedAt.split(" ")[0];
+    else { date = g.querySelector("[data-md]").value || m.uploadedAt.split(" ")[0]; time = g.querySelector("[data-mt]").value; }
+    const title = g ? g.querySelector("[data-title]").value.trim() : m.fileName.replace(/\.\w+$/, "");
+    const items = m.items.map((it, i) => ({ owner: it.owner, text: g ? g.querySelector(`[data-txt="${i}"]`).value : it.text, due: g ? g.querySelector(`[data-due="${i}"]`).value : "", convert: g ? g.querySelector(`[data-i="${i}"]`).checked : it.owner === "我" }));
+    const fileExists = PA.fileById(m.fileId);
+    const meetingTodo = { id: PA.uid("t"), title, date, time, duration: time ? parseInt(m.duration) || 0 : 0, location: "", status: "done", source: "meeting", sourceFile: fileExists ? m.fileId : null, attachments: fileExists ? [m.fileId] : [], notes: "会议摘要：" + m.summary, actionItems: [], createdAt: PA.nowStr() };
+    items.forEach((it) => {
+      const ai = { owner: it.owner, text: it.text, due: it.due };
+      if (it.convert) {
+        const nt = { id: PA.uid("t"), title: it.text, date: it.due, time: "", location: "", status: "open", source: "meeting", sourceFile: meetingTodo.sourceFile, attachments: [], notes: `来自会议：${title}${it.owner !== "我" ? "（原负责人：" + it.owner + "）" : ""}`, createdAt: PA.nowStr() };
+        state.todos.push(nt); ai.converted = nt.id;
+      }
+      meetingTodo.actionItems.push(ai);
+    });
+    state.todos.push(meetingTodo);
+    state.inbox = state.inbox.filter((x) => x !== m);
+    save(); log("确认会议待办", `${m.fileName}：创建会议记录 1 条，我的待办 ${items.filter((i) => i.convert).length} 条`); PA.updateBadges();
+    toast(`已保存会议「${title}」，新增 ${items.filter((i) => i.convert).length} 条我的待办`);
+  }
+  document.getElementById("expand").onclick = () => { state.inbox.forEach((m) => opened.add(m.id)); render(); };
+  document.getElementById("confirm-all").onclick = () => PA.confirmBox("全部按默认确认", `将确认 ${state.inbox.length} 个会议：时间取默认选项，只把负责人为“我”的行动项创建为待办。`, () => { [...state.inbox].forEach((m) => confirm(m, document.querySelector(`.mt-group[data-id="${m.id}"]`))); render(); });
+  document.addEventListener("pa:files-changed", render);
+  render();
+}
+</script>
+</body>
+</html>
