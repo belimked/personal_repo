@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>个人日常助手 · 原型版本</title>
-<link rel="stylesheet" href="ITER1/v2/assets/app.css">
+<link rel="stylesheet" href="ITER1/v3/assets/app.css">
 <style>
   body { background: var(--bg); }
   .wrap { max-width: 860px; margin: 40px auto; padding: 0 20px; }
@@ -20,9 +20,26 @@
   <h2 style="margin:0 0 10px">迭代一（ITER1）</h2>
 
   <div class="card ver">
-    <div class="tag">v2</div>
+    <div class="tag">v3</div>
     <div style="flex:1">
-      <div class="row"><b>原型 v2</b><span class="badge green">最新</span><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn primary" href="ITER1/v2/">打开 v2</a></div>
+      <div class="row"><b>原型 v3</b><span class="badge green">最新</span><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn primary" href="ITER1/v3/">打开 v3</a></div>
+      <ul>
+        <li>全局原则“助手优先”：助手页可文字 + 附件一起发送、结果卡片里直接修改 / 完成 / 删除 / 撤销、在对话中确认会议待办</li>
+        <li>“近 3 天提醒”合并进助手页（试行），邮件提醒设置移到个人设置</li>
+        <li>完成待办：各处统一圆形勾选框一键完成可撤销；助手支持“今天的事儿都完成了”“今天除了…都搞完了”批量完成</li>
+        <li>手动新建 / 编辑待办：日期、时间、时长改为快捷选项，并从待办内容自动识别；可直接上传附件，重复文件按内容判断只存一份</li>
+        <li>“归档”改为“删除”（可恢复、可彻底删除）；“全部”不含已删除</li>
+        <li>没有日期的待办统一叫“待安排”：星标、期限（如“11月内”，最后 7 天进入提醒）、想法记录（备注保留）</li>
+        <li>个人知识库从文件夹改为标签：一个文件多个标签、预设标签库、管理标签、重新生成标签（不动手动设置）；待办也可按标签筛选</li>
+      </ul>
+      <div class="hint">变更明细与处理规则：仓库 docs/ITER1/review/原型评审变更记录.md</div>
+    </div>
+  </div>
+
+  <div class="card ver">
+    <div class="tag" style="color:var(--muted)">v2</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v2</b><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn" href="ITER1/v2/">打开 v2</a></div>
       <ul>
         <li>日历周视图改为从今天起连续 7 天</li>
         <li>待办增加时长：快捷选择 15 分钟 / 30 分钟 / 45 分钟 / 1 小时 / 2 小时（新建、右侧详情、详情页、助手新增卡片）</li>
