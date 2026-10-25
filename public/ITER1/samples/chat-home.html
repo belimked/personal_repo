@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>样例 · 对话式助手页</title>
+<style>
+:root {
+  --bg: #f5f6f8; --panel: #fff; --border: #e3e6eb; --text: #1f2329; --muted: #6b7280;
+  --primary: #2f6fed; --primary-weak: #eaf1ff; --success: #1a9b5a; --success-weak: #e7f6ee;
+  --warn: #c27a00; --warn-weak: #fff4dc; --danger: #d43c3c; --danger-weak: #fdeaea;
+  --side: #1d2433; --side-hover: #2a3347; --radius: 10px;
+  font-size: 15px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: var(--primary); text-decoration: none; }
+
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* 左侧菜单：默认收成图标栏 */
+.rail { width: 60px; flex-shrink: 0; background: var(--side); color: #cfd6e4; display: flex; flex-direction: column; align-items: stretch; padding: 12px 8px; gap: 4px; transition: width .18s; }
+.rail.open { width: 200px; }
+.rail .item { display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 8px; color: #cfd6e4; position: relative; white-space: nowrap; overflow: hidden; border: 0; background: none; text-align: left; }
+.rail .item:hover { background: var(--side-hover); }
+.rail .item.active { background: var(--primary); color: #fff; }
+.rail .item .ico { width: 20px; flex-shrink: 0; text-align: center; font-size: 17px; }
+.rail .item .lbl { opacity: 0; transition: opacity .12s; }
+.rail.open .item .lbl { opacity: 1; }
+.rail:not(.open) .item:hover::after { content: attr(data-name); position: absolute; left: 52px; top: 8px; background: #111827; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 5px; white-space: nowrap; z-index: 20; }
+.rail:not(.open) .item { overflow: visible; }
+.rail .gap { flex: 1; }
+.rail .toggle { color: #7f8aa3; }
+
+/* 主区 */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.head { height: 64px; flex-shrink: 0; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: #e9eef6; color: #2c4a7a; display: grid; place-items: center; font-weight: 600; font-size: 17px; flex-shrink: 0; position: relative; }
+.avatar.sm { width: 32px; height: 32px; font-size: 14px; }
+.avatar .dot { position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--success); border: 2px solid #fff; }
+.who b { font-size: 16px; }
+.who .sub { font-size: 12px; color: var(--muted); }
+.rename { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 0 4px; }
+.spacer { flex: 1; }
+.sum { border: 1px solid var(--border); background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
+.sum:hover { border-color: var(--primary); }
+.sum .red { color: var(--danger); }
+.sample-tag { font-size: 12px; color: var(--warn); background: var(--warn-weak); border-radius: 10px; padding: 2px 8px; }
+
+.panel3 { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 20px 14px; display: none; max-height: 45vh; overflow-y: auto; }
+.panel3.show { display: block; }
+.panel3 .wrap { max-width: 760px; margin: 0 auto; }
+.panel3 h4 { margin: 10px 0 2px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.panel3 h4.red { color: var(--danger); }
+
+.stream { flex: 1; overflow-y: auto; padding: 20px 20px 8px; }
+.stream .wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.divider { text-align: center; font-size: 12px; color: var(--muted); margin: 4px 0; }
+
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg.me { flex-direction: row-reverse; }
+.bubble { background: #fff; border: 1px solid var(--border); border-radius: 4px var(--radius) var(--radius) var(--radius); padding: 10px 14px; max-width: min(560px, 82%); }
+.msg.me .bubble { background: var(--primary); color: #fff; border-color: var(--primary); border-radius: var(--radius) 4px var(--radius) var(--radius); }
+.bubble p { margin: 0; }
+.bubble p + p, .bubble p + .card, .bubble .card + p, .bubble .card + .acts, .bubble p + .acts { margin-top: 8px; }
+.tip { margin-top: 8px; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 6px; }
+.tip a { cursor: pointer; }
+
+.card { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: #fafbfc; }
+.row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; }
+.row + .row { border-top: 1px dashed var(--border); }
+.row .t { color: var(--muted); font-size: 13px; min-width: 86px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.loc { color: var(--muted); font-size: 12px; }
+.row.done .ti { color: var(--muted); text-decoration: line-through; }
+.tick { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #b6bdc8; background: #fff; flex-shrink: 0; padding: 0; display: grid; place-items: center; font-size: 11px; color: #fff; }
+.tick:hover { border-color: var(--success); }
+.row.done .tick { background: var(--success); border-color: var(--success); }
+.src { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.src a { margin-right: 8px; }
+.res { border-left: 3px solid var(--success); }
+.res .k { color: var(--muted); font-size: 13px; width: 40px; display: inline-block; }
+
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.btn { border: 1px solid var(--border); background: #fff; border-radius: 7px; padding: 4px 12px; font-size: 13px; }
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.pri:hover { color: #fff; opacity: .92; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.typing { display: inline-flex; gap: 4px; padding: 4px 0; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: #b6bdc8; animation: b 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes b { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+
+/* 底部 */
+.dock { flex-shrink: 0; padding: 6px 20px 16px; }
+.dock .wrap { max-width: 760px; margin: 0 auto; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.chip { flex-shrink: 0; border: 1px solid var(--border); background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 13px; color: #374151; }
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+.composer { display: flex; align-items: flex-end; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 22px; padding: 6px 6px 6px 14px; }
+.composer:focus-within { border-color: var(--primary); }
+.composer textarea { flex: 1; border: 0; outline: 0; resize: none; min-height: 32px; max-height: 120px; padding: 5px 0; font: inherit; line-height: 1.5; background: none; }
+.ibtn { width: 36px; height: 36px; border-radius: 50%; border: 0; background: none; font-size: 17px; color: var(--muted); flex-shrink: 0; }
+.ibtn:hover { background: var(--bg); }
+.ibtn.mic { background: var(--primary-weak); color: var(--primary); }
+.ibtn.send { background: var(--primary); color: #fff; }
+
+@media (max-width: 720px) {
+  .rail { display: none; }
+  .head { padding: 0 12px; }
+  .sample-tag, .who .sub { display: none; }
+  .stream, .dock { padding-left: 10px; padding-right: 10px; }
+  .bubble { max-width: 88%; }
+  .row .t { min-width: 0; font-size: 12px; }
+  .row { flex-wrap: wrap; row-gap: 0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" id="rail">
+    <a class="item active" data-name="助手"><span class="ico">💬</span><span class="lbl">助手</span></a>
+    <a class="item" data-name="待办事项" href="../v3/todos.html"><span class="ico">✅</span><span class="lbl">待办事项</span></a>
+    <a class="item" data-name="个人知识库" href="../v3/files.html"><span class="ico">📁</span><span class="lbl">个人知识库</span></a>
+    <span class="gap"></span>
+    <a class="item" data-name="个人设置" href="../v3/profile.html"><span class="ico">⚙️</span><span class="lbl">个人设置</span></a>
+    <button class="item toggle" id="rail-toggle" data-name="展开菜单"><span class="ico">»</span><span class="lbl">收起菜单</span></button>
+  </nav>
+
+  <div class="main">
+    <header class="head">
+      <div class="avatar">禾<span class="dot"></span></div>
+      <div class="who"><b id="aname">小禾</b><button class="rename" id="rename" title="给助手改个名字">✎</button><div class="sub">你的私人助手 · 帮你记事、找文件</div></div>
+      <span class="spacer"></span>
+      <span class="sample-tag">样例 · 未并入 v3</span>
+      <button class="sum" id="sum">今天 <b id="sum-today">3</b><span class="red"> · 逾期 <b id="sum-over">1</b></span> ▾</button>
+    </header>
+    <div class="panel3" id="panel3"><div class="wrap" id="panel3-body"></div></div>
+
+    <div class="stream" id="stream"><div class="wrap" id="msgs"></div></div>
+
+    <div class="dock"><div class="wrap">
+      <div class="chips" id="chips"></div>
+      <div class="composer">
+        <button class="ibtn" title="带上文件（同时存进知识库）">📎</button>
+        <textarea id="input" rows="1" placeholder="跟我说就行，比如：周五3点体检"></textarea>
+        <button class="ibtn mic" title="按住说话（App 版）">🎤</button>
+        <button class="ibtn send" id="send" title="发送">➤</button>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const msgs = $("#msgs"), stream = $("#stream"), input = $("#input");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const todos = [
+  { id: 1, day: -1, t: "全天", ti: "续交物业费" },
+  { id: 2, day: 0, t: "11:00–11:30", ti: "联系平安的客户经理" },
+  { id: 3, day: 0, t: "15:00–15:30", ti: "银行办理转账", loc: "招商银行（南京西路支行）" },
+  { id: 4, day: 0, t: "17:00–17:30", ti: "提交季度报告给王经理", loc: "公司" },
+  { id: 5, day: 1, t: "10:00–11:00", ti: "部门周会", loc: "5 楼大会议室" },
+  { id: 6, day: 1, t: "10:30–11:30", ti: "牙医复诊", loc: "仁爱口腔诊所" },
+  { id: 7, day: 2, t: "14:00–15:00", ti: "看房", loc: "古北路 88 弄" },
+];
+const byId = (id) => todos.find((x) => x.id === id);
+const dayName = (d) => ["昨天", "今天", "明天", "后天"][d + 1] || `${d} 天后`;
+
+function rowHTML(x) {
+  return `<div class="row ${x.done ? "done" : ""}" data-row="${x.id}"><button class="tick" data-tick="${x.id}" title="点一下完成">${x.done ? "✓" : ""}</button><span class="t">${esc(x.t)}</span><span class="ti">${esc(x.ti)}</span>${x.loc ? `<span class="loc">📍${esc(x.loc)}</span>` : ""}</div>`;
+}
+function refresh() {
+  document.querySelectorAll("[data-row]").forEach((r) => {
+    r.outerHTML = rowHTML(byId(+r.dataset.row));
+  });
+  $("#sum-today").textContent = todos.filter((x) => x.day === 0 && !x.done).length;
+  const over = todos.filter((x) => x.day < 0 && !x.done).length;
+  $("#sum-over").textContent = over;
+  $("#sum .red").style.display = over ? "" : "none";
+  renderPanel();
+}
+function renderPanel() {
+  const sec = (title, list, cls = "") => `<h4 class="${cls}">${title}</h4>` + (list.length ? `<div class="card">${list.map((x) => rowHTML(x)).join("")}</div>` : `<div class="loc" style="padding-left:4px">没有安排</div>`);
+  const over = todos.filter((x) => x.day < 0 && !x.done);
+  $("#panel3-body").innerHTML = (over.length ? sec(`已逾期 ${over.length} 项`, over, "red") : "") +
+    [0, 1, 2].map((d) => sec(dayName(d), todos.filter((x) => x.day === d))).join("") +
+    `<div class="loc" style="margin-top:10px;font-size:13px">待安排 5 件 · <a href="../v3/todos.html?tab=unscheduled">去看看 ›</a>　每天 08:00 邮件提醒 · <a href="../v3/profile.html#reminder">设置</a></div>`;
+}
+
+function scrollEnd() { stream.scrollTop = stream.scrollHeight; }
+function me(text) {
+  msgs.insertAdjacentHTML("beforeend", `<div class="msg me"><div class="bubble"><p>${esc(text)}</p></div></div>`);
+  scrollEnd();
+}
+function bot(html, delay = 650) {
+  const el = document.createElement("div");
+  el.className = "msg";
+  el.innerHTML = `<div class="avatar sm">${esc(avatarChar)}</div><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>`;
+  msgs.appendChild(el); scrollEnd();
+  return new Promise((ok) => setTimeout(() => { el.querySelector(".bubble").innerHTML = html; scrollEnd(); ok(el); }, delay));
+}
+
+// 每种能力的提示只出现一次，用来代替“新手引导”
+let avatarChar = "禾";
+const tipsShown = new Set();
+function tip(key, html) {
+  if (tipsShown.has(key)) return "";
+  tipsShown.add(key);
+  return `<div class="tip">💡 ${html}</div>`;
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-tick]");
+  if (t) { const x = byId(+t.dataset.tick); x.done = !x.done; refresh(); return; }
+  const s = e.target.closest("[data-say]");
+  if (s) { say(s.dataset.say); }
+});
+
+// ---------- 开场 ----------
+async function opening() {
+  const h = new Date().getHours();
+  const hi = h < 11 ? "早上好" : h < 13 ? "中午好" : h < 18 ? "下午好" : "晚上好";
+  msgs.innerHTML = `<div class="divider">今天 ${String(h).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}</div>`;
+  const today = todos.filter((x) => x.day === 0);
+  await bot(`<p>${hi}，Lily。今天有 ${today.length} 件事，最早是 <b>11:00 联系平安的客户经理</b>。</p>
+    <div class="card">${today.map((x) => rowHTML(x)).join("")}</div>
+    <p class="loc" style="font-size:13px;color:var(--muted)">做完了点一下圆圈，或者直接跟我说“银行的事办完了”。</p>`, 500);
+  const o = await bot(`<p>还有一件<b style="color:var(--danger)">昨天到期</b>没做：续交物业费。怎么处理？</p>
+    <div class="acts"><button class="btn" data-over="0">改到今天</button><button class="btn" data-over="1">改到明天</button><button class="btn" data-over="done">已经交了</button></div>`, 700);
+  o.querySelectorAll("[data-over]").forEach((b) => (b.onclick = () => overdue(b, o)));
+  const m = await bot(`<p>你昨天上传的<b>周会录音</b>（42 分钟），我整理出 4 条待办，有 1 条是分给你的。要一起过一下吗？</p>
+    <div class="acts"><button class="btn pri" id="meet-go">好，看看</button><button class="btn" id="meet-later">晚点再说</button></div>`, 700);
+  m.querySelector("#meet-go").onclick = () => meeting(m);
+  m.querySelector("#meet-later").onclick = () => { m.querySelectorAll("button").forEach((b) => (b.disabled = true)); me("晚点再说"); bot(`<p>好的，下午 3 点前我再提醒你一次。</p>`); };
+}
+
+function overdue(b, el) {
+  el.querySelectorAll("[data-over]").forEach((x) => (x.disabled = true));
+  const x = byId(1);
+  if (b.dataset.over === "done") { x.done = true; me("已经交了"); refresh(); bot(`<p>好的，“续交物业费”标为已完成。</p>${tip("done", "以后可以直接说“物业费交了”，我就帮你勾掉。")}`); return; }
+  x.day = +b.dataset.over; x.t = "全天"; me(b.textContent); refresh();
+  bot(`<p>已改到${dayName(x.day)}：续交物业费。</p><div class="acts"><button class="btn" data-undo>撤销</button></div>${tip("move", "改时间也可以直接说，比如“物业费改到周五”。")}`)
+    .then((m) => (m.querySelector("[data-undo]").onclick = (e) => { x.day = -1; refresh(); e.target.replaceWith(Object.assign(document.createElement("span"), { className: "loc", textContent: "已撤销" })); }));
+}
+
+async function meeting(el) {
+  el.querySelectorAll("button").forEach((b) => (b.disabled = true));
+  me("好，看看");
+  const items = [["下周三前把预算表发给财务", "你", true], ["整理客户反馈清单", "张伟", false], ["周五确认展会场地", "李娜", false], ["更新项目排期", "王经理", false]];
+  const m = await bot(`<p>这 4 条里，第 1 条是会上分给你的，我已默认勾上；其他是别人的，要不要也记下来跟进？</p>
+    <div class="card">${items.map(([ti, who, on], i) => `<label class="row"><input type="checkbox" ${on ? "checked" : ""} data-mi="${i}"><span class="ti">${esc(ti)}</span><span class="loc">负责人：${esc(who)}</span></label>`).join("")}</div>
+    <div class="acts"><button class="btn pri" id="mi-ok">加入待办</button><button class="btn" id="mi-src">听原话</button></div>`);
+  m.querySelector("#mi-src").onclick = () => bot(`<p>原话（23:15 处）：“……预算表这个，<b>Lily 你下周三前发给财务</b>，别拖。”</p>`, 400);
+  m.querySelector("#mi-ok").onclick = () => {
+    const n = m.querySelectorAll("[data-mi]:checked").length;
+    m.querySelectorAll("button, input").forEach((b) => (b.disabled = true));
+    me(`加入待办（${n} 条）`);
+    bot(`<p>已加入 ${n} 条待办。“发预算表”我排在下周三，没定具体时间，放在“待安排”里。</p>${tip("meet", "以后会议录音直接发给我就行，我会整理好再来问你。")}`);
+  };
+}
+
+// ---------- 对话脚本（原型模拟） ----------
+const CHIPS = [
+  "帮我记：周五下午3点去仁济医院体检",
+  "租房合同什么时候到期？",
+  "把明天的事都推迟一天",
+  "今天除了银行的事，都搞完了",
+  "上个月跟保险有关的事有哪些？",
+];
+$("#chips").innerHTML = CHIPS.map((c) => `<button class="chip" data-say="${esc(c)}">${esc(c)}</button>`).join("");
+
+async function say(text) {
+  text = text.trim(); if (!text) return;
+  me(text); input.value = ""; autosize();
+  if (/合同.*到期|到期.*合同/.test(text)) {
+    await bot(`<p>你的租房合同 <b>2027 年 3 月 31 日</b>到期，还有 17 个月。合同约定要<b>提前 1 个月</b>书面通知房东是否续租。</p>
+      <div class="src">来源：<a>租房合同-古北路.pdf</a>第 2 页、第 5 页</div>
+      <div class="acts"><button class="btn" data-say="提醒我 2027年2月底通知房东续租的事">到时提醒我通知房东</button></div>
+      ${tip("kb", "我只在你自己上传的文件里找，而且是按意思找，不用记文件名和关键字。")}`, 900);
+  } else if (/保险/.test(text)) {
+    await bot(`<p>上个月和保险有关的有 3 件：</p>
+      <div class="card"><div class="row done"><span class="tick">✓</span><span class="t">9月12日</span><span class="ti">比较三家车险报价</span></div><div class="row done"><span class="tick">✓</span><span class="t">9月20日</span><span class="ti">给妈妈买医疗险</span></div><div class="row"><span class="tick"></span><span class="t">待安排</span><span class="ti">研究一下重疾险</span></div></div>
+      <p>另外知识库里有 2 份相关文件：<a>平安车险保单.pdf</a>、<a>医疗险条款.pdf</a>。</p>
+      ${tip("search-todo", "待办也能这样按意思查，查到后可以接着说“把重疾险排到周六上午”。")}`, 900);
+  } else if (/推迟|延后|往后/.test(text)) {
+    const list = todos.filter((x) => x.day === 1);
+    const m = await bot(`<p>明天有 ${list.length} 件事，都推迟到后天、时间不变？</p><div class="card">${list.map((x) => rowHTML(x)).join("")}</div>
+      <div class="acts"><button class="btn pri" data-ok>都推迟</button><button class="btn" data-no>我再看看</button></div>`);
+    m.querySelector("[data-ok]").onclick = () => {
+      m.querySelectorAll(".acts button").forEach((b) => (b.disabled = true));
+      list.forEach((x) => (x.day = 2)); me("都推迟"); refresh();
+      bot(`<p>好了，${list.length} 件事都挪到后天。部门周会是多人会议，要我顺便起草一句给同事的说明吗？</p><div class="acts"><button class="btn" data-undo2>撤销</button></div>${tip("batch", "也可以说“除了周会，明天的都推迟”，我会把周会留下。")}`)
+        .then((r) => (r.querySelector("[data-undo2]").onclick = (e) => { list.forEach((x) => (x.day = 1)); refresh(); e.target.replaceWith(Object.assign(document.createElement("span"), { className: "loc", textContent: "已撤销" })); }));
+    };
+    m.querySelector("[data-no]").onclick = () => { m.querySelectorAll(".acts button").forEach((b) => (b.disabled = true)); me("我再看看"); bot("<p>好，没动。</p>", 400); };
+  } else if (/搞完|做完|完成|办完/.test(text)) {
+    const keep = /银行/.test(text) ? 3 : null;
+    const list = todos.filter((x) => x.day === 0 && x.id !== keep && !x.done);
+    const m = await bot(`<p>那我把这 ${list.length} 件标为完成${keep ? "，<b>银行办理转账</b>留着" : ""}：</p><div class="card">${list.map((x) => `<div class="row"><span class="tick" style="border-color:var(--success)"></span><span class="t">${x.t}</span><span class="ti">${esc(x.ti)}</span></div>`).join("")}</div>
+      <div class="acts"><button class="btn pri" data-ok>确认</button><button class="btn" data-no>不对</button></div>`);
+    m.querySelector("[data-ok]").onclick = () => {
+      m.querySelectorAll(".acts button").forEach((b) => (b.disabled = true));
+      list.forEach((x) => (x.done = true)); me("确认"); refresh();
+      bot(`<p>搞定 ${list.length} 件，辛苦了。${keep ? "银行下午 3 点，别忘了带身份证。" : ""}</p>`);
+    };
+    m.querySelector("[data-no]").onclick = () => { m.querySelectorAll(".acts button").forEach((b) => (b.disabled = true)); me("不对"); bot("<p>哪件还没做完？直接告诉我就行。</p>", 400); };
+  } else {
+    const ti = text.replace(/^(帮我记[:：]?|记一下[:：]?|提醒我)/, "").trim();
+    const m = await bot(`<p>记好了。</p>
+      <div class="card res"><div><span class="k">事项</span><b>${esc(ti.replace(/^(周五|明天|后天)?(上午|下午|晚上)?\d*点?(在|去)?/, "") || ti)}</b></div>
+      <div><span class="k">时间</span>${/周五/.test(ti) ? "本周五 15:00–16:00" : /2027/.test(ti) ? "2027年2月26日 全天" : "待安排（没说时间）"}</div>
+      ${/仁济/.test(ti) ? `<div><span class="k">地点</span>仁济医院</div>` : ""}</div>
+      <div class="acts"><button class="btn" data-undo>撤销</button><button class="btn">修改</button></div>
+      ${tip("add", "说错了直接补一句就行，比如“改到下午4点”“地点是东院”。")}`);
+    m.querySelector("[data-undo]").onclick = (e) => e.target.replaceWith(Object.assign(document.createElement("span"), { className: "loc", textContent: "已撤销" }));
+  }
+}
+
+function autosize() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; }
+input.addEventListener("input", autosize);
+input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); say(input.value); } });
+$("#send").onclick = () => say(input.value);
+$("#sum").onclick = () => $("#panel3").classList.toggle("show");
+$("#rail-toggle").onclick = () => { const r = $("#rail"); r.classList.toggle("open"); $("#rail-toggle .ico").textContent = r.classList.contains("open") ? "«" : "»"; };
+$("#rename").onclick = () => { const n = prompt("给助手起个名字", $("#aname").textContent); if (n && n.trim()) { $("#aname").textContent = n.trim().slice(0, 8); avatarChar = n.trim()[0]; document.querySelectorAll(".avatar").forEach((a) => (a.firstChild.textContent = n.trim()[0])); } };
+
+renderPanel();
+opening();
+</script>
+</body>
+</html>
