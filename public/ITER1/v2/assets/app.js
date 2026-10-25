@@ -43,15 +43,50 @@
   const timeRange = (t) => (t.time ? `${t.time}–${endOf(t)}` : "");
   function durationPicker(el, { time = "", duration = 0 } = {}) {
     let val = +duration || (time ? DEFAULT_DUR : 0), hasTime = !!time;
+    const maxDur = () => 1440 - toMin(time);
+    // 色条显示的时间范围：至少 4 小时，并比当前时长多出 1 小时，不超过当天结束
+    const windowOf = () => Math.min(maxDur(), Math.max(240, Math.ceil((val + 60) / 60) * 60));
+    const endText = () => `结束时间 ${toHM(toMin(time) + val)}${toMin(time) + val >= 1440 ? "（不跨天，最晚到 24:00）" : ""}`;
+    const label = () => `${time}–${toHM(toMin(time) + val)} · ${fmtDur(val)}`;
     const paint = () => {
-      const custom = val && !DUR_PRESETS.includes(val);
-      el.innerHTML = hasTime
-        ? `<div class="chip-list">${DUR_PRESETS.map((m) => `<span class="chip ${m === val ? "on" : ""}" data-m="${m}">${fmtDur(m)}</span>`).join("")}${custom ? `<span class="chip on" title="在日历上拖动得到的时长">自定义 ${fmtDur(val)}</span>` : ""}</div><div class="hint" style="margin-top:4px">结束时间 ${toHM(Math.min(1440, toMin(time) + val))}${toMin(time) + val > 1440 ? "（不跨天，截止到 24:00）" : ""}；也可以在日历的周/日视图中拖动待办的上下边缘调整</div>`
-        : '<span class="hint">先设置时间，才能选择时长（没有时间的待办按全天处理）</span>';
+      if (!hasTime) { el.innerHTML = '<span class="hint">先设置时间，才能选择时长（没有时间的待办按全天处理）</span>'; return; }
+      const custom = val && !DUR_PRESETS.includes(val), s = toMin(time), W = windowOf();
+      let ticks = "";
+      for (let m = Math.ceil(s / 15) * 15; m <= s + W; m += 15) {
+        const x = ((m - s) / W) * 100, hour = m % 60 === 0;
+        ticks += `<span class="dur-tick ${hour ? "h" : ""}" style="left:${x}%"></span>` + (hour && x < 96 ? `<span class="dur-tl" style="left:${x}%">${toHM(m)}</span>` : "");
+      }
+      el.innerHTML = `<div class="chip-list">${DUR_PRESETS.map((m) => `<span class="chip ${m === val ? "on" : ""}" data-m="${m}">${fmtDur(m)}</span>`).join("")}${custom ? `<span class="chip on" data-custom title="拖动得到的时长">自定义 ${fmtDur(val)}</span>` : ""}</div>
+        <div class="dur-track" data-w="${W}" title="拖动色条右端调整时长，按 15 分钟对齐">${ticks}<div class="dur-bar" style="width:${(val / W) * 100}%"><div class="dur-handle"></div></div><span class="dur-label"></span></div>
+        <div class="hint" data-end>${endText()}；拖动色条右端可调整时长，也可以点击色条上的位置直接设定结束时间</div>`;
       el.querySelectorAll("[data-m]").forEach((c) => (c.onclick = () => { val = +c.dataset.m; paint(); }));
+      const track = el.querySelector(".dur-track"), bar = el.querySelector(".dur-bar"), lab = el.querySelector(".dur-label");
+      // 色条较宽时文字放在色条内，较窄时放在色条右侧，避免被拖动手柄挡住
+      const placeLabel = () => {
+        const pct = (val / W) * 100;
+        lab.textContent = label();
+        lab.classList.toggle("inside", pct > 55);
+        lab.style.left = pct > 55 ? "8px" : `calc(${pct}% + 12px)`;
+      };
+      placeLabel();
+      const setFromX = (clientX) => {
+        const r = track.getBoundingClientRect();
+        val = Math.max(15, Math.min(maxDur(), Math.round((((clientX - r.left) / r.width) * W) / 15) * 15));
+        bar.style.width = (val / W) * 100 + "%";
+        placeLabel();
+        el.querySelector("[data-end]").firstChild.textContent = endText() + "；拖动色条右端可调整时长，也可以点击色条上的位置直接设定结束时间";
+        el.querySelectorAll("[data-m]").forEach((c) => c.classList.toggle("on", +c.dataset.m === val));
+      };
+      track.onpointerdown = (e) => {
+        e.preventDefault();
+        track.setPointerCapture(e.pointerId); track.classList.add("dragging");
+        setFromX(e.clientX);
+        track.onpointermove = (ev) => setFromX(ev.clientX);
+        track.onpointerup = () => { track.onpointermove = null; track.classList.remove("dragging"); paint(); };
+      };
     };
     paint();
-    return { value: () => (hasTime ? val : 0), setTime: (t) => { time = t; hasTime = !!t; if (hasTime && !val) val = DEFAULT_DUR; paint(); } };
+    return { value: () => (hasTime ? val : 0), setTime: (t) => { time = t; hasTime = !!t; if (hasTime && !val) val = DEFAULT_DUR; if (hasTime) val = Math.min(val, maxDur()); paint(); } };
   }
   const fmtDate = (ds, time) => (ds ? `${ds.slice(5)} 周${weekday(ds)}${relDay(ds) ? "（" + relDay(ds) + "）" : ""}${time ? " " + time : ""}` : "—");
   const catOf = (ext) => {
