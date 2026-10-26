@@ -30,6 +30,7 @@ a { color: var(--primary); text-decoration: none; }
 .rail.open .item .lbl { opacity: 1; }
 .rail:not(.open) .item:hover::after { content: attr(data-name); position: absolute; left: 52px; top: 8px; background: #111827; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 5px; white-space: nowrap; z-index: 20; }
 .rail:not(.open) .item { overflow: visible; }
+.rail:not(.open) .item .lbl { display: none; }
 .rail .gap { flex: 1; }
 .rail .toggle { color: #7f8aa3; }
 
@@ -43,16 +44,23 @@ a { color: var(--primary); text-decoration: none; }
 .who .sub { font-size: 12px; color: var(--muted); }
 .rename { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 0 4px; }
 .spacer { flex: 1; }
-.sum { border: 1px solid var(--border); background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
-.sum:hover { border-color: var(--primary); }
-.sum .red { color: var(--danger); }
 .sample-tag { font-size: 12px; color: var(--warn); background: var(--warn-weak); border-radius: 10px; padding: 2px 8px; }
 
-.panel3 { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 20px 14px; display: none; max-height: 45vh; overflow-y: auto; }
-.panel3.show { display: block; }
-.panel3 .wrap { max-width: 760px; margin: 0 auto; }
-.panel3 h4 { margin: 10px 0 2px; font-size: 12px; color: var(--muted); font-weight: 600; }
-.panel3 h4.red { color: var(--danger); }
+.dock .wrap { position: relative; }
+.dockrow { display: flex; align-items: center; gap: 8px; padding: 8px 0 8px 0; }
+.dockrow .chips { padding-bottom: 0; flex: 1; min-width: 0; }
+.recent { position: relative; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; margin-right: 6px; border-radius: 16px; border: 1px solid #c9d8fb; background: var(--primary-weak); color: var(--primary); font-size: 14px; font-weight: 600; }
+.recent:hover, .recent.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.recent .n { font-weight: 600; font-variant-numeric: tabular-nums; }
+.recent .over { position: absolute; top: -9px; right: -10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; line-height: 18px; text-align: center; border: 2px solid var(--bg); box-sizing: content-box; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 4px; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(15, 23, 42, .14); padding: 12px 16px 14px; max-height: 60vh; overflow-y: auto; display: none; z-index: 30; }
+.sheet.show { display: block; }
+.sheet-head { display: flex; align-items: center; gap: 8px; }
+.sheet-head b { font-size: 15px; }
+.sheet-head .x { border: 0; background: none; font-size: 18px; color: var(--muted); padding: 0 4px; }
+.sheet h4 { margin: 10px 0 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.sheet h4.red { color: var(--danger); }
+.sheet-foot { margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 13px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
 
 .stream { flex: 1; overflow-y: auto; padding: 20px 20px 8px; }
 .stream .wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
@@ -135,14 +143,19 @@ a { color: var(--primary); text-decoration: none; }
       <div class="who"><b id="aname">小禾</b><button class="rename" id="rename" title="给助手改个名字">✎</button><div class="sub">你的私人助手 · 帮你记事、找文件</div></div>
       <span class="spacer"></span>
       <span class="sample-tag">样例 · 未并入 v3</span>
-      <button class="sum" id="sum">今天 <b id="sum-today">3</b><span class="red"> · 逾期 <b id="sum-over">1</b></span> ▾</button>
     </header>
-    <div class="panel3" id="panel3"><div class="wrap" id="panel3-body"></div></div>
 
     <div class="stream" id="stream"><div class="wrap" id="msgs"></div></div>
 
     <div class="dock"><div class="wrap">
-      <div class="chips" id="chips"></div>
+      <div class="sheet" id="sheet">
+        <div class="sheet-head"><b>📅 最近安排</b><span class="loc">已逾期 · 今天 · 明天 · 后天 · 期限快到</span><span class="spacer"></span><button class="x" id="sheet-x" title="关闭">×</button></div>
+        <div id="sheet-body"></div>
+      </div>
+      <div class="dockrow">
+        <button class="recent" id="recent" title="查看最近 3 天的安排">📅 最近安排 <span class="n" id="sum-today">3</span><span class="over" id="sum-over" title="已逾期">1</span></button>
+        <div class="chips" id="chips"></div>
+      </div>
       <div class="composer">
         <button class="ibtn" title="带上文件（同时存进知识库）">📎</button>
         <textarea id="input" rows="1" placeholder="跟我说就行，比如：周五3点体检"></textarea>
@@ -180,15 +193,16 @@ function refresh() {
   $("#sum-today").textContent = todos.filter((x) => x.day === 0 && !x.done).length;
   const over = todos.filter((x) => x.day < 0 && !x.done).length;
   $("#sum-over").textContent = over;
-  $("#sum .red").style.display = over ? "" : "none";
+  $("#sum-over").style.display = over ? "" : "none";
   renderPanel();
 }
 function renderPanel() {
   const sec = (title, list, cls = "") => `<h4 class="${cls}">${title}</h4>` + (list.length ? `<div class="card">${list.map((x) => rowHTML(x)).join("")}</div>` : `<div class="loc" style="padding-left:4px">没有安排</div>`);
   const over = todos.filter((x) => x.day < 0 && !x.done);
-  $("#panel3-body").innerHTML = (over.length ? sec(`已逾期 ${over.length} 项`, over, "red") : "") +
+  $("#sheet-body").innerHTML = (over.length ? sec(`已逾期 ${over.length} 项`, over, "red") : "") +
     [0, 1, 2].map((d) => sec(dayName(d), todos.filter((x) => x.day === d))).join("") +
-    `<div class="loc" style="margin-top:10px;font-size:13px">待安排 5 件 · <a href="../v3/todos.html?tab=unscheduled">去看看 ›</a>　每天 08:00 邮件提醒 · <a href="../v3/profile.html#reminder">设置</a></div>`;
+    `<h4>期限快到</h4><div class="card"><div class="row"><span class="tick"></span><span class="t">本周五前</span><span class="ti">交车险续保材料</span><span class="loc">还剩 5 天</span></div></div>` +
+    `<div class="sheet-foot"><a href="../v3/todos.html">去待办页 ›</a><span>待安排 5 件 · <a href="../v3/todos.html?tab=unscheduled">看看 ›</a></span><span>每天 08:00 邮件提醒 · <a href="../v3/profile.html#reminder">设置</a></span></div>`;
 }
 
 function scrollEnd() { stream.scrollTop = stream.scrollHeight; }
@@ -324,10 +338,15 @@ function autosize() { input.style.height = "auto"; input.style.height = Math.min
 input.addEventListener("input", autosize);
 input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); say(input.value); } });
 $("#send").onclick = () => say(input.value);
-$("#sum").onclick = () => $("#panel3").classList.toggle("show");
+const sheet = $("#sheet"), recent = $("#recent");
+const setSheet = (on) => { sheet.classList.toggle("show", on); recent.classList.toggle("on", on); };
+recent.onclick = (e) => { e.stopPropagation(); setSheet(!sheet.classList.contains("show")); };
+$("#sheet-x").onclick = () => setSheet(false);
+document.addEventListener("click", (e) => { if (sheet.classList.contains("show") && !e.target.closest("#sheet") && !e.target.closest("[data-tick]")) setSheet(false); });
 $("#rail-toggle").onclick = () => { const r = $("#rail"); r.classList.toggle("open"); $("#rail-toggle .ico").textContent = r.classList.contains("open") ? "«" : "»"; };
 $("#rename").onclick = () => { const n = prompt("给助手起个名字", $("#aname").textContent); if (n && n.trim()) { $("#aname").textContent = n.trim().slice(0, 8); avatarChar = n.trim()[0]; document.querySelectorAll(".avatar").forEach((a) => (a.firstChild.textContent = n.trim()[0])); } };
 
+if (matchMedia("(max-width: 720px)").matches) input.placeholder = "比如：周五3点体检";
 renderPanel();
 opening();
 </script>
