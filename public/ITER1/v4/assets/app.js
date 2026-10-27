@@ -546,10 +546,10 @@
       const mo = num(m[1]); let y = +d0.slice(0, 4); if (mo < +d0.slice(5, 7)) y++;
       const from = `${y}-${String(mo).padStart(2, "0")}-01`; deadline = { from: from < d0 ? d0 : from, to: monthEndOf(from), label: `${mo}月内` }; used.push(m[0]);
     }
-    if ((m = text.match(/(上午|早上|中午|下午|晚上)?\s*(\d{1,2}|[一二两三四五六七八九十]{1,3})[点:：](半|(\d{1,2})分?)?/))) {
+    if ((m = text.match(/(凌晨|上午|早上|中午|下午|傍晚|晚上)?\s*(\d{1,2}|[一二两三四五六七八九十]{1,3})[点:：](半|(\d{1,2})分?)?/))) {
       let h = num(m[2]); const min = m[3] === "半" ? 30 : m[4] ? +m[4] : 0;
-      if ((m[1] === "下午" || m[1] === "晚上") && h < 12) h += 12;
-      if (m[1] === "中午" && h < 11) h += 12;
+      // 口语里不说时段的 1–6 点默认指下午
+      if (/下午|傍晚|晚上/.test(m[1] || "") ? h >= 1 && h <= 11 : m[1] === "中午" ? h < 11 : !m[1] && h >= 1 && h <= 6) h += 12;
       if (!isNaN(h) && h < 24) { time = `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`; used.push(m[0]); if (!date && !deadline) date = d0; }
     }
     if (time && deadline) deadline = null;

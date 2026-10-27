@@ -278,12 +278,15 @@
     if (!POSTPONE_RE.test(text) || !/(都|全部|统统|所有|除了)/.test(text)) return null;
     return scopeOf(text);
   }
+  const LOOKUP_RE = /^(?:帮我|请|麻烦)?\s*(?:查找|搜索|找|查|搜)\s*[^，。,.！!？?；;\s]/;
+  const NOT_LOOKUP = /(改|推迟|延期|提前|完成|删|取消|归档|记一下|提醒|新建|新增|安排|预约|到期)/;
+  const isLookup = (text) => LOOKUP_RE.test(text) && !NOT_LOOKUP.test(text) && PA.parseWhen(text).precision === "none";
   function detectIntent(text) {
     if (NOTE_RES.some((r) => r.test(text))) return "note";
     if (SCHED_RE.test(text)) return "schedule";
     if (/(待确认会议|确认会议|处理会议|会议录音.*确认)/.test(text)) return "meeting";
     if (postponeScope(text)) return "postpone";
-    if (/(查一下|查查|查询|查找|帮我查|找一下|找找|帮我找|搜|有没有|在哪|什么时候|说了什么|是多少|多少钱|哪份|哪个文件|有哪些|[?？]$)/.test(text)) return "search";
+    if (isLookup(text) || /(查一下|查查|查询|查找|帮我查|找一下|找找|帮我找|搜|有没有|在哪|什么时候|说了什么|是多少|多少钱|哪份|哪个文件|有哪些|[?？]$)/.test(text)) return "search";
     if (batchScope(text)) return "batch";
     if (/(删除|删掉|删了|不做了|不用做|不需要做|不用了|取消|归档)/.test(text)) return "delete";
     if (/(完成了|做完|搞定|搞完|已完成|办完|标记完成|已经提交|弄完)/.test(text)) return "complete";
@@ -652,7 +655,7 @@
       const x = state.inbox.find((y) => y.id === card.dataset.m);
       if (!x) return;
       const checked = [...card.querySelectorAll("[data-i]:checked")].map((c) => +c.dataset.i);
-      const { title, created } = confirmMeeting(x, checked);
+      const { title, created } = window.PA_CHAT.confirmMeeting(x, checked);
       acc[x.id] = `✅ 已确认会议「${esc(title)}」，新增 ${created.length} 条我的待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、") : ""}<div class="hint">新待办放在“待安排”里，可以接着说“把…排到周五”。</div>`;
     };
     b.querySelectorAll("[data-m]").forEach((card) => {
@@ -1163,22 +1166,3 @@
   };
 })();
 
-// ---------- 各页“问助手”入口带过来的短说法（S07） ----------
-// “找合同”这类只有动词+名词的短句里没有查询词，助手会反问一次；“问助手”入口是明确的查询意图，
-// 这里补一个问号让它直接按“查询”处理，气泡和记录里仍然显示用户原话。
-(function () {
-  const PA = window.PA, C = window.PA_CHAT;
-  if (!PA || !C) return;
-  const BARE = /^(?:帮我|请|麻烦)?\s*(?:找|查|搜|翻)\s*[^，。,.！!？?；;]{1,20}$/;
-  const NOT_QUERY = /(改|推迟|延期|提前|完成|删|取消|归档|记一下|提醒|新建|新增|安排|预约|到期|什么时候|多少钱|在哪|怎么|多少)/;
-  const bareLookup = (t) => BARE.test(t) && !NOT_QUERY.test(t) && PA.parseWhen(t).precision === "none";
-  const send = C.send;
-  C.send = function (text = "", files = []) {
-    const t = String(text || "").trim();
-    if (!t || (files || []).length || !bareLookup(t)) return send(text, files);
-    const p = send(t + "？");
-    const list = C.messages(), m = list[list.length - 1];
-    if (m && m.role === "user" && m.text === t + "？") { m.text = t; PA.save(); C.renderMsg(m); }
-    return p;
-  };
-})();
