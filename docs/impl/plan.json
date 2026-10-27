@@ -1,0 +1,512 @@
+{
+  "meta": {
+    "name": "proto-v4",
+    "lang": "zh",
+    "mode": "lite",
+    "design": {
+      "path": "docs/design/原型v4-设计.md",
+      "version": "v1",
+      "sha256": "9394ca3181b075630d293e0a22aae66c36227c2fcab4bf8d5a5a529674e98493",
+      "sealed_at": "2026-10-27T11:07:18.040Z"
+    },
+    "milestones": {
+      "M1": "原型 v4：助手页对话化"
+    },
+    "smoke": {
+      "command": "node --test tests/smoke.test.mjs",
+      "owner": "S01"
+    },
+    "shared_files": [
+      "public/ITER1/v4/assets/app.js",
+      "public/ITER1/v4/assets/app.css",
+      "public/ITER1/v4/assets/data.js",
+      "public/ITER1/v4/assets/chat.js",
+      "public/ITER1/v4/home.html",
+      "public/ITER1/v4/files.html",
+      "public/ITER1/v4/todos.html",
+      "public/ITER1/v4/profile.html",
+      "public/ITER1/v4/inbox.html",
+      "tests/helpers.mjs"
+    ],
+    "step_timeout_min": 15,
+    "history": [
+      {
+        "pv": 1,
+        "design_version": "v1",
+        "design_sha": "9394ca3181b075630d293e0a22aae66c36227c2fcab4bf8d5a5a529674e98493",
+        "date": "2026-10-27",
+        "note": "初始生成 8 步"
+      }
+    ],
+    "plan_version": 1,
+    "sections": {
+      "§1": {
+        "l": "4-12",
+        "h": "92f772a5b7"
+      },
+      "§1.1": {
+        "l": "5-6",
+        "h": "953f9227f3"
+      },
+      "§1.2": {
+        "l": "7-12",
+        "h": "ce5a311935"
+      },
+      "§2": {
+        "l": "13-18",
+        "h": "707acc7ce2"
+      },
+      "§3": {
+        "l": "19-51",
+        "h": "c6350fe8fb"
+      },
+      "§3.1": {
+        "l": "20-23",
+        "h": "6a91442673"
+      },
+      "§3.2": {
+        "l": "24-27",
+        "h": "d6d30dbca1"
+      },
+      "§3.3": {
+        "l": "28-31",
+        "h": "63dc38159a"
+      },
+      "§3.4": {
+        "l": "32-35",
+        "h": "eb77f77e03"
+      },
+      "§3.5": {
+        "l": "36-39",
+        "h": "3728911cc1"
+      },
+      "§3.6": {
+        "l": "40-43",
+        "h": "35ed363fa2"
+      },
+      "§3.7": {
+        "l": "44-47",
+        "h": "1d70bbae6e"
+      },
+      "§3.8": {
+        "l": "48-51",
+        "h": "04f424c9d4"
+      },
+      "§4": {
+        "l": "52-58",
+        "h": "946d4826dd"
+      },
+      "§5": {
+        "l": "59-66",
+        "h": "df71180bdc"
+      },
+      "§6": {
+        "l": "67-70",
+        "h": "f4da8b516e"
+      },
+      "§7": {
+        "l": "71-75",
+        "h": "58d29c4212"
+      },
+      "§8": {
+        "l": "76-82",
+        "h": "66f191251a"
+      }
+    }
+  },
+  "contracts": [],
+  "gaps": [],
+  "steps": [
+    {
+      "id": "S01",
+      "milestone": "M1",
+      "order": 1,
+      "title": "复制 v3 为 v4，建立 jsdom 测试工具",
+      "goal": "public/ITER1/v4 可独立运行（演示数据与 v3 分开），并有可加载任一 v4 页面的 jsdom 测试工具和冒烟测试。",
+      "deps": [],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "high",
+      "difficulty_reason": "第一个建立测试模式的步骤，后续步骤都依赖 helpers.mjs",
+      "model_tier": "main",
+      "sections": [
+        "§3.1",
+        "§4",
+        "§5"
+      ],
+      "files_owned": [
+        "public/ITER1/v4/admin-filetypes.html",
+        "public/ITER1/v4/admin-logs.html",
+        "public/ITER1/v4/admin-models.html",
+        "public/ITER1/v4/admin-system.html",
+        "public/ITER1/v4/admin-usage.html",
+        "public/ITER1/v4/admin-users.html",
+        "public/ITER1/v4/forgot.html",
+        "public/ITER1/v4/index.html",
+        "public/ITER1/v4/reminders.html",
+        "public/ITER1/v4/todo.html",
+        "tests/package.json",
+        "tests/package-lock.json",
+        "tests/smoke.test.mjs"
+      ],
+      "reads": [
+        "public/ITER1/v3/assets/app.js",
+        "public/ITER1/v3/index.html"
+      ],
+      "notes": [
+        "用 cp -r public/ITER1/v3 public/ITER1/v4 复制全部文件，再改 KEY 为 pa_ITER1_v4、sessionStorage 前缀 pa3_ 改为 pa4_、所有“原型 v3”字样改为“原型 v4”",
+        "app.js 支持 window.PA_TODAY（YYYY-MM-DD）覆盖“今天”，仅供测试；未设置时行为与 v3 相同（注意 data.js 的 dayStr 也要跟随）",
+        "tests/helpers.mjs 导出 loadPage(name, {session, today, state, url})：用 JSDOM.fromFile 加载 v4 页面，runScripts dangerously、resources usable，脚本运行前注入 localStorage 与 PA_TODAY，收集 window error 与 console.error，等待 load 后返回 {window, document, errors, state()}；另导出 sleep、拦截跳转的方法",
+        "冒烟：逐个加载 v4 全部 HTML（lily@demo.com 登录态；admin 页用 admin 登录态），断言 errors 为空且含“原型 v4”（跳转页 reminders.html 只断言跳转目标）",
+        "测试用 node:test + node:assert，jsdom 装在 tests/node_modules，根目录不放 package.json",
+        "不改 v1–v3 任何文件；不做功能改动（由 S02 起负责）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "npm --prefix tests install --no-audit --no-fund",
+          "node --test tests/smoke.test.mjs",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3",
+          "grep -q pa_ITER1_v4 public/ITER1/v4/assets/app.js"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "8c0f7c9e85",
+      "pv": 1
+    },
+    {
+      "id": "S02",
+      "milestone": "M1",
+      "order": 2,
+      "title": "菜单收成图标栏，取消“待确认”",
+      "goal": "左侧菜单默认为图标栏、可展开并记住选择，窄屏隐藏；菜单没有“待确认”，inbox.html 跳转到助手页；助手菜单显示今天未完成件数。",
+      "deps": [
+        "S01"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "mid",
+      "difficulty_reason": "公共布局改动，影响所有页面",
+      "model_tier": "main",
+      "sections": [
+        "§3.2"
+      ],
+      "files_owned": [
+        "tests/nav.test.mjs"
+      ],
+      "reads": [
+        "docs/ITER1/review/原型评审变更记录.md",
+        "public/ITER1/samples/chat-home.html"
+      ],
+      "notes": [
+        "评审原文见评审记录“## 10.”节第 3、7 点；样例 chat-home.html 已有收起菜单的写法，可参考（注意其中修过的遮挡点击问题）",
+        "展开状态存 state.prefs.navExpanded，所有页面共用",
+        "inbox.html 参照 v4/reminders.html 的跳转写法；全站搜索并移除指向 inbox.html 的菜单项和链接（admin 页等）",
+        "窄屏（≤640px）隐藏左侧菜单，提供顶部或底部简易图标导航，保证能到达所有页面"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/nav.test.mjs",
+          "node --test tests/smoke.test.mjs"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "7cd12ec74f",
+      "pv": 1
+    },
+    {
+      "id": "S03",
+      "milestone": "M1",
+      "order": 3,
+      "title": "助手页改为对话：先开口、气泡、结果卡片",
+      "goal": "home.html 成为聊天式助手页：助手按时段问候并带出今天待办卡片、逾期单独提醒，用户消息与助手回复以气泡往下排，v3 助手页的全部能力改在对话中完成。",
+      "deps": [
+        "S02"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "size_reason": "重写 658 行的助手页，并要保留 v3 的全部识别与操作能力",
+      "difficulty": "high",
+      "difficulty_reason": "建立对话页的代码模式，后续 S04–S07 都在其上扩展",
+      "model_tier": "main",
+      "sections": [
+        "§3.3",
+        "§5"
+      ],
+      "files_owned": [
+        "tests/chat-core.test.mjs"
+      ],
+      "reads": [
+        "public/ITER1/samples/chat-home.html",
+        "public/ITER1/v3/home.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "notes": [
+        "对话逻辑放 assets/chat.js，home.html 只留结构；对外暴露 window.PA_CHAT = { send(text, files?), messages() } 供后续步骤与测试调用",
+        "消息用统一结构 {id, role: 'bot'|'user', kind, text, data, ts}，渲染按 kind 分派，便于 S04–S06 增加新 kind；消息写入 state.chat[今天]（持久化与 30 天清理由 S05 做）",
+        "“正在输入”延时做成可配置常量（window.PA_TYPING_MS，默认 500），测试设为 0 或很小",
+        "保留 v3 的 parseWhen/归类、批量完成确认卡片、按意思查文件与待办、批量推迟、删除、追加想法、文字+附件；评审第 4、7、9 项的规则不能丢",
+        "删除 v3 的“近 3 天”区域和右上角摘要（入口由 S04 的“最近安排”按钮替代）",
+        "视觉朴素，像聊天软件；不做建议说法、提示、最近安排（S04）、会议消息与问候规则（S05）、代写（S06）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/chat-core.test.mjs",
+          "node --test tests/smoke.test.mjs"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "911f66e50b",
+      "pv": 1
+    },
+    {
+      "id": "S04",
+      "milestone": "M1",
+      "order": 4,
+      "title": "建议说法、随用随提示、“最近安排”按钮",
+      "goal": "输入框上方有可点的建议说法和固定的“📅 最近安排 N”按钮及弹出面板；每种能力首次使用后附一次 💡 提示。",
+      "deps": [
+        "S03"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "mid",
+      "difficulty_reason": "在已有对话页上增加组件，规则明确",
+      "model_tier": "main",
+      "sections": [
+        "§3.4"
+      ],
+      "files_owned": [
+        "tests/chat-extras.test.mjs"
+      ],
+      "reads": [
+        "public/ITER1/samples/chat-home.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "notes": [
+        "评审原文见“## 10.”节第 4、5、6 点，提示文案用其中的示例",
+        "提示种类至少：记事、查文件、批量推迟、按意思查待办；已出现的种类存 state.tipsShown",
+        "面板内勾选完成复用 S03 的完成逻辑，并刷新按钮数字；面板内容不写入 state.chat",
+        "期限快到 = 评审第 9 项“期限最后 7 天”"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/chat-extras.test.mjs",
+          "node --test tests/chat-core.test.mjs"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "e84ea146ce",
+      "pv": 1
+    },
+    {
+      "id": "S05",
+      "milestone": "M1",
+      "order": 5,
+      "title": "会议消息、对话记录、问候规则",
+      "goal": "助手主动发会议整理消息并可在对话中逐条加入待办；对话按天保存 30 天、默认只显示今天；每天首次完整问候、之后只报变化，问候带节日开场。",
+      "deps": [
+        "S04"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "high",
+      "difficulty_reason": "问候频率与变化判断、按天存储和清理容易出边界错误",
+      "model_tier": "main",
+      "sections": [
+        "§3.5",
+        "§5"
+      ],
+      "files_owned": [
+        "tests/chat-greet.test.mjs"
+      ],
+      "reads": [
+        "public/ITER1/v3/inbox.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "notes": [
+        "评审原文见“## 10.”节第 2、8、9、10 点；会议数据来自 state.inbox，处理逻辑参照 v3/inbox.html",
+        "节日表放 data.js（公历 + 若干农历节日的演示日期，至少包含演示数据“今天”附近的一个），测试用 PA_TODAY 命中",
+        "“模拟改写”：模板组好事实句后加节日 / 天气开场；改写后校验其中的数字与程序数据一致，不一致退回模板",
+        "变化判断：与 state.greetSnapshot（今天未完成、逾期、待处理会议的 id 集合）比较，只说新增项",
+        "“晚点再说”：约 30 秒后（常量可在测试中改小）或下次打开再提醒一次，之后不再提醒"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/chat-greet.test.mjs",
+          "node --test tests/chat-core.test.mjs"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "87878b911e",
+      "pv": 1
+    },
+    {
+      "id": "S06",
+      "milestone": "M1",
+      "order": 6,
+      "title": "助手主动提出代写文档",
+      "goal": "新建写作类待办时助手提示代写，同意后参照知识库、整理素材并生成文字初稿，可复制、导出 Word，并存入知识库挂到待办上。",
+      "deps": [
+        "S05"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "mid",
+      "difficulty_reason": "新增一条对话流程，规则明确",
+      "model_tier": "main",
+      "sections": [
+        "§3.6"
+      ],
+      "files_owned": [
+        "tests/chat-write.test.mjs"
+      ],
+      "reads": [
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "notes": [
+        "评审原文见“## 10.”节第 12 点",
+        "提示状态存 state.writeOffer：已提示的待办 id；按类别（周报/方案/介绍/总结/报告）记连续拒绝次数，接受时清零",
+        "初稿只用演示数据中的待办、想法记录、会议要点；缺素材时写“还缺：……”；数字必须可在数据中找到",
+        "导出 Word 用 Blob(text/html) 下载 .doc；存入知识库时文件走与上传相同的数据结构，自动打标签"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/chat-write.test.mjs",
+          "node --test tests/chat-core.test.mjs"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "bea3db6c68",
+      "pv": 1
+    },
+    {
+      "id": "S07",
+      "milestone": "M1",
+      "order": 7,
+      "title": "各页“问助手”入口与助手改名",
+      "goal": "知识库与待办页有“问助手”入口，输入后跳到助手页自动发送；个人设置可改助手名字。",
+      "deps": [
+        "S06"
+      ],
+      "size": "M",
+      "est_min": 15,
+      "difficulty": "low",
+      "difficulty_reason": "页面入口与参数传递，规格完整",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.7"
+      ],
+      "files_owned": [
+        "tests/ask-entry.test.mjs"
+      ],
+      "reads": [
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "notes": [
+        "评审原文见“## 10.”节第 11 点",
+        "home.html 读取 ?ask= 后调用 PA_CHAT.send，并用 history.replaceState 去掉参数，避免刷新重复发送",
+        "知识库原有的关键字筛选可保留为次要功能，但主搜索框提交走助手"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/ask-entry.test.mjs",
+          "node --test tests/"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "10881748d8",
+      "pv": 1
+    },
+    {
+      "id": "S08",
+      "milestone": "M1",
+      "order": 8,
+      "title": "版本登记：README、原型首页、评审记录、标签",
+      "goal": "README 与原型首页登记 v4，v3 标为冻结；评审记录第 10 项改为已改原型（v4）并补充 v4 实现说明；打本地标签 ITER1-proto-v4。",
+      "deps": [
+        "S07"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "文档登记",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.8"
+      ],
+      "files_owned": [
+        "README.md",
+        "public/index.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "reads": [
+        "public/ITER1/v4/assets/chat.js"
+      ],
+      "notes": [
+        "README 目录结构加 ITER1/v4/；版本规则第 4 条：当前版本标签随修改移动，冻结后不动——v3 标签保持不动",
+        "评审记录头部状态说明保持原风格；“v4 原型实现说明”写清模拟方式：问候改写、会议整理、代写初稿、节日表、晚点再说的时间、导出 .doc",
+        "标签在本步提交之后由执行者打（git tag ITER1-proto-v4），不 push"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "grep -q 'ITER1/v4' README.md",
+          "grep -q 'ITER1-proto-v4' README.md",
+          "grep -q 'ITER1/v4/' public/index.html",
+          "grep -q '已改原型（v4）' docs/ITER1/review/原型评审变更记录.md",
+          "grep -q 'v4 原型实现说明' docs/ITER1/review/原型评审变更记录.md",
+          "node --test tests/"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "c6d1a3e70f",
+      "pv": 1
+    }
+  ],
+  "post_run": [
+    {
+      "id": "A01",
+      "kind": "manual",
+      "title": "在浏览器里试用 v4 助手页",
+      "after": "S08",
+      "src": "§2",
+      "steps": [
+        "打开 public/ITER1/v4/index.html（或发布后的线上地址），用 lily@demo.com / demo1234 登录",
+        "依次试：点建议说法、最近安排、会议消息、记一件“下周三交周报”、收起/展开菜单、窄屏查看"
+      ],
+      "pass": [
+        "评审第 10 项 12 点在页面上都能找到对应表现",
+        "视觉朴素、无明显错位或遮挡"
+      ],
+      "affects": [
+        "S03",
+        "S04",
+        "S05",
+        "S06"
+      ]
+    }
+  ]
+}
