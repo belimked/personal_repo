@@ -31,5 +31,17 @@
 <script>
 if (PA.mount({ page: "home", title: "助手", narrow: false })) PA_CHAT.start();
 </script>
+<script>
+// S07：其他页的“问助手”入口跳过来时带 ?ask=，自动把这句话当用户消息发送；
+// 发送前用 replaceState 去掉参数，刷新页面不会重复发送。
+(function () {
+  const PA = window.PA;
+  if (!PA || !PA.state.session) return;
+  const ask = PA.qs("ask");
+  if (!ask || !ask.trim()) return;
+  history.replaceState(null, "", location.pathname);
+  window.PA_CHAT.send(ask.trim());
+})();
+</script>
 </body>
 </html>

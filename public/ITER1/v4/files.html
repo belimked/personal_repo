@@ -321,5 +321,19 @@ if (PA.mount({ page: "files", title: "个人知识库", narrow: false })) {
   if (fid) { const row = tbl.querySelector(`[data-row="${fid}"]`); if (row) { row.style.background = "var(--warn-weak)"; row.scrollIntoView({ block: "center" }); } }
 }
 </script>
+<script>
+// S07：知识库主搜索框改为“问助手”（按意思找），提交后跳到助手页；原有的文件名/标签筛选保留在下面作为次要功能。
+(function () {
+  const PA = window.PA, col = document.querySelector(".files-layout > div:nth-child(2)");
+  if (!PA || !col || !PA.state.session) return;
+  const bar = document.createElement("div");
+  bar.className = "askbar";
+  bar.innerHTML = '<div class="ask-main"><input class="input ask-input" id="ask" placeholder="用一句话描述你要找的内容"><button class="btn primary" id="ask-go">问助手</button></div>'
+    + '<span class="ask-note">按意思找：不用记文件名和关键字，回车就交给助手</span>';
+  col.insertBefore(bar, col.firstChild);
+  const input = PA.bindAsk(bar.querySelector("#ask"));
+  bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
 </body>
 </html>

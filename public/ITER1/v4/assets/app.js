@@ -997,3 +997,22 @@
     STATUS_LABEL: { open: "未完成", done: "已完成", deleted: "已删除" },
   };
 })();
+
+// ---------------- 各页“问助手”入口（S07） ----------------
+(function () {
+  const PA = window.PA;
+  if (!PA) return;
+  PA.askUrl = (text) => "home.html?ask=" + encodeURIComponent(String(text || "").trim());
+  // 回车/点按钮后跳到助手页，由助手页把这句话当用户消息发送
+  PA.goAsk = (text) => {
+    const t = String(text || "").trim();
+    if (!t) return false;
+    location.href = PA.askUrl(t);
+    return true;
+  };
+  PA.bindAsk = (input) => {
+    if (!input) return input;
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); PA.goAsk(input.value); } });
+    return input;
+  };
+})();

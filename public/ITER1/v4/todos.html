@@ -621,5 +621,20 @@ if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
   render();
 }
 </script>
+<script>
+// S07：待办页顶部的“跟助手说”入口，输入后跳到助手页处理。
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const bar = document.createElement("div");
+  bar.className = "askbar";
+  bar.innerHTML = '<span class="ask-label">跟助手说：</span>'
+    + '<div class="ask-main"><input class="input ask-input" id="ask" placeholder="把这周所有会议推迟一天"><button class="btn primary" id="ask-go">问助手</button></div>'
+    + '<span class="ask-note">在助手页里说人话就行，按意思查、批量改都能用</span>';
+  page.insertBefore(bar, page.firstChild);
+  const input = PA.bindAsk(bar.querySelector("#ask"));
+  bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
 </body>
 </html>

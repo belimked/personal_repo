@@ -1,22 +1,22 @@
 $ node --test tests/smoke.test.mjs
-✔ v4 包含全部页面 (7.478348ms)
-✔ 冒烟：admin-filetypes.html (1182.49714ms)
-✔ 冒烟：admin-logs.html (813.72482ms)
-✔ 冒烟：admin-models.html (597.208193ms)
-✔ 冒烟：admin-system.html (313.387784ms)
-✔ 冒烟：admin-usage.html (374.534162ms)
-✔ 冒烟：admin-users.html (271.069077ms)
-✔ 冒烟：files.html (620.336294ms)
-✔ 冒烟：forgot.html (189.793795ms)
-✔ 冒烟：home.html (273.961455ms)
-✔ 冒烟：inbox.html (369.604127ms)
-✔ 冒烟：index.html (157.87812ms)
-✔ 冒烟：profile.html (314.731934ms)
-✔ 冒烟：reminders.html (45.92381ms)
-✔ 冒烟：todo.html (146.661564ms)
-✔ 冒烟：todos.html (680.242003ms)
-✔ PA_TODAY 覆盖今天，数据随之生成 (244.643485ms)
-✔ 未登录访问会跳转到登录页 (278.7715ms)
+✔ v4 包含全部页面 (7.537694ms)
+✔ 冒烟：admin-filetypes.html (1211.729654ms)
+✔ 冒烟：admin-logs.html (842.772127ms)
+✔ 冒烟：admin-models.html (620.127114ms)
+✔ 冒烟：admin-system.html (328.579802ms)
+✔ 冒烟：admin-usage.html (381.508048ms)
+✔ 冒烟：admin-users.html (280.06626ms)
+✔ 冒烟：files.html (635.366012ms)
+✔ 冒烟：forgot.html (210.155975ms)
+✔ 冒烟：home.html (271.177453ms)
+✔ 冒烟：inbox.html (382.792788ms)
+✔ 冒烟：index.html (159.416547ms)
+✔ 冒烟：profile.html (319.216325ms)
+✔ 冒烟：reminders.html (48.810074ms)
+✔ 冒烟：todo.html (152.157768ms)
+✔ 冒烟：todos.html (687.447911ms)
+✔ PA_TODAY 覆盖今天，数据随之生成 (189.929518ms)
+✔ 未登录访问会跳转到登录页 (298.408805ms)
 ℹ tests 18
 ℹ suites 0
 ℹ pass 18
@@ -24,4 +24,4 @@ $ node --test tests/smoke.test.mjs
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 8969.613641
+ℹ duration_ms 9167.572113

@@ -87,5 +87,30 @@ if (PA.mount({ page: "profile", title: "个人设置" })) {
   };
 }
 </script>
+<script>
+// S07：助手名字（显示在助手页页头、头像和每条回复旁边）
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const card = document.createElement("div");
+  card.className = "card";
+  card.id = "assistant";
+  card.innerHTML = '<div class="card-head"><h2>助手名字</h2><span class="hint">默认叫“小禾”，可以改成你习惯的称呼</span></div>'
+    + '<div class="grid2"><div class="field"><label>助手名字</label><input class="input" id="bot-name" maxlength="8" placeholder="小禾"><span class="hint">最多 8 个字，会显示在助手页页头和每条回复旁边</span></div></div>'
+    + '<div class="row"><button class="btn primary" id="save-bot-name">保存</button><span class="err" id="bot-name-err"></span></div>';
+  const first = page.firstElementChild;
+  page.insertBefore(card, first ? first.nextSibling : null);
+  const input = card.querySelector("#bot-name");
+  input.value = PA.state.prefs.assistantName || "小禾";
+  card.querySelector("#save-bot-name").onclick = () => {
+    const name = input.value.trim().slice(0, 8);
+    if (!name) { card.querySelector("#bot-name-err").textContent = "名字不能为空"; return; }
+    card.querySelector("#bot-name-err").textContent = "";
+    PA.state.prefs.assistantName = name;
+    input.value = name;
+    PA.save(); PA.log("修改个人设置", `助手名字：${name}`); PA.toast("已保存");
+  };
+})();
+</script>
 </body>
 </html>
