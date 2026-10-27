@@ -714,10 +714,10 @@
     document.addEventListener("pa:todos-changed", () => messages().filter((m) => LIVE_KINDS.has(m.kind)).forEach(renderMsg));
     document.addEventListener("pa:uploads-tick", onTick);
     document.addEventListener("pa:files-changed", onTick);
-    opening();
+    window.PA_CHAT.opening();
   }
 
-  window.PA_CHAT = { start, send, messages, kinds: KINDS, push, bot, reply, renderMsg, setData, applyUndo, idle: () => queue };
+  window.PA_CHAT = { start, send, messages, kinds: KINDS, push, bot, reply, renderMsg, setData, applyUndo, idle: () => queue, opening, confirmMeeting };
 })();
 
 // 建议说法、💡 随用随提示、“📅 最近安排”按钮与面板（面板内容不进聊天记录）
@@ -800,4 +800,211 @@
   document.addEventListener("pa:todos-changed", refresh);
   refresh();
   C.recent = { open: () => setSheet(true), close: () => setSheet(false), refresh };
+})();
+
+// 会议整理消息、按天的对话记录（保留 30 天，默认只显示今天）、问候规则（每天一次完整问候，之后只报变化）
+(function () {
+  const PA = window.PA, C = window.PA_CHAT;
+  if (!PA || !C) return;
+  const { state, esc, save } = PA;
+  const KEEP_DAYS = 30;
+  const remindMs = () => (window.PA_REMIND_MS ?? 30000);
+  const shortDate = (ds) => PA.cnDate(ds).replace(/（.*/, "");
+  const hiWord = () => { const h = new Date().getHours(); return h < 5 ? "夜深了" : h < 11 ? "早上好" : h < 13 ? "中午好" : h < 18 ? "下午好" : "晚上好"; };
+  const snap = () => { const u = PA.upcoming(); return { today: u.days[0].list.map((t) => t.id), overdue: u.overdue.map((t) => t.id), meetings: state.inbox.map((m) => m.id) }; };
+  const row = (t) => `<div class="crow ${t.status !== "open" ? "done" : ""}" data-todo-row>${PA.tickHTML(t)}<span class="ct">${t.time ? PA.timeRange(t) : "全天"}</span><a class="ci" href="todo.html?id=${t.id}">${esc(t.title)}</a>${t.location ? `<span class="cl" title="${esc(t.location)}">📍${esc(t.location)}</span>` : ""}</div>`;
+
+  // ---------- 问候：模板 + 数据，再“模拟改写”加节日 / 天气开场；数字以程序数据为准 ----------
+  function holidayOf(ds) {
+    const H = PA.SEED.holidays || {};
+    return (H.lunar || {})[ds] || (H.fixed || {})[ds.slice(5)] || null;
+  }
+  const WEATHER = ["今天天气不错，适合出门走走", "外面有点凉，出门多穿一件", "今天可能有小雨，出门记得带伞", "今天风有点大，注意保暖", "今天阴天，记得多喝水"];
+  const weatherOf = (ds) => WEATHER[[...ds].reduce((s, c) => s + c.charCodeAt(0), 0) % WEATHER.length];
+  function factsOf(ids) {
+    const list = ids.map(PA.todoById).filter((t) => t && t.status !== "deleted");
+    const left = list.filter((t) => t.status === "open");
+    const first = left.find((t) => t.time) || left[0];
+    return !list.length ? "今天没有安排的事，想到什么随时跟我说。"
+      : !left.length ? `今天的 ${list.length} 件事都做完了，辛苦了。`
+      : `今天有 ${left.length} 件事${first.time ? `，最早是 ${first.time} ${first.title}` : ""}。`;
+  }
+  const mockRewrite = ({ template, holiday, weather }) => `${holiday ? holiday[1] + "！" : weather + "。"}${template}`;
+  const nums = (s) => (String(s).match(/\d+(?::\d+)?/g) || []).sort();
+  function verified(out, template) {
+    if (typeof out !== "string" || !out.trim()) return false;
+    const a = nums(out), b = nums(template);
+    return a.length === b.length && a.every((x, i) => x === b[i]);
+  }
+  function greetData() {
+    const d0 = PA.today(), ids = PA.upcoming().days[0].list.map((t) => t.id), hi = hiWord(), name = PA.me()?.name || "";
+    const facts = factsOf(ids), template = `${hi}${name ? "，" + name : ""}。${facts}`, holiday = holidayOf(d0);
+    let out = null;
+    try { out = (window.PA_GREET_REWRITE || mockRewrite)({ template, facts, hi, name, holiday, weather: weatherOf(d0) }); } catch (e) { out = null; }
+    const ok = verified(out, template);
+    return { hi, ids, facts, text: ok ? out : template, rewritten: ok, holiday: ok && holiday ? holiday[0] : "" };
+  }
+  const origGreet = C.kinds.greet;
+  C.kinds.greet = (b, m) => {
+    origGreet(b, m);
+    // 当天数据变了就回到模板的实时内容
+    if (m.data.text && m.data.facts === factsOf(m.data.ids)) { const p = b.querySelector("p"); if (p) p.textContent = m.data.text; }
+  };
+
+  C.kinds.greetDelta = (b, m) => {
+    const d = m.data, list = d.today.map(PA.todoById).filter((t) => t && t.status !== "deleted");
+    const parts = [list.length && `今天又多了 ${list.length} 件事`, d.overdue.length && `又有 ${d.overdue.length} 件到期了`].filter(Boolean);
+    b.innerHTML = `<p>补充一下：${parts.join("；")}。</p>` + (list.length ? `<div class="ccard">${list.map(row).join("")}</div>` : "");
+  };
+
+  // ---------- 会议整理消息 ----------
+  const meetingsOf = (ids) => ids.map((id) => state.inbox.find((x) => x.id === id)).filter(Boolean);
+  const mineN = (mt) => mt.items.filter((it) => it.owner === "我").length;
+  function uploadedWhen(mt) {
+    const ds = (mt.uploadedAt || "").slice(0, 10);
+    return ds ? PA.relDay(ds) || shortDate(ds) : "";
+  }
+  function meetingMsg(ids, reminder) {
+    const list = meetingsOf(ids);
+    if (!list.length) return;
+    list.forEach((mt) => { if (mt.remindLater === "waiting") mt.remindLater = "done"; });
+    const s = state.greetSnapshot;
+    if (s && state.greetedOn === PA.today()) s.meetings = [...new Set([...(s.meetings || []), ...list.map((x) => x.id)])];
+    save();
+    const n = list.reduce((s, x) => s + x.items.length, 0), mine = list.reduce((s, x) => s + mineN(x), 0);
+    const lead = list.length === 1 ? `你${uploadedWhen(list[0])}上传的「${list[0].fileName.replace(/\.\w+$/, "")}」，我整理出 ${n} 条待办，有 ${mine} 条是分给你的。`
+      : `有 ${list.length} 个会议录音整理好了，一共 ${n} 条待办，有 ${mine} 条是分给你的。`;
+    C.bot("meetingNote", "", { ids: list.map((x) => x.id), reminder: !!reminder, lead });
+  }
+  C.kinds.meetingNote = (b, m) => {
+    const d = m.data, list = meetingsOf(d.ids);
+    b.innerHTML = `<p>${d.reminder ? "之前说晚点再看的会议，提醒你一下：" : ""}${esc(d.lead)}要一起过一下吗？</p>`
+      + (d.chosen ? `<p class="muted small">已选择：${esc(d.chosen)}</p>` : !list.length ? '<p class="muted small">这些会议录音已经处理过了。</p>'
+        : '<div class="actions"><button class="btn sm primary" data-mn="go">一起过一下</button><button class="btn sm" data-mn="later">晚点再说</button></div>');
+    const go = b.querySelector('[data-mn="go"]'), later = b.querySelector('[data-mn="later"]');
+    if (go) go.onclick = () => {
+      C.setData(m, { chosen: "一起过一下" });
+      C.push("user", "text", "一起过一下");
+      C.reply(() => C.bot("meetingReview", "", { ids: meetingsOf(d.ids).map((x) => x.id), checked: {}, heard: {} }));
+    };
+    if (later) later.onclick = () => {
+      C.setData(m, { chosen: "晚点再说" });
+      laterFor(meetingsOf(d.ids));
+      C.push("user", "text", "晚点再说");
+      C.reply(() => C.bot("text", "好的，晚点再提醒你一次。想处理时也可以直接跟我说“处理待确认会议”。"));
+    };
+  };
+  function laterFor(list) {
+    const ids = list.filter((mt) => mt.remindLater !== "done").map((mt) => { mt.remindLater = "waiting"; return mt.id; });
+    save();
+    if (!ids.length) return;
+    setTimeout(() => {
+      const due = meetingsOf(ids).filter((mt) => mt.remindLater === "waiting");
+      if (due.length && document.getElementById("msgs")) C.reply(() => meetingMsg(due.map((x) => x.id), true));
+    }, remindMs());
+  }
+
+  const defaultChecked = (mt) => mt.items.map((it, i) => (it.owner === "我" ? i : -1)).filter((i) => i >= 0);
+  C.kinds.meetingReview = (b, m) => {
+    const d = m.data;
+    if (d.result) { b.innerHTML = `<div class="result-card">${d.result}</div>`; return; }
+    const list = meetingsOf(d.ids);
+    if (!list.length) { b.innerHTML = '<p class="muted">这些会议录音已经处理过了。</p>'; return; }
+    const checked = (mt) => d.checked[mt.id] || defaultChecked(mt);
+    b.innerHTML = `<p>好的，逐条看一下。勾选的会加入你的待办，会议本身保存为一条已完成的记录：</p>` + list.map((mt) => `<div class="result-card mt-review" data-m="${mt.id}">
+        <div><b>🎙 ${esc(mt.fileName)}</b> <span class="muted small">${esc(mt.duration)} · 会议时间 ${esc(mt.dateFromAudio || mt.dateFromFile)}</span></div>
+        ${mt.items.map((it, i) => `<div class="mt-line"><label><input type="checkbox" data-i="${i}" ${checked(mt).includes(i) ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}</label>
+          <button class="btn ghost sm" data-hear="${i}">${d.heard[mt.id + ":" + i] ? "收起原话" : "听原话"}</button>
+          ${d.heard[mt.id + ":" + i] ? `<div class="mt-quote">${it.at ? `<span class="muted small">[${esc(it.at)}]</span> ` : ""}“${esc(it.quote || it.text)}”${it.at ? "" : '<span class="muted small">（原型：这段录音没有逐句时间点）</span>'}</div>` : ""}</div>`).join("")}
+      </div>`).join("") + `<div class="actions" style="display:flex;gap:8px;margin-top:8px"><button class="btn sm primary" data-mr="ok"></button><button class="btn sm" data-mr="later">晚点再说</button></div>`;
+    const ok = b.querySelector('[data-mr="ok"]');
+    const sync = () => {
+      b.querySelectorAll("[data-m]").forEach((card) => (d.checked[card.dataset.m] = [...card.querySelectorAll("[data-i]:checked")].map((c) => +c.dataset.i)));
+      save();
+      const k = Object.values(d.checked).reduce((s, a) => s + a.length, 0);
+      ok.textContent = k ? `加入待办（${k} 条）` : "都不用加，标记已处理";
+    };
+    b.querySelectorAll("[data-i]").forEach((c) => (c.onchange = sync));
+    sync();
+    b.querySelectorAll("[data-hear]").forEach((x) => (x.onclick = () => {
+      const k = x.closest("[data-m]").dataset.m + ":" + x.dataset.hear;
+      C.setData(m, { heard: { ...d.heard, [k]: !d.heard[k] } });
+    }));
+    ok.onclick = () => {
+      sync();
+      const done = meetingsOf(d.ids).map((mt) => C.confirmMeeting(mt, d.checked[mt.id] || []));
+      const created = done.flatMap((x) => x.created);
+      C.setData(m, { result: `✅ 已处理 ${done.length} 个会议，加入 ${created.length} 条待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、") : ""}<div class="hint">新待办放在“待安排”里，可以接着说“把…排到周五”。</div>` });
+    };
+    b.querySelector('[data-mr="later"]').onclick = () => {
+      laterFor(list);
+      C.setData(m, { result: '<span class="muted">好的，会议先放着，晚点再提醒你一次。</span>' });
+    };
+  };
+
+  // ---------- 开场：每天第一次完整问候，之后只说新增的 ----------
+  C.opening = function () {
+    const d0 = PA.today(), cur = snap();
+    const full = state.greetedOn !== d0 || !C.messages().some((m) => m.kind === "greet");
+    if (full) {
+      state.greetedOn = d0; state.greetSnapshot = cur; save();
+      C.reply(() => C.bot("greet", "", greetData()));
+      if (cur.overdue.length) C.reply(() => { const ids = PA.upcoming().overdue.map((t) => t.id); if (ids.length) C.bot("overdue", "", { ids, acts: {} }); });
+      const ms = state.inbox.filter((mt) => mt.remindLater !== "done");
+      if (ms.length) C.reply(() => meetingMsg(ms.map((x) => x.id), ms.some((x) => x.remindLater === "waiting")));
+      return;
+    }
+    const old = state.greetSnapshot || { today: [], overdue: [], meetings: [] };
+    const added = (k) => cur[k].filter((id) => !(old[k] || []).includes(id));
+    const nt = added("today"), no = added("overdue"), nm = added("meetings");
+    state.greetSnapshot = { ...cur, meetings: [...new Set([...(old.meetings || []), ...cur.meetings])] }; save();
+    if (nt.length || no.length) C.reply(() => C.bot("greetDelta", "", { today: nt, overdue: no }));
+    if (no.length) C.reply(() => { const ids = no.filter((id) => PA.todoById(id)?.status === "open"); if (ids.length) C.bot("overdue", "", { ids, acts: {} }); });
+    const ms = state.inbox.filter((mt) => mt.remindLater === "waiting" || (nm.includes(mt.id) && mt.remindLater !== "done"));
+    if (ms.length) C.reply(() => meetingMsg(ms.map((x) => x.id), ms.some((x) => x.remindLater === "waiting")));
+  };
+
+  // ---------- 对话记录：保留 30 天，默认只显示今天，往上翻或点按钮加载更早的 ----------
+  function prune() {
+    const d0 = PA.today();
+    state.chat = state.chat || {};
+    Object.keys(state.chat).forEach((k) => { if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || PA.diffDays(d0, k) > KEEP_DAYS) delete state.chat[k]; });
+    save();
+  }
+  function history() {
+    const box = document.getElementById("msgs"), d0 = PA.today();
+    const older = Object.keys(state.chat).filter((k) => k < d0 && state.chat[k].length).sort().reverse();
+    if (!older.length) return;
+    const more = document.createElement("div");
+    more.className = "chat-more";
+    more.innerHTML = '<button class="btn ghost sm" data-more>查看更早的对话</button>';
+    box.prepend(more);
+    let next = 0;
+    const loadDay = () => {
+      if (next >= older.length) return;
+      const day = older[next++], sec = document.createElement("div");
+      sec.className = "chat-day"; sec.dataset.day = day;
+      sec.innerHTML = `<div class="day-sep"><span>${esc(PA.cnDate(day))}</span></div>` + state.chat[day].map((m) => `<div data-mid="${esc(m.id)}"></div>`).join("");
+      more.after(sec);
+      state.chat[day].forEach((m) => C.renderMsg(m));
+      if (next >= older.length) more.innerHTML = '<span class="muted small">更早的对话超过 30 天，已自动清理</span>';
+    };
+    more.querySelector("[data-more]").onclick = loadDay;
+    const onTop = (y) => { if (y <= 0) loadDay(); };
+    box.addEventListener("scroll", () => onTop(box.scrollTop));
+    window.addEventListener("scroll", () => onTop(window.scrollY));
+    C.loadEarlier = loadDay;
+  }
+
+  const LIVE = new Set(["greetDelta", "meetingNote", "meetingReview"]);
+  const origStart = C.start;
+  C.start = function () {
+    prune();
+    origStart();
+    history();
+    document.addEventListener("pa:todos-changed", () => {
+      C.messages().filter((m) => LIVE.has(m.kind)).forEach(C.renderMsg);
+      if (state.greetedOn === PA.today() && state.greetSnapshot) { const s = snap(); Object.assign(state.greetSnapshot, { today: s.today, overdue: s.overdue }); save(); }
+    });
+  };
 })();
