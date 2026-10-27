@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>系统设置 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card">
+    <div class="card-head"><h2>文件存储</h2><span class="hint">开发、测试、UAT 阶段可切换；商业化后计划关闭此功能</span><span class="spacer"></span><button class="btn" id="add-st">＋ 添加存储</button></div>
+    <div class="note warn">切换“当前写入存储”<b>只影响之后上传的文件</b>。已有文件仍从原存储读取（每个文件记录自己所在的存储），不会自动迁移。</div>
+    <div class="table-wrap"><table class="table" id="st-tbl"></table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>上传限制</h2></div>
+    <div class="grid4">
+      <div class="field"><label>单次最多文件数</label><input class="input" type="number" id="u-count"></div>
+      <div class="field"><label>单次总大小上限（MB）</label><input class="input" type="number" id="u-batch"></div>
+      <div class="field"><label>单个文件上限（MB）</label><input class="input" type="number" id="u-file"></div>
+      <div class="field"><label>新用户默认配额（MB）</label><input class="input" type="number" id="u-quota"></div>
+    </div>
+    <div class="hint" style="margin-bottom:10px">校验顺序：用户剩余配额 → 单次数量 / 总大小 → 单文件大小。修改默认配额不影响已有用户。</div>
+    <button class="btn primary" id="save-up">保存</button>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>邮件发送</h2><span class="hint">用于每日提醒和重置密码邮件</span></div>
+    <div class="grid2">
+      <div class="field"><label>发送方式</label><select class="input" id="m-provider"><option>邮件服务 API</option><option>SMTP（待技术验证）</option></select></div>
+      <div class="field"><label>API Key / SMTP 密码</label><input class="input" type="password" id="m-key" placeholder="已配置（留空不修改）"></div>
+      <div class="field"><label>发件邮箱</label><input class="input" id="m-from"></div>
+      <div class="field"><label>发件人名称</label><input class="input" id="m-name"></div>
+    </div>
+    <div class="row"><button class="btn primary" id="save-mail">保存</button><button class="btn" id="test-mail">发送测试邮件到我的邮箱</button></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>账号安全</h2></div>
+    <div class="row" style="margin-bottom:12px"><label class="switch"><input type="checkbox" id="s-lock"><span></span></label><span>启用登录失败锁定</span><span class="hint">（V1 默认关闭）</span></div>
+    <div class="grid3">
+      <div class="field"><label>连续失败次数</label><input class="input" type="number" id="s-att"></div>
+      <div class="field"><label>锁定时长（分钟）</label><input class="input" type="number" id="s-min"></div>
+      <div class="field"><label>删除用户后数据保留天数</label><input class="input" type="number" id="s-purge"></div>
+    </div>
+    <button class="btn primary" id="save-sec">保存</button>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "admin-system", title: "系统设置", admin: true })) {
+  const { state, esc, save, toast, log } = PA;
+  const c = state.config, $ = (id) => document.getElementById(id);
+  function renderSt() {
+    $("st-tbl").innerHTML = `<tr><th>名称</th><th>类型</th><th>存储桶</th><th>文件数</th><th>已用</th><th>状态</th><th></th></tr>` + c.storages.map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(s.type)}</td><td><code>${esc(s.bucket)}</code></td><td>${s.files}</td><td>${s.sizeGB} GB</td>
+      <td>${s.id === c.activeStorage ? '<span class="badge green">当前写入</span>' : s.files ? '<span class="badge">只读（存有旧文件）</span>' : '<span class="badge">未使用</span>'}</td>
+      <td>${s.id === c.activeStorage ? "" : `<button class="btn sm" data-sw="${s.id}">设为当前写入</button>`} <button class="btn sm" data-test="${s.id}">测试连接</button></td></tr>`).join("");
+    document.querySelectorAll("[data-sw]").forEach((b) => (b.onclick = () => {
+      const s = c.storages.find((x) => x.id === b.dataset.sw), cur = c.storages.find((x) => x.id === c.activeStorage);
+      PA.confirmBox("切换写入存储", `之后上传的文件将写入 <b>${esc(s.name)}</b>。<br>${esc(cur.name)} 中的 ${cur.files} 个文件保持原位、仍可正常读取。`, () => { c.activeStorage = s.id; save(); log("切换存储", `写入存储 ${cur.name} → ${s.name}`); toast("已切换"); renderSt(); }, "确认切换");
+    }));
+    document.querySelectorAll("[data-test]").forEach((b) => (b.onclick = () => { b.textContent = "测试中…"; setTimeout(() => { b.textContent = "✓ 读写正常"; }, 800); }));
+  }
+  $("add-st").onclick = () => PA.modal({ title: "添加存储", body: `<div class="field"><label>名称</label><input class="input" id="n-name"></div>
+    <div class="field"><label>类型</label><select class="input" id="n-type"><option>Cloudflare R2</option><option>S3 兼容</option></select></div>
+    <div class="field"><label>服务地址（Endpoint）</label><input class="input" placeholder="https://<account>.r2.cloudflarestorage.com"></div>
+    <div class="field"><label>存储桶</label><input class="input" id="n-bucket"></div>
+    <div class="grid2"><div class="field"><label>Access Key</label><input class="input" type="password"></div><div class="field"><label>Secret Key</label><input class="input" type="password"></div></div>
+    <div class="hint">必须支持预签名上传地址，浏览器才能直传。</div>`,
+    actions: [{ label: "取消" }, { label: "添加", primary: true, onClick: (m) => { const n = m.querySelector("#n-name").value.trim(), bk = m.querySelector("#n-bucket").value.trim(); if (!n || !bk) { toast("请填写名称和存储桶"); return false; }
+      c.storages.push({ id: PA.uid("s"), name: n, type: m.querySelector("#n-type").value, bucket: bk, files: 0, sizeGB: 0 }); save(); log("切换存储", "添加存储 " + n); renderSt(); } }] });
+  $("u-count").value = c.upload.maxCount; $("u-batch").value = c.upload.maxBatchMB; $("u-file").value = c.upload.maxFileMB; $("u-quota").value = c.upload.defaultQuotaMB;
+  $("save-up").onclick = () => {
+    const v = { maxCount: +$("u-count").value, maxBatchMB: +$("u-batch").value, maxFileMB: +$("u-file").value, defaultQuotaMB: +$("u-quota").value };
+    if (Object.values(v).some((x) => !(x > 0))) return toast("请输入正整数");
+    if (v.maxFileMB > v.maxBatchMB) return toast("单文件上限不能大于单次总大小上限");
+    c.upload = v; save(); log("修改上传限制", `单次 ${v.maxCount} 个 / ${v.maxBatchMB}MB，单文件 ${v.maxFileMB}MB，默认配额 ${v.defaultQuotaMB}MB`); toast("已保存");
+  };
+  $("m-provider").value = c.mail.provider; $("m-from").value = c.mail.from; $("m-name").value = c.mail.fromName;
+  $("save-mail").onclick = () => { c.mail.provider = $("m-provider").value; c.mail.from = $("m-from").value.trim(); c.mail.fromName = $("m-name").value.trim(); save(); log("修改邮件配置", "发件人 " + c.mail.from); toast("已保存"); };
+  $("test-mail").onclick = () => toast(`原型：测试邮件已发送到 ${PA.me().email}`);
+  $("s-lock").checked = c.security.lockEnabled; $("s-att").value = c.security.lockAttempts; $("s-min").value = c.security.lockMinutes; $("s-purge").value = c.security.purgeDays;
+  $("save-sec").onclick = () => { c.security = { lockEnabled: $("s-lock").checked, lockAttempts: +$("s-att").value || 5, lockMinutes: +$("s-min").value || 15, purgeDays: +$("s-purge").value || 30 }; save(); log("修改安全设置", `登录锁定：${c.security.lockEnabled ? "开启" : "关闭"}`); toast("已保存"); };
+  renderSt();
+}
+</script>
+</body>
+</html>

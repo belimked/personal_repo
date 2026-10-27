@@ -1,0 +1,2 @@
+$ grep -q pa_ITER1_v4 public/ITER1/v4/assets/app.js
+

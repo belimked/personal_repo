@@ -1,0 +1,11 @@
+{
+  "name": "daily-assistant-proto-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ."
+  },
+  "dependencies": {
+    "jsdom": "^26.1.0"
+  }
+}
