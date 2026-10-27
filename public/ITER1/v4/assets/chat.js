@@ -719,3 +719,85 @@
 
   window.PA_CHAT = { start, send, messages, kinds: KINDS, push, bot, reply, renderMsg, setData, applyUndo, idle: () => queue };
 })();
+
+// 建议说法、💡 随用随提示、“📅 最近安排”按钮与面板（面板内容不进聊天记录）
+(function () {
+  const PA = window.PA, C = window.PA_CHAT;
+  const cbox = document.getElementById("cbox");
+  if (!PA || !C || !cbox) return;
+  const { state, esc, save } = PA;
+
+  const SUGGESTIONS = [
+    "帮我记：周五下午3点去仁济医院体检",
+    "租房合同什么时候到期？",
+    "跟保险有关的事有哪些？",
+    "把明天的事都推迟一天",
+    "今天除了银行的事儿，都搞完了",
+  ];
+  const TIPS = {
+    add: "说错了直接补一句就行，比如“改到下午4点”。",
+    kb: "我只在你自己上传的文件里找，而且是按意思找，不用记文件名和关键字。",
+    "search-todo": "查到后可以接着说“把重疾险排到周六上午”。",
+    postpone: "也可以说“除了周会，明天的都推迟”。",
+    batch: "也可以说“今天除了买保险的事儿，都搞完了”。",
+  };
+  const shown = () => (state.tipsShown = state.tipsShown || []);
+  // 返回 null 表示这条消息还没到能判断的时候（如确认卡片未确认）
+  function tipsFor(m, b) {
+    if (m.kind === "todo") return m.data.fresh ? ["add"] : [];
+    if (m.kind === "search") return [b.querySelector(".hit") && "kb", b.querySelector(".ccard") && "search-todo"].filter(Boolean);
+    if (m.kind === "postpone" || m.kind === "batch") return m.data.done ? [m.kind] : m.data.cancelled ? [] : null;
+    return [];
+  }
+  ["todo", "search", "postpone", "batch"].forEach((k) => {
+    const orig = C.kinds[k];
+    C.kinds[k] = (b, m) => {
+      orig(b, m);
+      if (!m.data.tips) {
+        const keys = tipsFor(m, b);
+        if (keys) { m.data.tips = keys.filter((x) => !shown().includes(x)); shown().push(...m.data.tips); save(); }
+      }
+      (m.data.tips || []).forEach((x) => b.insertAdjacentHTML("beforeend", `<div class="tip">💡 ${esc(TIPS[x])}</div>`));
+    };
+  });
+
+  const dock = document.createElement("div");
+  dock.className = "dock";
+  dock.innerHTML = `<div class="recent-sheet hidden" id="recent-sheet"><div class="sheet-head"><b>📅 最近安排</b><span class="muted small">已逾期 · 今天 · 明天 · 后天 · 期限快到</span><span class="spacer"></span><button class="x" data-sheet-x title="关闭">×</button></div><div id="recent-body"></div></div>
+    <div class="dockrow"><button class="recent" id="recent-btn" title="查看最近 3 天的安排">📅 最近安排 <span class="n" data-recent-n></span><span class="over hidden" data-recent-over title="已逾期"></span></button>
+    <div class="says" id="says">${SUGGESTIONS.map((s) => `<button class="say" data-say="${esc(s)}">${esc(s)}</button>`).join("")}</div></div>`;
+  cbox.before(dock);
+  const sheet = dock.querySelector("#recent-sheet"), btn = dock.querySelector("#recent-btn"), body = dock.querySelector("#recent-body");
+  dock.querySelectorAll("[data-say]").forEach((x) => (x.onclick = () => C.send(x.dataset.say)));
+
+  const shortDate = (ds) => PA.cnDate(ds).replace(/（.*/, "");
+  const timeOf = (t) => (t.time ? PA.timeRange(t) : "全天");
+  function panelHTML() {
+    const u = PA.upcoming();
+    const row = (t, when) => `<div class="crow" data-todo-row>${PA.tickHTML(t)}<span class="ct">${esc(when)}</span><a class="ci" href="todo.html?id=${t.id}">${esc(t.title)}</a>${t.location ? `<span class="cl" title="${esc(t.location)}">📍${esc(t.location)}</span>` : ""}</div>`;
+    const sec = (title, list, when, cls = "") => `<h4 class="${cls}">${esc(title)}</h4>` + (list.length ? `<div class="ccard">${list.map((t) => row(t, when(t))).join("")}</div>` : '<div class="muted small">没有安排</div>');
+    const mail = state.prefs.dailyMail ? `每天 ${esc(state.prefs.mailTime || "08:00")} 邮件提醒` : "邮件提醒已关闭";
+    return (u.overdue.length ? sec(`已逾期 ${u.overdue.length} 项`, u.overdue, (t) => `${shortDate(t.date)} ${timeOf(t)}`, "red") : "")
+      + u.days.map((d) => sec(`${d.label} · ${shortDate(d.date)}`, d.list, timeOf)).join("")
+      + (u.deadlines.length ? sec("期限快到", u.deadlines, (t) => PA.deadlineText(t).replace(/^期限：/, "")) : "")
+      + `<div class="sheet-foot"><a href="todos.html">去待办页 ›</a><span>待安排 <b data-unsched>${u.unscheduled.length}</b> 件 · <a href="todos.html?tab=unscheduled">看看 ›</a></span><span>${mail} · <a href="profile.html#reminder">设置</a></span></div>`;
+  }
+  function refresh() {
+    const u = PA.upcoming(), n = u.days[0].list.length, od = u.overdue.length;
+    btn.querySelector("[data-recent-n]").textContent = n;
+    const o = btn.querySelector("[data-recent-over]");
+    o.textContent = od; o.classList.toggle("hidden", !od);
+    btn.title = `今天未完成 ${n} 件${od ? `，已逾期 ${od} 件` : ""}`;
+    if (!sheet.classList.contains("hidden")) body.innerHTML = panelHTML();
+  }
+  const setSheet = (on) => {
+    sheet.classList.toggle("hidden", !on); btn.classList.toggle("on", on);
+    if (on) body.innerHTML = panelHTML();
+  };
+  btn.onclick = (e) => { e.stopPropagation(); setSheet(sheet.classList.contains("hidden")); };
+  sheet.querySelector("[data-sheet-x]").onclick = () => setSheet(false);
+  document.addEventListener("click", (e) => { if (!sheet.classList.contains("hidden") && e.target.isConnected && !e.target.closest("#recent-sheet, #recent-btn")) setSheet(false); });
+  document.addEventListener("pa:todos-changed", refresh);
+  refresh();
+  C.recent = { open: () => setSheet(true), close: () => setSheet(false), refresh };
+})();

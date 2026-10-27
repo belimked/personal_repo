@@ -7,7 +7,7 @@
       "path": "docs/design/原型v4-设计.md",
       "version": "v1",
       "sha256": "8ecf79e22a5d2b7be88dd00513c3235069826c0fab03e7ebf4c4c723ccc96de0",
-      "sealed_at": "2026-10-27T11:12:18.209Z"
+      "sealed_at": "2026-10-27T11:40:22.234Z"
     },
     "milestones": {
       "M1": "原型 v4：助手页对话化"
@@ -43,6 +43,13 @@
         "design_sha": "8ecf79e22a5d2b7be88dd00513c3235069826c0fab03e7ebf4c4c723ccc96de0",
         "date": "2026-10-27",
         "note": "用户同意完成后自动推送发布"
+      },
+      {
+        "pv": 2,
+        "design_version": "v1",
+        "design_sha": "8ecf79e22a5d2b7be88dd00513c3235069826c0fab03e7ebf4c4c723ccc96de0",
+        "date": "2026-10-27",
+        "note": "补全：全量测试命令改为 node --test \"tests/*.test.mjs\"（Node 24 不支持传目录）"
       }
     ],
     "plan_version": 2,
@@ -289,7 +296,8 @@
       "model_used": "main",
       "actual_min": 11.6,
       "last_error": null,
-      "finished_at": "2026-10-27T11:33:18.025Z"
+      "finished_at": "2026-10-27T11:33:18.025Z",
+      "commit": "4b42c69"
     },
     {
       "id": "S04",
@@ -329,10 +337,15 @@
         ]
       },
       "gaps": [],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "e84ea146ce",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-27T11:33:27.371Z",
+      "model_used": "main",
+      "actual_min": 8.6,
+      "last_error": null,
+      "finished_at": "2026-10-27T11:42:05.439Z"
     },
     {
       "id": "S05",
@@ -453,14 +466,14 @@
         "type": "auto",
         "commands": [
           "node --test tests/ask-entry.test.mjs",
-          "node --test tests/"
+          "node --test \"tests/*.test.mjs\""
         ]
       },
       "gaps": [],
       "status": "pending",
       "attempts": 0,
-      "spec_sha": "10881748d8",
-      "pv": 1
+      "spec_sha": "17ccd52a61",
+      "pv": 2
     },
     {
       "id": "S08",
@@ -500,14 +513,14 @@
           "grep -q 'ITER1/v4/' public/index.html",
           "grep -q '已改原型（v4）' docs/ITER1/review/原型评审变更记录.md",
           "grep -q 'v4 原型实现说明' docs/ITER1/review/原型评审变更记录.md",
-          "node --test tests/"
+          "node --test \"tests/*.test.mjs\""
         ]
       },
       "gaps": [],
       "status": "pending",
       "attempts": 0,
-      "spec_sha": "c6d1a3e70f",
-      "pv": 1
+      "spec_sha": "d98981d433",
+      "pv": 2
     }
   ],
   "post_run": [
