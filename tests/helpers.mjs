@@ -93,3 +93,14 @@ export async function loadPage(name, { session, today, state, url } = {}) {
     close: () => window.close(),
   };
 }
+
+// 轮询直到 fn 返回真值（返回该值），超时抛错
+export async function waitFor(fn, { timeout = 3000, interval = 10, label = "条件" } = {}) {
+  const end = Date.now() + timeout;
+  for (;;) {
+    const v = fn();
+    if (v) return v;
+    if (Date.now() > end) throw new Error(`等待超时：${label}`);
+    await sleep(interval);
+  }
+}

@@ -479,3 +479,58 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
   .topbar { padding: 0 12px; }
   .proto-tag { display: none; }
 }
+
+/* ---------- 助手对话页 ---------- */
+.chat-head { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+.chat-head .sub { font-size: 12px; color: var(--muted); }
+.bot-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e9eef6; color: #2c4a7a; display: grid; place-items: center; font-weight: 600; font-size: 17px; flex-shrink: 0; position: relative; }
+.bot-avatar .dot { position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--success); border: 2px solid #fff; }
+.msg.bot .who { width: 32px; height: 32px; background: #e9eef6; color: #2c4a7a; font-weight: 600; font-size: 14px; }
+.msg.bot .bubble { border-radius: 4px 10px 10px 10px; }
+.msg.me .bubble { border-radius: 10px 4px 10px 10px; white-space: normal; }
+.msg .bubble p { margin: 0; }
+.msg .bubble p + p, .msg .bubble p + .ccard, .msg .bubble .ccard + p, .msg .bubble p + .result-card { margin-top: 8px; }
+.msg .bubble .red { color: var(--danger); }
+.msg.typing .dots { display: inline-flex; gap: 4px; padding: 4px 0; vertical-align: middle; }
+.msg.typing .dots i { width: 6px; height: 6px; border-radius: 50%; background: #b6bdc8; animation: pa-typing 1s infinite; }
+.msg.typing .dots i:nth-child(2) { animation-delay: .15s; }
+.msg.typing .dots i:nth-child(3) { animation-delay: .3s; }
+.msg.typing .typing-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+@keyframes pa-typing { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+.ccard { border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; background: #fafbfc; }
+.crow { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 14px; flex-wrap: wrap; }
+.crow + .crow { border-top: 1px dashed var(--border); }
+.crow .ct { color: var(--muted); font-size: 13px; min-width: 86px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.crow .ci { color: var(--text); }
+.crow .cl { color: var(--muted); font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow.done .ci { color: var(--muted); text-decoration: line-through; }
+.crow-acts { display: flex; gap: 6px; margin-left: auto; }
+.composer-row { display: flex; align-items: flex-end; gap: 8px; }
+.composer-box .composer-row textarea { flex: 1; min-height: 32px; max-height: 120px; padding: 5px 0; line-height: 1.5; background: none; }
+.ibtn { width: 36px; height: 36px; border-radius: 50%; border: 0; background: none; font-size: 17px; color: var(--muted); flex-shrink: 0; cursor: pointer; }
+.ibtn:hover { background: var(--bg); }
+.ibtn.mic { background: var(--primary-weak); color: var(--primary); }
+.ibtn.send { background: var(--primary); color: #fff; }
+.att-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.composer-box.over { border-color: var(--primary); background: var(--primary-weak); }
+.me-files { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.me-files span { background: rgba(255,255,255,.2); border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+.rc-head { font-weight: 500; }
+.rc-meta { margin-top: 4px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rc-files { margin-top: 6px; font-size: 12px; }
+.rc-files div { padding: 2px 0; }
+.rc-edit:not(:empty) { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.ask { margin-top: 8px; font-size: 13px; color: var(--primary); }
+.bt-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--border); cursor: pointer; flex-wrap: wrap; }
+.bt-row:last-child { border-bottom: none; }
+.bt-row .bt-time { color: var(--muted); font-size: 12px; min-width: 88px; }
+.bt-row.excl b { color: var(--muted); }
+.excl-why { color: var(--warn); font-size: 12px; }
+.bt-fold { margin-top: 8px; }
+.bt-fold summary { cursor: pointer; color: var(--warn); font-size: 13px; }
+.mt-items label { display: flex; gap: 8px; align-items: center; padding: 4px 0; cursor: pointer; }
+.rec-hit { border-left: 3px solid var(--success); background: #fafbfc; padding: 4px 8px; margin-top: 6px; font-size: 13px; }
+@media (max-width: 640px) {
+  .msg .bubble { max-width: 88%; }
+  .crow .ct { min-width: 0; font-size: 12px; }
+}

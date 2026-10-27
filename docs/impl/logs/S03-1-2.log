@@ -1,0 +1,27 @@
+$ node --test tests/smoke.test.mjs
+✔ v4 包含全部页面 (7.510852ms)
+✔ 冒烟：admin-filetypes.html (1189.174067ms)
+✔ 冒烟：admin-logs.html (820.723825ms)
+✔ 冒烟：admin-models.html (599.626364ms)
+✔ 冒烟：admin-system.html (329.140559ms)
+✔ 冒烟：admin-usage.html (389.122399ms)
+✔ 冒烟：admin-users.html (277.382884ms)
+✔ 冒烟：files.html (625.453675ms)
+✔ 冒烟：forgot.html (187.026677ms)
+✔ 冒烟：home.html (244.150898ms)
+✔ 冒烟：inbox.html (373.692769ms)
+✔ 冒烟：index.html (143.032502ms)
+✔ 冒烟：profile.html (330.47043ms)
+✔ 冒烟：reminders.html (48.244606ms)
+✔ 冒烟：todo.html (152.088731ms)
+✔ 冒烟：todos.html (710.794635ms)
+✔ PA_TODAY 覆盖今天，数据随之生成 (158.946689ms)
+✔ 未登录访问会跳转到登录页 (302.599973ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8999.981217
