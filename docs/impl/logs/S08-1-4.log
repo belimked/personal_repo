@@ -1,0 +1,2 @@
+$ grep -q '已改原型（v4）' docs/ITER1/review/原型评审变更记录.md
+

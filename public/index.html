@@ -20,9 +20,26 @@
   <h2 style="margin:0 0 10px">迭代一（ITER1）</h2>
 
   <div class="card ver">
-    <div class="tag">v3</div>
+    <div class="tag">v4</div>
     <div style="flex:1">
-      <div class="row"><b>原型 v3</b><span class="badge green">最新</span><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn primary" href="ITER1/v3/">打开 v3</a></div>
+      <div class="row"><b>原型 v4</b><span class="badge green">最新</span><span class="muted small">2026-10-26</span><span class="spacer"></span><a class="btn primary" href="ITER1/v4/">打开 v4</a></div>
+      <ul>
+        <li>助手页整页改为对话：助手先开口、按时段问候并带出今天的待办；有逾期单独一条消息；回复前显示“正在输入”；结果用卡片展示并可撤销 / 修改</li>
+        <li>问候语由程序组好再说得像人话：可以带节日、天气开场，件数时间以程序数据为准，出错或超时用固定模板；每天第一次完整问候，之后只补充变化</li>
+        <li>会议录音整理好后由助手主动发消息，在对话里逐条勾选加入待办、可“听原话”；选“晚点再说”稍后再提醒一次；取消“待确认”菜单项</li>
+        <li>随用随提示（每种能力第一次用完附一行 💡 提示）、输入框上方可点击的建议说法、“📅 最近安排”按钮与面板（面板内容不进聊天记录）</li>
+        <li>对话记录保留 30 天，默认只看今天，往上翻可看更早的；左侧菜单默认收成图标栏，可展开并记住选择</li>
+        <li>助手可改名；各菜单页放“问助手”入口（知识库按意思找、待办页一句示例说法），输入后跳到助手页在对话里处理</li>
+        <li>助手主动提出代写文档：识别周报 / 方案 / 介绍 / 总结 / 报告，参照知识库里的类似文档、整理素材后写初稿；初稿可复制、导出 .doc，同时存入知识库并挂到待办</li>
+      </ul>
+      <div class="hint">变更明细与处理规则：仓库 docs/ITER1/review/原型评审变更记录.md（第 10 项、v4 原型实现说明）</div>
+    </div>
+  </div>
+
+  <div class="card ver">
+    <div class="tag" style="color:var(--muted)">v3</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v3</b><span class="badge">冻结</span><span class="muted small">2026-10-25</span><span class="spacer"></span><a class="btn" href="ITER1/v3/">打开 v3</a></div>
       <ul>
         <li>全局原则“助手优先”：助手页可文字 + 附件一起发送、结果卡片里直接修改 / 完成 / 删除 / 撤销、在对话中确认会议待办</li>
         <li>“近 3 天提醒”合并进助手页（试行），邮件提醒设置移到个人设置</li>
