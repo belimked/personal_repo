@@ -1,0 +1,15 @@
+$ node --test tests/nav.test.mjs
+✔ 菜单默认收成图标栏，名称放在 title 上 (1829.789076ms)
+✔ 点 » 展开并写入 localStorage，重新加载和换页后保持；再点 « 收起 (2175.337201ms)
+✔ 菜单和链接里没有“待确认”和 inbox.html (2093.480186ms)
+✔ inbox.html 跳转到助手页 (3.064653ms)
+✔ 助手菜单显示今天未完成件数，有逾期时红色 (1432.919096ms)
+✔ 窄屏导航覆盖全部页面 (604.868592ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10262.576723

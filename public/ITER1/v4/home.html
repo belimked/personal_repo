@@ -405,7 +405,7 @@ if (PA.mount({ page: "home", title: "助手", narrow: false })) {
     b.innerHTML = intentTag("upload") + '<div class="result-card"><div class="rc-files"></div><div data-q></div></div>';
     liveFiles(b.querySelector(".rc-files"), res);
     const others = ok.filter((r) => !media(r));
-    b.querySelector("[data-q]").innerHTML = (ok.some(media) ? '<div class="small" style="margin-top:6px">🎙 音视频正在识别；如果是会议录音，识别完会放进“待确认会议”，可以在这里直接确认。</div>' : "")
+    b.querySelector("[data-q]").innerHTML = (ok.some(media) ? '<div class="small" style="margin-top:6px">🎙 音视频正在识别；如果是会议录音，识别完我会在这里跟你确认。</div>' : "")
       + (others.length ? `<div style="margin-top:8px">已保存到知识库，要为它建一条待办吗？</div><div class="actions">${others.map((r, i) => `<button class="btn sm" data-mk="${i}">建待办${others.length > 1 ? "：" + esc(r.f.name) : ""}</button>`).join("")}</div>` : "");
     b.querySelectorAll("[data-mk]").forEach((x) => (x.onclick = () => newTodoForFile(others[+x.dataset.mk])));
   }
@@ -618,7 +618,7 @@ if (PA.mount({ page: "home", title: "助手", narrow: false })) {
         <div class="muted small" style="margin:4px 0 6px">${esc(m.summary)}</div><div class="small"><b>识别出的行动项</b>（默认勾选负责人是“我”的）</div>
         <div class="mt-items">${m.items.map((it, i) => `<label><input type="checkbox" data-i="${i}" ${it.owner === "我" ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}</label>`).join("")}</div>
         <div class="actions"><button class="btn sm primary" data-ok>确认</button><button class="btn sm" data-not>不是会议</button></div></div>`).join("")
-      + `<div class="actions" style="display:flex;gap:8px;margin-top:8px" data-foot><button class="btn sm primary" data-all>全部确认</button><button class="btn sm" data-later>稍后处理</button><a class="btn ghost sm" href="inbox.html">去待确认页</a></div>`;
+      + `<div class="actions" style="display:flex;gap:8px;margin-top:8px" data-foot><button class="btn sm primary" data-all>全部确认</button><button class="btn sm" data-later>稍后处理</button></div>`;
     const done = (card, html) => { card.removeAttribute("data-m"); card.innerHTML = html; if (!b.querySelector("[data-m]")) b.querySelector("[data-foot]")?.remove(); };
     const doOne = (card) => {
       const m = state.inbox.find((x) => x.id === card.dataset.m);

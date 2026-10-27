@@ -426,7 +426,7 @@
           summary: "（原型）会议摘要：讨论了项目进度和下一步分工，约定下周复盘。",
           dateFromAudio: Math.random() < 0.5 ? SEED.dayStr(-1) + " 10:00" : "", dateFromFile: SEED.dayStr(-1) + " 11:20",
           items: [{ owner: "我", text: "汇总会议纪要并发给参会人" }, { owner: "王五", text: "跟进供应商报价" }, { owner: "未识别", text: "下周复盘项目进度" }] });
-        toast(`识别到会议录音「${u.name}」，已加入“待确认”`, 4000);
+        toast(`识别到会议录音「${u.name}」，可以在助手页确认`, 4000);
       }
     }
     state.files.push(f);
@@ -915,7 +915,6 @@
   const NAV_USER = [
     ["home", "home.html", "💬", "助手"],
     ["todos", "todos.html", "✅", "待办事项"],
-    ["inbox", "inbox.html", "📥", "待确认"],
     ["files", "files.html", "📁", "个人知识库"],
     ["profile", "profile.html", "⚙️", "个人设置"],
   ];
@@ -928,10 +927,11 @@
     ["admin-logs", "admin-logs.html", "📜", "操作日志"],
   ];
   function updateBadges() {
-    const n = state.inbox.length;
-    document.querySelectorAll('[data-badge="inbox"]').forEach((el) => { el.textContent = n; el.classList.toggle("hidden", !n); });
-    const r = upcomingCount();
-    document.querySelectorAll('[data-badge="home"]').forEach((el) => { el.textContent = r; el.classList.toggle("hidden", !r); });
+    const u = upcoming(), n = u.days[0].list.length, od = u.overdue.length;
+    document.querySelectorAll('[data-badge="home"]').forEach((el) => {
+      el.textContent = n; el.classList.toggle("hidden", !n && !od); el.classList.toggle("overdue", !!od);
+      el.title = `今天未完成 ${n} 件${od ? `，已逾期 ${od} 件` : ""}`;
+    });
   }
 
   function mount({ page, title, admin = false, narrow = true }) {
@@ -939,16 +939,26 @@
     if (admin && state.session.role !== "admin") { location.href = "home.html"; return false; }
     const u = me();
     const content = document.getElementById("page");
-    const nav = (items) => items.map(([k, href, ico, label]) => `<a class="nav-item ${k === page ? "active" : ""}" href="${href}"><span class="ico">${ico}</span>${label}${k === "inbox" || k === "home" ? `<span class="count hidden" data-badge="${k}"></span>` : ""}</a>`).join("");
+    const navItems = state.session.role === "admin" ? [...NAV_USER, ...NAV_ADMIN] : NAV_USER;
+    const nav = (items) => items.map(([k, href, ico, label]) => `<a class="nav-item ${k === page ? "active" : ""}" href="${href}" title="${label}" data-name="${label}"><span class="ico">${ico}</span><span class="lbl">${label}</span>${k === "home" ? `<span class="count hidden" data-badge="${k}"></span>` : ""}</a>`).join("");
     const app = document.createElement("div");
     app.className = "app";
+    const setNav = (open) => {
+      app.querySelector(".sidebar").classList.toggle("collapsed", !open);
+      document.body.classList.toggle("nav-collapsed", !open);
+      const t = app.querySelector("#nav-toggle");
+      t.querySelector(".ico").textContent = open ? "«" : "»";
+      t.title = t.dataset.name = open ? "收起菜单" : "展开菜单";
+    };
     app.innerHTML = `
       <aside class="sidebar">
         <div class="brand"><span class="logo">助</span>个人日常助手</div>
         <div class="nav-group"><div class="nav-title">我的</div>${nav(NAV_USER)}</div>
         ${state.session.role === "admin" ? `<div class="nav-group"><div class="nav-title">系统管理（管理员）</div>${nav(NAV_ADMIN)}</div>` : ""}
-        <div class="sidebar-foot">ITER1 · 原型 v4 · 数据仅保存在本浏览器<br><button id="reset-demo" style="margin-top:6px">重置演示数据</button></div>
+        <div class="sidebar-foot"><span class="lbl">ITER1 · 原型 v4 · 数据仅保存在本浏览器<br><button id="reset-demo" style="margin-top:6px">重置演示数据</button></span>
+          <button class="nav-item nav-toggle" id="nav-toggle"><span class="ico">»</span><span class="lbl">收起菜单</span></button></div>
       </aside>
+      <nav class="mnav">${navItems.map(([k, href, ico, label]) => `<a class="${k === page ? "active" : ""}" href="${href}" title="${label}"><span class="ico">${ico}</span><span class="lbl">${label}</span>${k === "home" ? `<span class="count hidden" data-badge="${k}"></span>` : ""}</a>`).join("")}</nav>
       <div class="workspace">
         <div class="main-col">
           <header class="topbar"><span class="title">${esc(title)}</span><a class="proto-tag" href="../../" title="查看所有版本">ITER1 · 原型 v4</a><span class="spacer"></span>
@@ -961,6 +971,8 @@
       </div>
       <div class="preview-toggle hidden" id="preview-toggle"></div>`;
     document.body.prepend(app);
+    setNav(!!state.prefs.navExpanded);
+    app.querySelector("#nav-toggle").onclick = () => { state.prefs.navExpanded = !state.prefs.navExpanded; save(); setNav(state.prefs.navExpanded); };
     app.querySelector("#content").appendChild(content);
     app.querySelector("#user-chip").onclick = (e) => { e.stopPropagation(); app.querySelector("#user-menu").classList.toggle("open"); };
     app.querySelector("#logout").onclick = () => { log("退出登录", "—"); state.session = null; save(); location.href = "index.html"; };

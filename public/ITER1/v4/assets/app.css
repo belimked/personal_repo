@@ -446,3 +446,36 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .star.on { color: #f5a623; }
 .deadline { color: var(--warn); font-size: 12px; }
 .deadline.urgent { color: var(--danger); }
+
+/* ---------- 菜单：图标栏 / 窄屏导航 ---------- */
+.sidebar { transition: width .18s; }
+.sidebar .lbl { white-space: nowrap; }
+.nav-item .count { background: var(--primary-weak); color: var(--primary); }
+.nav-item.active .count { background: rgba(255,255,255,.25); color: #fff; }
+.nav-item .count.overdue, .mnav .count.overdue { background: var(--danger); color: #fff; }
+.sidebar-foot { display: flex; flex-direction: column; gap: 8px; }
+.nav-toggle { width: 100%; border: none; background: none; font: inherit; text-align: left; color: #7f8aa3; }
+.sidebar.collapsed { width: 60px; overflow: visible; }
+.sidebar.collapsed .brand { padding: 18px 0 14px; justify-content: center; font-size: 0; }
+.sidebar.collapsed .nav-group { padding: 6px 8px; }
+.sidebar.collapsed .nav-title { font-size: 0; padding: 0; margin: 8px 6px; border-top: 1px solid #2a3347; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 10px 0; }
+.sidebar.collapsed .lbl { display: none; }
+.sidebar.collapsed .sidebar-foot { padding: 8px; }
+.sidebar.collapsed .nav-item .count { position: absolute; top: 2px; right: 2px; margin: 0; font-size: 10px; padding: 0 5px; line-height: 15px; }
+/* 悬停浮层不拦截点击，避免挡住相邻菜单项 */
+.sidebar.collapsed .nav-item:hover::after { content: attr(data-name); position: absolute; left: 50px; top: 50%; transform: translateY(-50%); background: #111827; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 5px; white-space: nowrap; z-index: 60; pointer-events: none; }
+.mnav { display: none; }
+@media (max-width: 640px) {
+  .app { flex-direction: column; }
+  .sidebar { display: none; }
+  .workspace { min-height: 0; }
+  .mnav { display: flex; order: 2; flex-shrink: 0; overflow-x: auto; background: var(--panel); border-top: 1px solid var(--border); }
+  .mnav a { flex: 1 0 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; color: var(--muted); font-size: 11px; position: relative; white-space: nowrap; }
+  .mnav a:hover { text-decoration: none; }
+  .mnav a.active { color: var(--primary); }
+  .mnav .ico { font-size: 18px; }
+  .mnav .count { position: absolute; top: 2px; left: calc(50% + 6px); background: var(--primary); color: #fff; border-radius: 8px; font-size: 10px; padding: 0 5px; line-height: 15px; }
+  .topbar { padding: 0 12px; }
+  .proto-tag { display: none; }
+}
