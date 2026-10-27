@@ -1008,3 +1008,157 @@
     });
   };
 })();
+
+// 代写文档：写作类待办新建后提示一次；同意后找参考文档、整理素材、生成文字初稿（只用已有数据，缺什么写明），存入知识库并挂到待办
+(function () {
+  const PA = window.PA, C = window.PA_CHAT;
+  if (!PA || !C) return;
+  const { state, esc, save, toast, log } = PA;
+  const CATS = ["周报", "方案", "介绍", "总结", "报告"];
+  const REF_TERMS = { 周报: ["周报", "周会", "本周"], 方案: ["方案", "计划"], 介绍: ["介绍", "简介", "项目"], 总结: ["总结", "复盘", "报告"], 报告: ["报告", "总结"] };
+  const FALLBACK_TAG = { 周报: "工作/报告", 方案: "工作/方案", 介绍: "工作/项目资料", 总结: "工作/报告", 报告: "工作/报告" };
+  const W = () => (state.writeOffer = state.writeOffer || { offered: [], rejects: {} });
+  const catOf = (title) => CATS.find((c) => title.includes(c)) || "";
+  const docTitle = (t) => t.title.replace(/^(帮我)?(提交|交|写|编写|撰写|准备|整理)(一份|一下)?/, "") || t.title;
+
+  function maybeOffer(t) {
+    const cat = t && t.status === "open" && catOf(t.title), w = W();
+    if (!cat || w.offered.includes(t.id) || (w.rejects[cat] || 0) >= 3) return;
+    w.offered.push(t.id); save();
+    C.reply(() => C.bot("writeOffer", "", { todoId: t.id, cat, refId: findRef(cat, t)?.id || "" }));
+  }
+  document.addEventListener("pa:chat-message", (e) => { const m = e.detail; if (m.kind === "todo" && m.data.fresh) maybeOffer(PA.todoById(m.data.todoId)); });
+  const origConfirm = C.confirmMeeting;
+  C.confirmMeeting = (...args) => { const r = origConfirm(...args); r.created.forEach(maybeOffer); return r; };
+
+  // 模拟按意思匹配：名称命中权重高于正文
+  function findRef(cat, t) {
+    const terms = REF_TERMS[cat];
+    return state.files.filter((f) => f.status === "indexed" && !t.attachments.includes(f.id) && (f.cat === "text" || f.cat === "doc")).map((f) => ({
+      f, s: terms.reduce((s, x) => s + (f.name.includes(x) ? 3 : 0) + ((f.content || "").includes(x) ? 1 : 0), 0),
+    })).filter((x) => x.s >= 3).sort((a, b) => b.s - a.s)[0]?.f;
+  }
+  const offerText = (d, t, ref) => d.cat === "周报"
+    ? `需要我参照之前的周报${ref ? `《${ref.name}》` : ""}帮你写吗？可以把本周素材发给我。`
+    : ref ? `知识库里有类似的${d.cat}《${ref.name}》，把${d.cat === "介绍" ? "项目" : "相关"}信息给我，我来写「${t.title}」。`
+    : `「${t.title}」需要我帮你起草吗？把相关信息给我，我来写。`;
+  C.kinds.writeOffer = (b, m) => {
+    const d = m.data, t = PA.todoById(d.todoId);
+    if (!t) { b.innerHTML = '<p class="muted">这条待办已经不在了。</p>'; return; }
+    b.innerHTML = `<p>✍️ ${esc(offerText(d, t, PA.fileById(d.refId)))}</p>` + (d.chosen ? `<p class="muted small">已选择：${esc(d.chosen)}</p>`
+      : '<div class="actions"><button class="btn sm primary" data-wo="go">好，开始</button><button class="btn sm" data-wo="no">不用了</button></div>');
+    const go = b.querySelector('[data-wo="go"]'), no = b.querySelector('[data-wo="no"]');
+    if (go) go.onclick = () => {
+      W().rejects[d.cat] = 0;
+      C.setData(m, { chosen: "好，开始" });
+      C.push("user", "text", "好，开始");
+      C.reply(() => C.bot("writeMaterials", "", { todoId: t.id, cat: d.cat, refId: d.refId, groups: collect(d.cat, t) }));
+    };
+    if (no) no.onclick = () => {
+      const w = W(); w.rejects[d.cat] = (w.rejects[d.cat] || 0) + 1;
+      C.setData(m, { chosen: "不用了" });
+      C.push("user", "text", "不用了");
+      C.reply(() => C.bot("text", w.rejects[d.cat] >= 3 ? `好的。以后${d.cat}类的事我就不主动问了，需要时直接跟我说。` : "好的，需要时再跟我说。"));
+    };
+  };
+
+  // ---------- 素材：只取演示数据里的待办、想法记录、会议要点 ----------
+  function weekOf(ds) { const dow = new Date(ds + "T00:00:00").getDay(), mon = PA.addDays(ds, -((dow + 6) % 7)); return [mon, PA.addDays(mon, 6)]; }
+  const inRange = (ds, [a, b]) => !!ds && ds >= a && ds <= b;
+  const meetingPoints = (pick) => [
+    ...state.todos.filter((x) => x.source === "meeting" && x.status !== "deleted" && /^会议摘要：/.test(x.notes || "") && pick(x.date, x.title + x.notes)).map((x) => `${x.title}：${x.notes.replace(/^会议摘要：/, "")}`),
+    ...state.inbox.filter((x) => pick((x.dateFromAudio || x.dateFromFile || "").slice(0, 10), x.fileName + x.summary)).map((x) => `${x.fileName.replace(/\.\w+$/, "")}：${x.summary}`),
+  ];
+  const recordsOf = (pick, self) => state.todos.filter((x) => x.status !== "deleted").flatMap((x) => (x.records || []).filter((r) => pick(r.at.slice(0, 10), x.title + r.text, x, self)).map((r) => `${x.title}：${r.text}`));
+  function collect(cat, t) {
+    if (cat === "周报") {
+      const wk = weekOf(PA.today()), next = weekOf(PA.addDays(wk[0], 7)), inWk = (ds) => inRange(ds, wk);
+      return [
+        { label: "本周完成", lines: state.todos.filter((x) => x.status === "done" && inWk(x.date || (x.updatedAt || "").slice(0, 10))).map((x) => x.title), need: "本周完成的工作" },
+        { label: "会议要点", lines: meetingPoints(inWk), need: "本周会议的结论" },
+        { label: "想法记录", lines: recordsOf(inWk), need: "" },
+        { label: "下周计划", lines: state.todos.filter((x) => x.status === "open" && x.id !== t.id && inRange(x.date, next)).map((x) => x.title), need: "下周计划" },
+        { label: "风险", lines: [], need: "风险和需要协调的事" },
+      ];
+    }
+    const core = docTitle(t).replace(cat, "").replace(/新的|一份|的|[\s，,。]/g, "");
+    const terms = [...new Set([...core].slice(0, -1).map((c, i) => c + core[i + 1]))];
+    const hit = (_, hay) => terms.some((x) => hay.includes(x));
+    return [
+      { label: "会议要点", lines: meetingPoints(hit), need: `${docTitle(t)}的背景和会议结论` },
+      { label: "相关待办", lines: state.todos.filter((x) => x.id !== t.id && x.status !== "deleted" && hit("", x.title)).map((x) => x.title), need: "" },
+      { label: "想法记录", lines: recordsOf((d, hay, x) => x.id === t.id || hit(d, hay)), need: "" },
+      { label: cat === "介绍" ? "项目信息" : "关键数据", lines: [], need: cat === "介绍" ? "项目目标、范围、时间安排" : "关键数据和结论" },
+    ];
+  }
+
+  C.kinds.writeMaterials = (b, m) => {
+    const d = m.data, t = PA.todoById(d.todoId), ref = PA.fileById(d.refId);
+    const has = d.groups.filter((g) => g.lines.length);
+    b.innerHTML = `<p>${ref ? `我参照知识库里的《${esc(ref.name)}》来写。` : "知识库里没找到类似的文档，我按通用格式写。"}${d.cat === "周报" ? "先帮你整理了本周的素材：" : "从会议和待办里找到这些素材："}</p>`
+      + `<div class="result-card">${has.length ? has.map((g) => `<div class="small"><b>${esc(g.label)}</b></div><ul class="wr-list">${g.lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`).join("") : '<div class="muted small">没有找到相关素材。</div>'}`
+      + (d.done ? "" : `<div class="field" style="margin-top:8px"><label>还有要补充的吗？（可不填）</label><textarea class="input" rows="2" data-wm="extra" placeholder="${d.cat === "周报" ? "比如本周其他进展、遇到的问题" : "比如项目目标、时间安排"}"></textarea></div>
+        <div class="actions"><button class="btn sm primary" data-wm="go">写初稿</button></div>`) + "</div>";
+    const go = b.querySelector('[data-wm="go"]');
+    if (go) go.onclick = () => {
+      const extra = b.querySelector('[data-wm="extra"]').value.trim();
+      C.setData(m, { done: true });
+      C.push("user", "text", extra ? `补充：${extra}` : "直接写吧");
+      C.reply(() => draft(t, d, extra));
+    };
+  };
+
+  // ---------- 初稿 ----------
+  const CN = ["一", "二", "三", "四", "五", "六", "七"];
+  function compose(t, d, extra) {
+    const out = [`${docTitle(t)}（初稿）`, ""], missing = [];
+    let n = 0;
+    d.groups.forEach((g) => {
+      if (!g.lines.length && !g.need) return;
+      out.push(`${CN[n++]}、${g.label}`);
+      if (g.lines.length) g.lines.forEach((l) => out.push(`- ${l}`));
+      else { out.push(`还缺：${g.need}`); missing.push(g.need); }
+      out.push("");
+    });
+    if (extra) out.push(`${CN[n++]}、补充`, `- ${extra}`, "");
+    return { text: out.join("\n").trim(), missing };
+  }
+  function draft(t, d, extra) {
+    const { text, missing } = compose(t, d, extra);
+    const name = `${docTitle(t)}（初稿）.md`;
+    const tags = PA.autoTags(`${t.title} ${d.cat}`);
+    const f = { id: PA.uid("f"), name, ext: "md", cat: "text", size: new Blob([text]).size, tags: tags.length ? tags : [FALLBACK_TAG[d.cat]], uploadedAt: PA.nowStr(), status: "indexed", content: text };
+    state.files.push(f);
+    t.attachments.push(f.id); t.updatedAt = PA.nowStr();
+    save(); log("代写文档", `${t.title} → 生成初稿《${name}》`);
+    document.dispatchEvent(new CustomEvent("pa:files-changed"));
+    PA.todosChanged();
+    C.bot("writeDraft", "", { todoId: t.id, fileId: f.id, text, missing, title: docTitle(t) });
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(() => toast("已复制初稿"), () => toast("复制失败，请手动选中复制")); return; }
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+    toast(document.execCommand && document.execCommand("copy") ? "已复制初稿" : "复制失败，请手动选中复制");
+    ta.remove();
+  }
+  function exportWord(title, text) {
+    const html = `<html><head><meta charset="utf-8"><title>${esc(title)}</title></head><body>${text.split("\n").map((l) => (l ? `<p>${esc(l)}</p>` : "<p>&nbsp;</p>")).join("")}</body></html>`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    a.download = `${title}.doc`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    log("下载文件", `导出 Word：${title}.doc`);
+  }
+  C.kinds.writeDraft = (b, m) => {
+    const d = m.data, t = PA.todoById(d.todoId), f = PA.fileById(d.fileId);
+    b.innerHTML = `<p>初稿写好了${d.missing.length ? `，还缺 ${d.missing.length} 项素材，我在稿子里标出来了（不会自己编数字和事实）` : ""}：</p>
+      <div class="result-card draft-card"><div class="draft-text" data-draft>${esc(d.text)}</div>
+      <div class="actions"><button class="btn sm" data-wd="copy">复制</button><button class="btn sm" data-wd="word">导出 Word</button>${f ? `<button class="btn ghost sm" data-wd="view">在知识库中查看</button>` : ""}</div>
+      <div class="hint">${f ? `已存入知识库《${esc(f.name)}》` : "知识库中的文件已删除"}${t && f && t.attachments.includes(f.id) ? `，并挂到待办「<a href="todo.html?id=${t.id}">${esc(t.title)}</a>」` : ""}。</div></div>`;
+    b.querySelector('[data-wd="copy"]').onclick = () => copyText(d.text);
+    b.querySelector('[data-wd="word"]').onclick = () => exportWord(d.title, d.text);
+    const v = b.querySelector('[data-wd="view"]');
+    if (v) v.onclick = () => PA.openPreview(f.id, []);
+  };
+})();

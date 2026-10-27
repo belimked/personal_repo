@@ -396,7 +396,8 @@
       "model_used": "main",
       "actual_min": 8,
       "last_error": null,
-      "finished_at": "2026-10-27T11:50:17.419Z"
+      "finished_at": "2026-10-27T11:50:17.419Z",
+      "commit": "089912b"
     },
     {
       "id": "S06",
@@ -435,10 +436,15 @@
         ]
       },
       "gaps": [],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "bea3db6c68",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-27T11:50:27.073Z",
+      "model_used": "main",
+      "actual_min": 7.1,
+      "last_error": null,
+      "finished_at": "2026-10-27T11:57:30.630Z"
     },
     {
       "id": "S07",
