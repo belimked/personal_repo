@@ -1039,12 +1039,17 @@
     const terms = REF_TERMS[cat];
     return state.files.filter((f) => f.status === "indexed" && !t.attachments.includes(f.id) && (f.cat === "text" || f.cat === "doc")).map((f) => ({
       f, s: terms.reduce((s, x) => s + (f.name.includes(x) ? 3 : 0) + ((f.content || "").includes(x) ? 1 : 0), 0),
-    })).filter((x) => x.s >= 3).sort((a, b) => b.s - a.s)[0]?.f;
+    })).filter((x) => x.s >= 3).sort((a, b) => b.s - a.s || isTpl(a.f) - isTpl(b.f) || b.f.uploadedAt.localeCompare(a.f.uploadedAt))[0]?.f;
   }
-  const offerText = (d, t, ref) => d.cat === "周报"
-    ? `需要我参照之前的周报${ref ? `《${ref.name}》` : ""}帮你写吗？可以把本周素材发给我。`
-    : ref ? `知识库里有类似的${d.cat}《${ref.name}》，把${d.cat === "介绍" ? "项目" : "相关"}信息给我，我来写「${t.title}」。`
-    : `「${t.title}」需要我帮你起草吗？把相关信息给我，我来写。`;
+  const isTpl = (f) => (f.tags || []).some((x) => x.endsWith("模板")) || f.name.includes("模板");
+  const meetingOf = (t) => t.source === "meeting" && ((t.notes || "").match(/^来自会议：([^（]+)/) || [])[1];
+  const offerText = (d, t, ref) => {
+    if (d.cat === "周报") return `需要我${ref ? `参照你之前的周报《${ref.name}》` : ""}帮你写这份周报吗？可以把这周的素材都发给我，本周完成的事我先帮你整理好。`;
+    const mt = meetingOf(t), lead = mt ? `会议「${mt}」里提到要「${t.title}」。` : "";
+    const kind = d.cat === "介绍" ? "项目介绍" : d.cat, info = d.cat === "介绍" ? "项目的信息" : "相关信息";
+    return ref ? `${lead}知识库里已经有一份类似的${kind}《${ref.name}》，这件事我可以帮你做，只需要把${info}给我就行。`
+      : `${lead}「${t.title}」需要我帮你起草吗？把${info}给我，我来写。`;
+  };
   C.kinds.writeOffer = (b, m) => {
     const d = m.data, t = PA.todoById(d.todoId);
     if (!t) { b.innerHTML = '<p class="muted">这条待办已经不在了。</p>'; return; }
@@ -1100,7 +1105,7 @@
     const has = d.groups.filter((g) => g.lines.length);
     b.innerHTML = `<p>${ref ? `我参照知识库里的《${esc(ref.name)}》来写。` : "知识库里没找到类似的文档，我按通用格式写。"}${d.cat === "周报" ? "先帮你整理了本周的素材：" : "从会议和待办里找到这些素材："}</p>`
       + `<div class="result-card">${has.length ? has.map((g) => `<div class="small"><b>${esc(g.label)}</b></div><ul class="wr-list">${g.lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`).join("") : '<div class="muted small">没有找到相关素材。</div>'}`
-      + (d.done ? "" : `<div class="field" style="margin-top:8px"><label>还有要补充的吗？（可不填）</label><textarea class="input" rows="2" data-wm="extra" placeholder="${d.cat === "周报" ? "比如本周其他进展、遇到的问题" : "比如项目目标、时间安排"}"></textarea></div>
+      + (d.done ? "" : `<div class="field" style="margin-top:8px"><label>${d.cat === "介绍" ? "把项目的信息发给我（目标、范围、时间安排等，可不填）" : d.cat === "周报" ? "这周还有其他素材吗？发给我就行（可不填）" : "还有要补充的吗？（可不填）"}</label><textarea class="input" rows="2" data-wm="extra" placeholder="${d.cat === "周报" ? "比如本周其他进展、遇到的问题" : "比如项目目标、时间安排"}"></textarea></div>
         <div class="actions"><button class="btn sm primary" data-wm="go">写初稿</button></div>`) + "</div>";
     const go = b.querySelector('[data-wm="go"]');
     if (go) go.onclick = () => {

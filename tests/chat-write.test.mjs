@@ -33,8 +33,7 @@ test("新建“下周三交周报”后提示代写；好，开始 → 素材 �
     const filesBefore = c.PA.state.files.length;
     const t = await create(c, "下周三交周报");
     const offer = await waitFor(() => lastKind(c, "writeOffer"), { label: "代写提示" });
-    assert.match(offer.textContent, /参照之前的周报/);
-    assert.ok(offer.textContent.includes("项目周报模板.html"), "按意思找到的参考文档");
+    assert.match(offer.textContent, /参照你之前的周报《工作周报-\d\d-\d\d\.md》帮你写这份周报吗？可以把这周的素材都发给我/);
     assert.ok(btn(offer, "好，开始") && btn(offer, "不用了"));
     assert.deepEqual(c.state().writeOffer.offered, [t.id]);
 
@@ -158,5 +157,30 @@ test("刷新后代写消息按 data 重新渲染", async () => {
     assert.deepEqual(c2.errors, []);
   } finally {
     c2.close();
+  }
+});
+
+test("会议录音里有“编写一份新的项目介绍”：确认后助手提示知识库有类似项目介绍，只需提供项目信息", async () => {
+  const c = await openChat();
+  try {
+    const note = await waitFor(() => lastKind(c, "meetingNote"), { label: "会议消息" });
+    btn(note, "一起过一下").click();
+    const review = await waitFor(() => lastKind(c, "meetingReview"), { label: "逐条确认" });
+    const intro = [...review.querySelectorAll("input[data-i]")].find((x) => x.closest("label").textContent.includes("编写一份新的移动审批项目介绍"));
+    assert.ok(intro && intro.checked, "分给我的项目介绍默认勾选");
+    const n = countKind(c, "writeOffer");
+    [...review.querySelectorAll("button")].find((b) => b.textContent.startsWith("加入待办")).click();
+    const offer = await waitFor(() => countKind(c, "writeOffer") > n && c.all('#msgs .msg[data-kind="writeOffer"]').find((m) => m.textContent.includes("项目介绍")), { label: "代写提示" });
+    const text = offer.textContent;
+    assert.ok(text.includes("会议「客户需求沟通」里提到要「编写一份新的移动审批项目介绍」"), text);
+    assert.ok(text.includes("知识库里已经有一份类似的项目介绍《客户管理系统二期-项目介绍.md》"), text);
+    assert.ok(text.includes("只需要把项目的信息给我就行"), text);
+    btn(offer, "好，开始").click();
+    const mat = await waitFor(() => lastKind(c, "writeMaterials"), { label: "素材消息" });
+    assert.ok(mat.textContent.includes("我参照知识库里的《客户管理系统二期-项目介绍.md》来写"));
+    assert.ok(mat.textContent.includes("把项目的信息发给我"));
+    assert.deepEqual(c.errors, []);
+  } finally {
+    c.close();
   }
 });

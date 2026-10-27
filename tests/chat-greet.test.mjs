@@ -28,7 +28,7 @@ test("有未处理会议时助手主动发消息；勾选 2 条确认后待办�
   try {
     assert.deepEqual(c.errors, []);
     const note = await waitFor(() => c.kinds("meetingNote")[0], { label: "会议消息" });
-    assert.match(note.textContent, /整理出 4 条待办，有 1 条是分给你的/);
+    assert.match(note.textContent, /整理出 5 条待办，有 2 条是分给你的/);
     assert.ok(btn(note, "晚点再说"));
     btn(note, "一起过一下").click();
     const review = await waitFor(() => c.kinds("meetingReview")[0], { label: "逐条确认" });
@@ -38,14 +38,14 @@ test("有未处理会议时助手主动发消息；勾选 2 条确认后待办�
     assert.ok(r.querySelector(".mt-quote").textContent.includes("00:12:40"), "显示时间点");
     assert.ok(r.querySelector(".mt-quote").textContent.includes("周五之前发给客户"), "显示原文片段");
     const boxes = r.querySelectorAll("input[data-i]");
-    assert.equal([...boxes].filter((x) => x.checked).length, 1, "默认勾选分给我的");
+    assert.equal([...boxes].filter((x) => x.checked).length, 2, "默认勾选分给我的");
     boxes[2].checked = true;
     boxes[2].dispatchEvent(new c.window.Event("change"));
     const before = openCount(c);
-    btn(r, "加入待办（2 条）").click();
-    assert.equal(openCount(c), before + 2);
+    btn(r, "加入待办（3 条）").click();
+    assert.equal(openCount(c), before + 3);
     assert.ok(!c.state().inbox.some((m) => m.id === "m1"), "会议标记为已处理");
-    assert.ok(c.kinds("meetingReview")[0].textContent.includes("加入 2 条待办"));
+    assert.ok(c.kinds("meetingReview")[0].textContent.includes("加入 3 条待办"));
     assert.ok(c.kinds("meetingNote")[0].textContent.includes("已选择：一起过一下"));
     assert.deepEqual(c.errors, []);
   } finally {

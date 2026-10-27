@@ -102,6 +102,7 @@ test("从“待确认会议”卡片确认的写作类待办也会触发代写�
     const box = card.querySelector('[data-i="1"]');
     assert.ok(box.closest("label").textContent.includes("负责更新报价方案"));
     box.checked = true;
+    card.querySelector('[data-i="4"]').checked = false;
     const n = countKind(c, "writeOffer");
     card.querySelector("[data-ok]").click();
     const offer = await waitFor(() => countKind(c, "writeOffer") > n && lastKind(c, "writeOffer"), { label: "代写提示" });
