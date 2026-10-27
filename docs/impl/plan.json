@@ -6,8 +6,8 @@
     "design": {
       "path": "docs/design/原型v4-设计.md",
       "version": "v1",
-      "sha256": "9394ca3181b075630d293e0a22aae66c36227c2fcab4bf8d5a5a529674e98493",
-      "sealed_at": "2026-10-27T11:07:18.040Z"
+      "sha256": "8ecf79e22a5d2b7be88dd00513c3235069826c0fab03e7ebf4c4c723ccc96de0",
+      "sealed_at": "2026-10-27T11:12:18.209Z"
     },
     "milestones": {
       "M1": "原型 v4：助手页对话化"
@@ -36,9 +36,16 @@
         "design_sha": "9394ca3181b075630d293e0a22aae66c36227c2fcab4bf8d5a5a529674e98493",
         "date": "2026-10-27",
         "note": "初始生成 8 步"
+      },
+      {
+        "pv": 2,
+        "design_version": "v1",
+        "design_sha": "8ecf79e22a5d2b7be88dd00513c3235069826c0fab03e7ebf4c4c723ccc96de0",
+        "date": "2026-10-27",
+        "note": "用户同意完成后自动推送发布"
       }
     ],
-    "plan_version": 1,
+    "plan_version": 2,
     "sections": {
       "§1": {
         "l": "4-12",
@@ -50,7 +57,7 @@
       },
       "§1.2": {
         "l": "7-12",
-        "h": "ce5a311935"
+        "h": "6048bf2189"
       },
       "§2": {
         "l": "13-18",
@@ -110,7 +117,7 @@
       },
       "§8": {
         "l": "76-82",
-        "h": "66f191251a"
+        "h": "c75aa0b703"
       }
     }
   },
