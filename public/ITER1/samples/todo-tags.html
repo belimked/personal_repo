@@ -57,6 +57,26 @@ a { color: var(--primary); text-decoration: none; cursor: pointer; }
 .tagbar.compact .chip { font-size: 12px; line-height: 20px; padding: 0 8px; }
 .tagbar.compact .pchip { font-size: 12px; }
 
+/* 左侧标签树 */
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
+.treewrap { position: sticky; top: 70px; }
+.tree { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 6px; }
+.tree-item { padding: 5px 10px; border-radius: 5px; cursor: pointer; display: flex; gap: 6px; align-items: center; font-size: 14px; user-select: none; }
+.tree-item:hover { background: var(--bg); }
+.tree-item.active { background: var(--primary-weak); color: var(--primary); }
+.tree-item .n { margin-left: auto; color: var(--muted); font-size: 12px; }
+.tree-item .caret { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+.tree-item.untagged { color: var(--muted); }
+.cb { width: 14px; height: 14px; flex: none; border: 1.5px solid #c3c9d4; border-radius: 3px; background: #fff; position: relative; }
+.cb:hover { border-color: var(--primary); }
+.cb.on { background: var(--primary); border-color: var(--primary); }
+.cb.on::after { content: ""; position: absolute; left: 3px; top: 0; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.cb.part { border-color: var(--primary); }
+.cb.part::after { content: ""; position: absolute; left: 2px; right: 2px; top: 4.5px; height: 2px; background: var(--primary); }
+.cb-sp { width: 14px; flex: none; }
+.treehint { font-size: 12px; color: var(--muted); padding: 8px 4px; }
+.treebtn { display: none; }
+
 /* 待办列表 */
 .stline { display: flex; gap: 22px; padding: 0 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--muted); }
 .stline span { padding: 10px 0; }
@@ -169,6 +189,11 @@ details.preset summary { cursor: pointer; font-size: 14px; font-weight: 600; pad
   .grp { flex-wrap: nowrap; }
   .tagbar > *, .grp > * { flex-shrink: 0; }
   .mt .hide-m { display: none; }
+  .layout { grid-template-columns: 1fr; gap: 0; }
+  .treewrap { position: static; }
+  .treebtn { display: block; width: 100%; text-align: left; border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 6px 12px; font-size: 14px; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .treewrap:not(.open) .tree, .treewrap:not(.open) .treehint { display: none; }
+  .treewrap.open .tree { margin-bottom: 4px; }
 }
 </style>
 </head>
@@ -187,7 +212,8 @@ details.preset summary { cursor: pointer; font-size: 14px; font-weight: 600; pad
 <datalist id="alltags"></datalist>
 
 <script>
-const KEY = "demo_todo_tags_v1";
+const KEY = "demo_todo_tags_v2";
+const NONE = "__none__";
 const TODAY = "2026-10-28";
 const WD = "日一二三四五六";
 const pad = (n) => String(n).padStart(2, "0");
@@ -238,6 +264,7 @@ const seed = () => ({
     { id: "t14", title: "车险续保", date: "2026-11-30", period: true, tags: ["生活/保险", "生活/缴费"] },
     { id: "t15", title: "宽带续费", date: addDays(TODAY, 18), tags: ["生活/缴费"] },
     { id: "t16", title: "研究一下基金定投", date: "", tags: ["财务/理财"] },
+    { id: "t18", title: "取快递", date: TODAY, tags: [] },
     { id: "t17", title: "交水费", date: addDays(TODAY, -8), tags: ["生活/缴费"], done: true },
   ],
   src: { "合同": "user" },
@@ -265,7 +292,8 @@ function toast(text, undo) {
 const openTodos = () => S.todos.filter((t) => !t.done);
 const usedTags = (items) => [...new Set(items.flatMap((i) => i.tags))];
 const allTags = () => [...new Set([...usedTags(S.files), ...usedTags(S.todos), ...S.custom])];
-const match = (it, sel) => !sel.size || it.tags.some((t) => sel.has(t));
+const match = (it, sel) => !sel.size || it.tags.some((t) => sel.has(t)) || (sel.has(NONE) && !it.tags.length);
+const tagName = (t) => (t === NONE ? "未打标签" : t);
 const tagSrc = (t) => S.src[t] || (PRESET_SET.has(t) ? "preset" : "model");
 
 function bucketOf(t) {
@@ -331,16 +359,22 @@ function tagBar(items, sel, onChange, compact) {
   return el;
 }
 
-function selSummary(sel, count, unit, onChange) {
+function selSummary(sel, count, unit, onChange, items = []) {
   const el = document.createElement("div");
   el.className = "selsum";
-  if (!sel.size) { el.innerHTML = `没有选标签，显示全部 ${count} ${unit}。可以多选，结果是选中标签的合集。`; return el; }
-  el.innerHTML = `已选：${[...sel].map((t) => `<span class="s">${esc(t)}<button data-t="${esc(t)}" title="去掉">×</button></span>`).join(" + ")} · 共 ${count} ${unit} · <a data-clear="1">清除</a>`;
+  if (!sel.size) { el.innerHTML = `全部 ${count} ${unit}`; return el; }
+  const parts = [], rest = new Set(sel);
+  for (const g of groupsOf(items)) {
+    const tags = g.kids.map((k) => k.tag);
+    if (tags.length > 1 && tags.every((t) => sel.has(t))) { parts.push([`${g.p}（全部）`, tags]); tags.forEach((t) => rest.delete(t)); }
+  }
+  rest.forEach((t) => parts.push([tagName(t), [t]]));
+  el.innerHTML = `已选：${parts.map(([l, ts]) => `<span class="s">${esc(l)}<button data-t="${esc(ts.join("|"))}" title="去掉">×</button></span>`).join(" + ")} · 共 ${count} ${unit} · <a data-clear="1">清除</a>`;
   el.onclick = (e) => {
     const b = e.target.closest("[data-t],[data-clear]");
     if (!b) return;
     const s = new Set(sel);
-    b.dataset.clear ? s.clear() : s.delete(b.dataset.t);
+    b.dataset.clear ? s.clear() : b.dataset.t.split("|").forEach((t) => s.delete(t));
     onChange(s);
   };
   return el;
@@ -404,21 +438,69 @@ function todoList(items, sel, rerender, editable) {
   return frag;
 }
 
+/* ---------- 左侧标签树（与知识库同一风格，可勾选多选） ---------- */
+const expanded = { todos: new Set(), kb: new Set() };
+const treeOpen = { todos: false, kb: false };
+function tagTree(ctx, items, sel, onChange, allLabel, hint) {
+  const groups = groupsOf(items).sort((a, b) => a.p.localeCompare(b.p, "zh"));
+  const untagged = items.filter((i) => !i.tags.length).length;
+  const keyTags = {};
+  const state = (tags) => { const n = tags.filter((t) => sel.has(t)).length; return n === 0 ? "" : n === tags.length ? "on" : "part"; };
+  const row = (key, tags, label, n, { pad = 10, caret = "", cls = "" } = {}) => {
+    keyTags[key] = tags;
+    const st = key === "all" ? (sel.size ? "" : "on") : state(tags);
+    const cb = key === "all" ? `<span class="cb-sp"></span>` : `<span class="cb ${st}" data-cb="1" title="勾选可同时看多类"></span>`;
+    return `<div class="tree-item ${st === "on" ? "active" : ""} ${cls}" data-k="${esc(key)}" style="padding-left:${pad}px">${caret || `<span class="caret"></span>`}${cb}<span class="nm">${label}</span><span class="n">${n}</span></div>`;
+  };
+  let html = row("all", [], allLabel, items.length);
+  for (const g of groups) {
+    const tags = g.kids.map((k) => k.tag);
+    if (g.kids.length === 1 && g.kids[0].tag === g.p) { html += row("t:" + g.p, tags, `🏷️ ${esc(g.p)}`, g.n); continue; }
+    const open = expanded[ctx].has(g.p);
+    html += row("g:" + g.p, tags, `🏷️ ${esc(g.p)}`, g.n, { caret: `<span class="caret" data-tg="${esc(g.p)}">${open ? "▼" : "▶"}</span>` });
+    if (open) [...g.kids].sort((a, b) => b.n - a.n).forEach((k) => { html += row("t:" + k.tag, [k.tag], esc(k.label), k.n, { pad: 30 }); });
+  }
+  html += row("none", [NONE], "未打标签", untagged, { cls: "untagged" });
+  const wrap = document.createElement("div");
+  wrap.className = "treewrap" + (treeOpen[ctx] ? " open" : "");
+  const selText = sel.size ? [...sel].map(tagName).join(" + ") : "全部";
+  wrap.innerHTML = `<button class="treebtn">🏷️ 标签：${esc(selText)} ${treeOpen[ctx] ? "▲" : "▼"}</button><div class="tree">${html}</div><div class="treehint">${hint}<br>点标签名只看这一类；勾选方框可以同时看多类。</div>`;
+  wrap.querySelector(".treebtn").onclick = () => { treeOpen[ctx] = !treeOpen[ctx]; onChange(sel); };
+  wrap.querySelector(".tree").onclick = (e) => {
+    const it = e.target.closest(".tree-item");
+    if (!it) return;
+    const caret = e.target.closest("[data-tg]");
+    if (caret) { const p = caret.dataset.tg; expanded[ctx].has(p) ? expanded[ctx].delete(p) : expanded[ctx].add(p); return onChange(sel); }
+    const k = it.dataset.k, tags = keyTags[k];
+    if (k === "all") return onChange(new Set());
+    if (k.startsWith("g:")) expanded[ctx].add(k.slice(2));
+    if (k.startsWith("t:") && k.includes("/")) expanded[ctx].add(k.slice(2).split("/")[0]);
+    if (e.target.closest("[data-cb]")) {
+      const s = new Set(sel), all = tags.every((t) => s.has(t));
+      tags.forEach((t) => (all ? s.delete(t) : s.add(t)));
+      return onChange(s);
+    }
+    onChange(new Set(tags));
+  };
+  return wrap;
+}
+
 /* ---------- 待办页 ---------- */
 function viewTodos() {
   const open = openTodos();
   const sel = new Set(S.selTodo);
   const list = open.filter((t) => match(t, sel));
   view.innerHTML = `<div class="note"><b>看点：</b><ul>
-      <li>标签可以多选，结果是选中标签的合集；点一级标签（如“生活”）会选中它下面的全部二级标签，再点一次取消。不选就是全部。</li>
+      <li>左侧标签树和知识库一样：<b>点标签名</b>只看这一类（点“生活”看整个生活类）；<b>勾选前面的方框</b>可以同时看多类，比如勾“缴费”和“会议”。点“全部待办”恢复。</li>
       <li>这里只列<b>待办用到的</b>标签，件数只算未完成的待办（不会出现“照片”这类只在文件上用的标签）。选择会被记住，刷新后仍在。</li>
-      <li>鼠标移到待办的标签上可以点 × 去掉，或点“＋ 标签”添加；手动改过的待办会锁定，以后模型不会再改。</li></ul></div>
+      <li>鼠标移到某条待办上可以点 × 去掉标签，或点“＋ 标签”添加；手动改过的待办会锁定，以后模型不会再改。</li></ul></div>
+    <div class="layout"><div id="side"></div><div>
     <div class="ask"><b>跟助手说：</b><input id="ask" placeholder="比如：看看缴费和会议相关的待办"></div>
     <div class="box"><div class="stline"><span class="on">未完成（${open.length}）</span><span>待安排</span><span>已完成</span><span>已删除</span><span>全部</span></div>
-      <div class="filterwrap" id="fw"></div><div id="list"></div></div>`;
+      <div class="filterwrap" id="fw"></div><div id="list"></div></div></div></div>`;
   const onChange = (s) => { S.selTodo = [...s]; save(); viewTodos(); };
-  const fw = $("fw");
-  fw.append(tagBar(open, sel, onChange), selSummary(sel, list.length, "件", onChange));
+  $("side").append(tagTree("todos", open, sel, onChange, "📋 全部待办", "标签由模型按内容自动打，可以随时修改；一件待办可以有多个标签。"));
+  $("fw").append(selSummary(sel, list.length, "件", onChange, open));
   const box = $("list");
   if (list.length) box.append(todoList(list, sel, viewTodos, true));
   else box.innerHTML = `<div class="empty">这些标签下没有未完成的待办</div>`;
@@ -563,13 +645,15 @@ function viewKB() {
   const todoOnly = usedTags(S.todos).filter((t) => !usedTags(S.files).includes(t));
   const relTodos = sel.size ? openTodos().filter((t) => match(t, sel)) : [];
   view.innerHTML = `<div class="note"><b>看点：</b><ul>
-      <li>和待办页是<b>同一个筛选组件、同一套标签</b>，用法一样；这里只列文件用到的标签，件数只算文件。</li>
+      <li>和待办页是<b>同一套标签、同一种标签树</b>，用法一样（点名字只看这一类，勾方框同时看多类）；这里只列文件用到的标签，件数只算文件。</li>
       <li>只在待办上用到的 ${todoOnly.map((t) => `「${esc(t)}」`).join("") || "（无）"} 不会出现在这里。</li>
       <li>选了某个标签，如果待办里也有这个标签，会提示一句并可以跳过去——同一个标签把相关的事和文件串起来。</li></ul></div>
+    <div class="layout"><div id="side"></div><div>
     <div class="ask"><b>跟助手说：</b><input placeholder="用一句话描述你要找的内容（按意思找，不用记文件名）"></div>
-    <div class="box"><div class="filterwrap" id="fw"></div><div id="banner"></div><div id="list"></div></div>`;
+    <div class="box"><div class="filterwrap" id="fw"></div><div id="banner"></div><div id="list"></div></div></div></div>`;
   const onChange = (s) => { S.selKB = [...s]; save(); viewKB(); };
-  $("fw").append(tagBar(S.files, sel, onChange), selSummary(sel, list.length, "个文件", onChange));
+  $("side").append(tagTree("kb", S.files, sel, onChange, "📚 全部文件", "标签由文件管理模型自动生成，可以随时修改；一个文件可以有多个标签。"));
+  $("fw").append(selSummary(sel, list.length, "个文件", onChange, S.files));
   if (relTodos.length) {
     $("banner").innerHTML = `<div class="banner">这些标签下还有 ${relTodos.length} 件未完成的待办 · <a id="totodo">去待办页看 ›</a></div>`;
     $("totodo").onclick = () => { S.selTodo = [...sel]; save(); go("todos"); };
