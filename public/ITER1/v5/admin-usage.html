@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>存储与数据用量 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="grid4" id="stats" style="margin-bottom:16px"></div>
+  <div class="card">
+    <div class="card-head"><h2>文件存储用量查询</h2></div>
+    <div class="row" style="margin-bottom:12px">
+      <span class="muted small">用户</span><div id="f-user"></div>
+      <span class="muted small">文件类型</span><div id="f-type"></div>
+      <span class="muted small">上传时间</span><input class="input inline" type="date" id="d1"><span class="muted">~</span><input class="input inline" type="date" id="d2">
+      <span class="muted small">汇总方式</span><select class="input inline" id="grp"><option value="user">按用户</option><option value="ext">按文件类型</option><option value="month">按上传月份</option></select>
+      <button class="btn primary" id="q">查询</button>
+    </div>
+    <div id="sum" class="row" style="margin-bottom:10px"></div>
+    <div class="table-wrap"><table class="table" id="tbl"></table></div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "admin-usage", title: "存储与数据用量", admin: true })) {
+  const { state, esc, fmtSize, SEED } = PA;
+  // 原型：为所有用户生成确定性的文件记录
+  let seed = 11; const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const exts = ["md", "txt", "pdf", "jpg", "png", "m4a", "mp3", "mp4", "csv", "docx"];
+  const sizes = { md: 0.05, txt: 0.02, pdf: 3, jpg: 3.5, png: 1.5, m4a: 30, mp3: 25, mp4: 70, csv: 0.1, docx: 1 };
+  const records = [];
+  state.users.forEach((u) => { const n = Math.round(u.used / 6) + 5; for (let i = 0; i < n; i++) { const e = exts[Math.floor(rnd() * exts.length)]; records.push({ user: u.email, ext: e, size: sizes[e] * (0.4 + rnd()) * 1024 * 1024, date: SEED.dayStr(-Math.floor(rnd() * 50)) }); } });
+  const total = records.reduce((s, r) => s + r.size, 0);
+  stats.innerHTML = [["数据库（D1 / SQLite）当前大小", "18.6 MB", "含待办、用户、日志、配置等非文件数据"], ["文件总存储用量", fmtSize(total), "不含转写等派生文本"], ["文件总数", records.length + " 个", ""], ["用户数", state.users.length + " 个", `正常 ${state.users.filter((u) => u.status === "active").length} · 禁用 ${state.users.filter((u) => u.status === "disabled").length} · 待清除 ${state.users.filter((u) => u.status === "pending_purge").length}`]]
+    .map(([l, v, h]) => `<div class="card stat" style="margin:0"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h}</div></div>`).join("");
+  const uSel = PA.multiSelect(document.getElementById("f-user"), state.users.map((u) => ({ value: u.email, label: u.email })), "全部用户");
+  const tSel = PA.multiSelect(document.getElementById("f-type"), exts.map((e) => ({ value: e, label: "." + e })), "全部类型");
+  function query() {
+    const us = uSel.values(), ts = tSel.values();
+    const list = records.filter((r) => (!us.length || us.includes(r.user)) && (!ts.length || ts.includes(r.ext)) && (!d1.value || r.date >= d1.value) && (!d2.value || r.date <= d2.value));
+    const key = { user: (r) => r.user, ext: (r) => "." + r.ext, month: (r) => r.date.slice(0, 7) }[grp.value];
+    const g = {}; list.forEach((r) => { const k = key(r); g[k] = g[k] || { n: 0, s: 0 }; g[k].n++; g[k].s += r.size; });
+    const sumS = list.reduce((s, r) => s + r.size, 0);
+    sum.innerHTML = `<span class="badge blue">共 ${list.length} 个文件</span><span class="badge blue">合计 ${fmtSize(sumS)}</span>`;
+    tbl.innerHTML = `<tr><th>${{ user: "用户", ext: "文件类型", month: "上传月份" }[grp.value]}</th><th>文件数</th><th>用量</th><th style="width:40%">占比</th></tr>` + Object.entries(g).sort((a, b) => b[1].s - a[1].s).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.n}</td><td>${fmtSize(v.s)}</td><td><div class="row" style="flex-wrap:nowrap"><div class="progress" style="flex:1"><div style="width:${(v.s / sumS) * 100}%"></div></div><span class="small muted" style="width:44px">${((v.s / sumS) * 100).toFixed(1)}%</span></div></td></tr>`).join("") || '<tr><td colspan="4" class="empty">没有数据</td></tr>';
+  }
+  document.getElementById("q").onclick = query;
+  query();
+}
+</script>
+</body>
+</html>

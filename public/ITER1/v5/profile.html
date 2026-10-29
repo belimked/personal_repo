@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人设置 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card">
+    <div class="card-head"><h2>基本信息</h2></div>
+    <div class="grid2">
+      <div class="field"><label>姓名</label><input class="input" id="name"></div>
+      <div class="field"><label>登录邮箱（必填，修改请联系管理员）</label><input class="input" id="email" disabled></div>
+      <div class="field"><label>手机号（可选，添加后也可用手机号登录）</label><input class="input" id="phone" placeholder="11 位手机号"></div>
+      <div class="field"><label>时区（用于解析“明天”“下周三”和发送提醒）</label><select class="input" id="tz"></select></div>
+    </div>
+    <div class="row"><button class="btn primary" id="save-basic">保存</button><span class="err" id="basic-err"></span></div>
+  </div>
+  <div class="card" id="reminder">
+    <div class="card-head"><h2>邮件提醒</h2></div>
+    <div class="hint" style="margin-bottom:12px">邮件内容：已逾期 + 今天/明天/后天的未完成待办 + 期限快到的待安排事项。</div>
+    <div class="row" style="margin-bottom:12px"><label class="switch"><input type="checkbox" id="mail-on"><span></span></label><span>每天发邮件提醒</span></div>
+    <div class="grid2">
+      <div class="field"><label>发送时间</label><select class="input" id="mail-time"></select><span class="hint">按你设置的时区发送</span></div>
+      <div class="field"><label>收件邮箱</label><input class="input" id="mail-to" disabled><span class="hint">V1 固定使用账号邮箱</span></div>
+    </div>
+    <div class="row" style="margin-bottom:12px"><label class="switch"><input type="checkbox" id="weekly"><span></span></label><span>每周一附加“待安排”提醒</span><span class="hint">列出还没定日期的事，问一句要不要排进这周</span></div>
+    <div class="row"><button class="btn primary" id="save-mail">保存</button><button class="btn" id="preview-mail">预览邮件</button></div>
+  </div>
+  <div class="card" id="identity">
+    <div class="card-head"><h2>我的身份（可选）</h2><span class="hint">只用来让系统优先使用相关的预设标签，不影响任何功能</span></div>
+    <div class="row" id="id-opts" style="margin-bottom:12px"></div>
+    <button class="btn primary" id="save-id">保存</button>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>修改密码</h2></div>
+    <div class="grid3">
+      <div class="field"><label>当前密码</label><input class="input" type="password" id="p0"></div>
+      <div class="field"><label>新密码（8~16 位）</label><input class="input" type="password" id="p1"></div>
+      <div class="field"><label>确认新密码</label><input class="input" type="password" id="p2"></div>
+    </div>
+    <div class="row"><button class="btn primary" id="save-pwd">修改密码</button><span class="err" id="pwd-err"></span></div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "profile", title: "个人设置" })) {
+  const { state, save, toast, log } = PA;
+  const u = PA.me(), p = state.prefs;
+  tz.innerHTML = Array.from({ length: 27 }, (_, i) => i - 12).map((n) => { const v = "UTC" + (n >= 0 ? "+" : "") + n; return `<option value="${v}">${v}${n === 8 ? "（北京时间）" : n === 9 ? "（东京）" : n === 0 ? "（伦敦）" : ""}</option>`; }).join("");
+  document.getElementById("mail-time").innerHTML = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`).map((t) => `<option>${t}</option>`).join("");
+  document.getElementById("name").value = u.name; email.value = u.email; phone.value = u.phone || ""; tz.value = p.tz;
+  document.getElementById("mail-on").checked = p.dailyMail; document.getElementById("mail-time").value = p.mailTime; document.getElementById("mail-to").value = u.email;
+  document.getElementById("save-basic").onclick = () => {
+    const ph = phone.value.trim();
+    if (ph && !/^1\d{10}$/.test(ph)) { document.getElementById("basic-err").textContent = "手机号格式不正确"; return; }
+    if (ph && state.users.some((x) => x !== u && x.phone === ph)) { document.getElementById("basic-err").textContent = "该手机号已被其他账号使用"; return; }
+    document.getElementById("basic-err").textContent = "";
+    u.name = document.getElementById("name").value.trim() || u.name; u.phone = ph; p.tz = tz.value; u.tz = tz.value;
+    save(); log("修改个人设置", "基本信息"); toast("已保存");
+  };
+  const mailOn = document.getElementById("mail-on"), mailTime = document.getElementById("mail-time"), weekly = document.getElementById("weekly");
+  weekly.checked = p.weeklyNudge !== false;
+  const syncMail = () => { mailTime.disabled = weekly.disabled = !mailOn.checked; };
+  mailOn.onchange = syncMail; syncMail();
+  document.getElementById("save-mail").onclick = () => {
+    p.dailyMail = mailOn.checked; p.mailTime = mailTime.value; p.weeklyNudge = weekly.checked;
+    save(); log("修改个人设置", `邮件提醒：${p.dailyMail ? `开启 ${p.mailTime}，每周一待安排提醒${p.weeklyNudge ? "开启" : "关闭"}` : "关闭"}`); toast("已保存");
+  };
+  document.getElementById("preview-mail").onclick = () => PA.previewMail();
+  const IDS = ["大学生", "白领", "家庭主妇", "小老板"];
+  document.getElementById("id-opts").innerHTML = IDS.map((x) => `<label class="row" style="gap:4px"><input type="checkbox" value="${x}" ${(p.identity || []).includes(x) ? "checked" : ""}> ${x}</label>`).join("");
+  document.getElementById("save-id").onclick = () => {
+    p.identity = [...document.querySelectorAll("#id-opts input:checked")].map((c) => c.value);
+    save(); log("修改个人设置", `我的身份：${p.identity.join("、") || "未填写"}`); toast("已保存");
+  };
+  if (location.hash) { const el = document.querySelector(location.hash); if (el) el.scrollIntoView({ block: "start" }); }
+  document.getElementById("save-pwd").onclick = () => {
+    const e = document.getElementById("pwd-err");
+    if (p0.value !== (u.password || "demo1234")) return (e.textContent = "当前密码不正确");
+    if (p1.value.length < 8 || p1.value.length > 16) return (e.textContent = "新密码长度应为 8~16 位");
+    if (p1.value !== p2.value) return (e.textContent = "两次输入的新密码不一致");
+    e.textContent = ""; u.password = p1.value; save(); log("修改个人设置", "修改密码"); toast("密码已修改");
+    p0.value = p1.value = p2.value = "";
+  };
+}
+</script>
+<script>
+// S07：助手名字（显示在助手页页头、头像和每条回复旁边）
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const card = document.createElement("div");
+  card.className = "card";
+  card.id = "assistant";
+  card.innerHTML = '<div class="card-head"><h2>助手名字</h2><span class="hint">默认叫“小禾”，可以改成你习惯的称呼</span></div>'
+    + '<div class="grid2"><div class="field"><label>助手名字</label><input class="input" id="bot-name" maxlength="8" placeholder="小禾"><span class="hint">最多 8 个字，会显示在助手页页头和每条回复旁边</span></div></div>'
+    + '<div class="row"><button class="btn primary" id="save-bot-name">保存</button><span class="err" id="bot-name-err"></span></div>';
+  const first = page.firstElementChild;
+  page.insertBefore(card, first ? first.nextSibling : null);
+  const input = card.querySelector("#bot-name");
+  input.value = PA.state.prefs.assistantName || "小禾";
+  card.querySelector("#save-bot-name").onclick = () => {
+    const name = input.value.trim().slice(0, 8);
+    if (!name) { card.querySelector("#bot-name-err").textContent = "名字不能为空"; return; }
+    card.querySelector("#bot-name-err").textContent = "";
+    PA.state.prefs.assistantName = name;
+    input.value = name;
+    PA.save(); PA.log("修改个人设置", `助手名字：${name}`); PA.toast("已保存");
+  };
+})();
+</script>
+</body>
+</html>

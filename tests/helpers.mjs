@@ -12,6 +12,8 @@ export const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.ur
 export const V4_DIR = path.join(PUBLIC_DIR, "ITER1/v4");
 export const ORIGIN = "http://proto.test";
 export const STATE_KEY = "pa_ITER1_v4";
+export const V5_DIR = path.join(PUBLIC_DIR, "ITER1/v5");
+export const stateKey = (version = "v4") => `pa_ITER1_${version}`;
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -40,10 +42,16 @@ export function interceptNavigation(window) {
   return navigations;
 }
 
-// 跳转目标相对 v4 目录的写法，如 "home.html"、"todos.html?view=list"
-export const relTarget = (href) => (href ? new URL(href, `${ORIGIN}/ITER1/v4/`).href.replace(`${ORIGIN}/ITER1/v4/`, "") : href);
+// 跳转目标相对版本目录（默认 v4）的写法，如 "home.html"、"todos.html?view=list"
+// 第二个参数只认字符串版本：旧测试用 .map(relTarget) 时会传进数组下标
+export const relTarget = (href, version) => {
+  const v = typeof version === "string" ? version : "v4";
+  return href ? new URL(href, `${ORIGIN}/ITER1/${v}/`).href.replace(`${ORIGIN}/ITER1/${v}/`, "") : href;
+};
 
-export async function loadPage(name, { session, today, state, url } = {}) {
+export async function loadPage(name, { session, today, state, url, version = "v4" } = {}) {
+  const dir = path.join(PUBLIC_DIR, "ITER1", version);
+  const key = stateKey(version);
   const errors = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on("error", (...args) => errors.push(args.map(String).join(" ")));
@@ -54,8 +62,8 @@ export async function loadPage(name, { session, today, state, url } = {}) {
   let navigations = [];
   const sessionObj = typeof session === "string" ? { email: session } : session;
 
-  const dom = await JSDOM.fromFile(path.join(V4_DIR, name.split(/[?#]/)[0]), {
-    url: `${ORIGIN}/ITER1/v4/${url || name}`,
+  const dom = await JSDOM.fromFile(path.join(dir, name.split(/[?#]/)[0]), {
+    url: `${ORIGIN}/ITER1/${version}/${url || name}`,
     runScripts: "dangerously",
     resources: new PublicDirLoader(),
     pretendToBeVisual: true,
@@ -64,7 +72,7 @@ export async function loadPage(name, { session, today, state, url } = {}) {
       window.addEventListener("error", (e) => errors.push(e.error?.stack || e.message));
       navigations = interceptNavigation(window);
       if (today) window.PA_TODAY = today;
-      if (state) window.localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      if (state) window.localStorage.setItem(key, JSON.stringify(state));
       if (sessionObj) {
         // app.js 导出 window.PA 时写入登录态，此时页面内联脚本尚未运行
         let pa;
@@ -89,7 +97,7 @@ export async function loadPage(name, { session, today, state, url } = {}) {
     document: window.document,
     errors,
     navigations,
-    state: () => JSON.parse(window.localStorage.getItem(STATE_KEY)),
+    state: () => JSON.parse(window.localStorage.getItem(key)),
     close: () => window.close(),
   };
 }

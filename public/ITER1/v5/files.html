@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人知识库 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.tree-item .caret { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+.tree-item.untagged { color: var(--muted); }
+.lock { cursor: help; font-size: 12px; margin-left: 2px; }
+.tag-cell { white-space: normal; min-width: 170px; }
+.mgr-link { font-size: 12px; color: var(--muted); }
+.mgr-link:hover { color: var(--primary); }
+.mt-row { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.mt-row.sub { padding-left: 28px; }
+.mt-row .nm { flex: 1; min-width: 120px; }
+.mt-row .acts a { font-size: 12px; margin-left: 8px; }
+.mt-row .edit-area { flex-basis: 100%; display: flex; gap: 6px; align-items: center; padding: 4px 0 2px; }
+.src { font-size: 11px; padding: 0 6px; border-radius: 3px; background: var(--bg); color: var(--muted); }
+.src.user { background: var(--primary-weak); color: var(--primary); }
+.diff-box { max-height: 280px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; margin-top: 8px; }
+.diff-box .ln { padding: 3px 0; font-size: 13px; }
+.tag.new { background: #e3f6e8; color: #1e7b3a; }
+.tag.gone { background: #fde8e8; color: #b42318; text-decoration: line-through; }
+.step { padding: 3px 0; color: var(--muted); }
+.step.run { color: var(--text); }
+.step.done { color: var(--success); }
+.preset-tbl td { padding: 4px 6px; vertical-align: top; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="page">
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:260px"><div class="row" style="justify-content:space-between"><b>存储空间</b><span class="small muted" id="quota-text"></span></div><div class="progress" style="margin-top:6px" id="quota-bar"><div></div></div></div>
+      <button class="btn" id="history">上传记录</button>
+      <button class="btn primary" id="up">⬆ 上传文件</button>
+    </div>
+    <div class="hint" style="margin-top:8px" id="limits"></div>
+  </div>
+  <div class="files-layout">
+    <div>
+      <div class="tree" id="tree"></div>
+      <div class="hint" style="padding:8px 4px">标签由<b>文件管理模型</b>自动生成，可以随时修改；一个文件可以有多个标签。</div>
+    </div>
+    <div>
+      <div class="row" style="margin-bottom:10px">
+        <input class="input inline" id="kw" placeholder="按文件名或标签筛选" style="width:200px">
+        <div id="cats"></div>
+        <span class="spacer"></span>
+        <span class="hint">内容查询请在 <a href="home.html">助手</a> 中直接提问</span>
+        <a href="#" class="mgr-link" id="mgr">管理标签</a>
+      </div>
+      <div class="table-wrap"><table class="table nowrap" id="tbl"></table></div>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "files", title: "个人知识库", narrow: false })) {
+  const { state, esc, save, fmtSize, toast, log } = PA;
+  const NONE = "__untagged__";
+  const LOCK_TIP = "你手动设置过标签，重新生成时不会改动";
+  let sel = "";
+  const expanded = new Set();
+  const editing = new Set();
+  const catSel = PA.multiSelect(document.getElementById("cats"), Object.entries(PA.CAT_LABEL).map(([value, label]) => ({ value, label })), "全部类型");
+  document.getElementById("up").onclick = () => PA.pickFiles();
+  document.getElementById("history").onclick = PA.showUploadPanel;
+  const c = state.config.upload;
+  limits.textContent = `单次最多 ${c.maxCount} 个文件、合计 ≤ ${c.maxBatchMB}MB；单个文件 ≤ ${c.maxFileMB}MB；可上传类型由管理员配置（${state.fileTypes.length} 种）。`;
+
+  const userTags = () => (state.userTags = state.userTags || []);
+  const blocked = () => (state.blockedTags = state.blockedTags || []);
+  const liveTodos = () => state.todos.filter((t) => t.status !== "deleted");
+  const lockIcon = (f) => (f.tagLocked ? `<span class="lock" title="${LOCK_TIP}">🔒</span>` : "");
+  const tagSource = (t) => (userTags().includes(t) ? "user" : PA.PRESET_FULL.includes(t) ? "preset" : "model");
+  const SRC_LABEL = { user: "用户", preset: "预设", model: "模型" };
+
+  function renderQuota() {
+    const used = PA.usedBytes(), q = PA.quotaBytes(), pct = Math.min(100, (used / q) * 100);
+    document.getElementById("quota-text").textContent = `已用 ${fmtSize(used)} / ${fmtSize(q)}（含待办附件；转写等派生文本不计入）`;
+    const bar = document.getElementById("quota-bar");
+    bar.className = "progress" + (pct > 90 ? " danger" : pct > 75 ? " warn" : "");
+    bar.firstElementChild.style.width = pct + "%";
+  }
+  function renderTree() {
+    const nodes = PA.tagTree(state.files);
+    const untagged = state.files.filter((f) => !(f.tags || []).length).length;
+    const item = (key, label, n, extra = "", caret = "") => `<div class="tree-item ${sel === key ? "active" : ""} ${extra}" data-f="${esc(key)}">${caret}${label}<span class="n">${n}</span></div>`;
+    tree.innerHTML = item("", "📚 全部文件", state.files.length) + nodes.map((n) => {
+      const open = expanded.has(n.top);
+      const caret = `<span class="caret" data-toggle="${esc(n.top)}">${n.subs.length ? (open ? "▼" : "▶") : ""}</span>`;
+      return item(n.top, `🏷️ ${esc(n.top)}`, n.count, "", caret) + (open ? n.subs.map((s) => `<div class="tree-item ${sel === s.full ? "active" : ""}" data-f="${esc(s.full)}" style="padding-left:34px">${esc(s.name)}<span class="n">${s.count}</span></div>`).join("") : "");
+    }).join("") + item(NONE, "未打标签", untagged, "untagged");
+    tree.querySelectorAll("[data-toggle]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); const t = el.dataset.toggle; expanded.has(t) ? expanded.delete(t) : expanded.add(t); renderTree(); }));
+    tree.querySelectorAll(".tree-item").forEach((el) => (el.onclick = () => { sel = el.dataset.f; if (sel && sel !== NONE) expanded.add(sel.split("/")[0]); render(); }));
+  }
+  function render() {
+    renderQuota(); renderTree();
+    const k = kw.value.trim(), cats = catSel.values();
+    const list = state.files.filter((f) => (!sel || (sel === NONE ? !(f.tags || []).length : PA.hasTag(f, sel))) && (!k || f.name.includes(k) || (f.tags || []).some((t) => t.includes(k))) && (!cats.length || cats.includes(f.cat))).sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
+    tbl.innerHTML = `<tr><th>文件名</th><th>类型</th><th>大小</th><th>标签</th><th>上传时间</th><th>状态</th><th>关联待办</th><th></th></tr>` + (list.map((f) => {
+      const links = PA.linkedTodos(f.id), ed = editing.has(f.id);
+      return `<tr data-row="${f.id}"><td style="white-space:normal;min-width:180px">${PA.fileIcon(f)} ${esc(f.name)}${f.meeting ? ' <span class="badge orange">会议</span>' : ""}</td><td>${PA.CAT_LABEL[f.cat]}</td><td>${fmtSize(f.size)}</td>
+        <td class="tag-cell" data-tags="${f.id}">${ed ? "" : (PA.tagChips(f.tags) || '<span class="muted small">未打标签</span>') + lockIcon(f)}</td><td class="small">${esc(f.uploadedAt)}</td>
+        <td>${f.status === "indexed" ? '<span class="badge green">可检索</span>' : `<span class="badge red" title="${esc(f.failReason)}">处理失败</span> <a href="#" data-retry="${f.id}">重试</a>`}</td>
+        <td class="small">${links.length ? `<span title="${esc(links.map((t) => t.title).join("、"))}">🔗 ${links.length} 个</span>` : '<span class="muted">—</span>'}</td>
+        <td style="white-space:nowrap">${PA.canPreview(f) ? `<button class="btn sm" data-prev="${f.id}">预览</button> ` : ""}<button class="btn sm" data-dl="${f.id}">下载</button> <button class="btn sm ghost" data-link="${f.id}">关联待办</button> <button class="btn sm ${ed ? "primary" : "ghost"}" data-retag="${f.id}">${ed ? "完成" : "改标签"}</button></td></tr>`;
+    }).join("") || '<tr><td colspan="8" class="empty">没有文件</td></tr>');
+    tbl.querySelectorAll("[data-prev]").forEach((b) => (b.onclick = () => PA.openPreview(b.dataset.prev)));
+    tbl.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => PA.download(PA.fileById(b.dataset.dl))));
+    tbl.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); const f = PA.fileById(b.dataset.retry); f.status = "indexed"; f.transcript = "（原型）重试后识别成功"; save(); toast("重新处理成功"); render(); }));
+    tbl.querySelectorAll("[data-link]").forEach((b) => (b.onclick = () => linkTodos(PA.fileById(b.dataset.link))));
+    // mousedown 先于标签输入框的 blur，避免“完成”点击被提交时的重绘吞掉
+    tbl.querySelectorAll("[data-retag]").forEach((b) => (b.onmousedown = (e) => { e.preventDefault(); const id = b.dataset.retag; const inp = tbl.querySelector(`[data-tags="${id}"] .tag-input`); if (inp) inp.blur(); editing.has(id) ? editing.delete(id) : editing.add(id); render(); }));
+    editing.forEach((id) => { const cell = tbl.querySelector(`[data-tags="${id}"]`); if (cell) mountEditor(cell, PA.fileById(id)); });
+  }
+  function mountEditor(cell, f) {
+    const box = document.createElement("div"), lk = document.createElement("span");
+    cell.append(box, lk); lk.innerHTML = lockIcon(f);
+    PA.tagEditor(box, { value: f.tags || [], onChange: (tags, { added, removed }) => {
+      const before = new Set(PA.allTags());
+      if (added && !before.has(added) && !userTags().includes(added)) userTags().push(added);
+      if (added) state.blockedTags = blocked().filter((t) => t !== added);
+      f.tags = tags; f.tagLocked = true;
+      if (removed && !userTags().includes(removed) && !blocked().includes(removed)) blocked().push(removed);
+      save(); log("修改标签", `${f.name}：${added ? "加上「" + added + "」" : "去掉「" + removed + "」"}`);
+      lk.innerHTML = lockIcon(f); renderTree();
+    } });
+  }
+  function linkTodos(f) {
+    const todos = liveTodos();
+    PA.modal({ title: `关联待办 · ${f.name}`, body: `<div class="hint" style="margin-bottom:8px">同一个文件可以作为多个待办的附件。</div>${todos.map((t) => `<label class="row" style="padding:4px 0"><input type="checkbox" value="${t.id}" ${t.attachments.includes(f.id) ? "checked" : ""}> ${esc(t.title)} <span class="muted small">${PA.fmtDate(t.date, t.time)}</span></label>`).join("")}`,
+      actions: [{ label: "取消" }, { label: "保存", primary: true, onClick: (m) => {
+        m.querySelectorAll("input[type=checkbox]").forEach((c) => { const t = PA.todoById(c.value); const has = t.attachments.includes(f.id); if (c.checked && !has) t.attachments.push(f.id); if (!c.checked && has) t.attachments = t.attachments.filter((x) => x !== f.id); });
+        save(); log("手动更新待办", `${f.name} 关联待办已更新`); toast("已保存"); render();
+      } }] });
+  }
+
+  // ---------------- 管理标签 ----------------
+  // 把标签 from 映射为 to；from 是一级时其子标签一起改（to 为二级时子标签并入 to）
+  const mapTag = (t, from, to) => (t === from ? to : t.startsWith(from + "/") ? (to.includes("/") ? to : to + "/" + t.slice(from.length + 1)) : t);
+  function retagAll(from, to) {
+    let nf = 0, nt = 0;
+    const apply = (it) => { const old = it.tags || []; if (!old.some((t) => t === from || t.startsWith(from + "/"))) return false; it.tags = [...new Set(old.map((t) => (to ? mapTag(t, from, to) : t)).filter((t) => to || !(t === from || t.startsWith(from + "/"))))]; return true; };
+    state.files.forEach((f) => apply(f) && nf++);
+    state.todos.forEach((t) => { if (apply(t)) { nt++; t.updatedAt = PA.nowStr(); } });
+    return { nf, nt };
+  }
+  // 改名/合并记录：重新生成时模型产出的旧名按此映射，不把用户改掉的名字加回来
+  const remember = (from, to) => { state.tagRenames = state.tagRenames || {}; delete state.tagRenames[to]; state.tagRenames[from] = to; };
+  function applyRenames(t) {
+    const map = state.tagRenames || {};
+    for (let i = 0; i < 5; i++) { const n = Object.entries(map).reduce((x, [a, b]) => mapTag(x, a, b), t); if (n === t) break; t = n; }
+    return t;
+  }
+  const usage = (tag) => ({ nf: state.files.filter((f) => PA.hasTag(f, tag)).length, nt: liveTodos().filter((t) => PA.hasTag(t, tag)).length });
+  function tagRows() {
+    const tops = new Map();
+    PA.allTags().forEach((t) => { const [top] = t.split("/"); if (!tops.has(top)) tops.set(top, new Set()); if (t.includes("/")) tops.get(top).add(t); });
+    return [...tops.entries()].sort((a, b) => a[0].localeCompare(b[0], "zh")).map(([top, subs]) => ({ top, subs: [...subs].sort((a, b) => a.localeCompare(b, "zh")) }));
+  }
+  function openManager() {
+    let mode = null; // {kind:"rename"|"merge", tag}
+    PA.modal({ title: "管理标签", wide: true, body: `<div id="mt-body"></div>`, onMount: (m) => {
+      const body = m.querySelector("#mt-body");
+      const paint = () => {
+        const rows = tagRows();
+        const line = (tag, sub) => {
+          const u = usage(tag), src = tagSource(tag), label = sub ? tag.split("/")[1] : tag;
+          const isEd = mode && mode.tag === tag;
+          const others = PA.allTags().filter((t) => t !== tag && !t.startsWith(tag + "/"));
+          return `<div class="mt-row ${sub ? "sub" : ""}" data-tag="${esc(tag)}"><span class="nm">${sub ? "" : "🏷️ "}${esc(label)}</span>
+            <span class="small muted">${u.nf} 个文件${u.nt ? ` · ${u.nt} 个待办` : ""}</span><span class="src ${src}">${SRC_LABEL[src]}</span>
+            <span class="acts"><a href="#" data-act="rename">改名</a><a href="#" data-act="merge">合并到…</a><a href="#" data-act="del" style="color:var(--danger)">删除</a></span>
+            ${isEd ? `<div class="edit-area">${mode.kind === "rename"
+              ? `<span class="small">新名称</span><input class="input inline" data-new value="${esc(tag)}" style="width:200px"><span class="hint">最多两层，如 工作/报告</span>`
+              : `<span class="small">把「${esc(tag)}」合并到</span><select class="input inline" data-target>${others.map((t) => `<option>${esc(t)}</option>`).join("")}</select>`}
+              <button class="btn sm primary" data-ok>确定</button><button class="btn sm" data-cancel>取消</button></div>` : ""}</div>`;
+        };
+        const hist = (state.tagHistory || [])[0];
+        body.innerHTML = `<div class="row" style="margin-bottom:8px"><span class="hint">删除标签只会从文件和待办上去掉，不删除文件。改名后视为你自己的标签。</span><span class="spacer"></span>
+            ${hist ? `<button class="btn sm" data-undo-regen>撤销上次重新生成</button>` : ""}<button class="btn sm primary" data-regen>重新生成标签</button></div>
+          <div>${rows.map((r) => line(r.top, false) + r.subs.map((s) => line(s, true)).join("")).join("") || '<div class="empty">还没有标签</div>'}</div>
+          ${(state.blockedTags || []).length ? `<div class="hint" style="margin-top:8px">不再自动使用：${state.blockedTags.map(esc).join("、")}</div>` : ""}
+          <details style="margin-top:14px"><summary class="small" style="cursor:pointer">预设标签库（候选库，用到才出现在侧栏）</summary>
+            <table class="preset-tbl" style="margin-top:6px"><tr><td class="muted">一级</td><td class="muted">二级</td><td class="muted">主要人群</td></tr>${PA.SEED.presetTags.map((p) => `<tr><td><b>${esc(p.top)}</b></td><td>${p.subs.map(esc).join("、")}</td><td class="muted">${esc(p.who)}</td></tr>`).join("")}</table>
+            ${(state.prefs.identity || []).length ? `<div class="hint">你的身份：${state.prefs.identity.map(esc).join("、")}，自动打标签时优先用相关的预设标签。</div>` : `<div class="hint">在 <a href="profile.html">个人设置</a> 里选“我的身份”，可让系统优先用相关的预设标签。</div>`}
+          </details>`;
+        body.querySelectorAll("[data-act]").forEach((a) => (a.onclick = (e) => {
+          e.preventDefault(); const tag = a.closest("[data-tag]").dataset.tag, act = a.dataset.act;
+          if (act === "del") return delTag(tag, paint);
+          if (act === "merge" && PA.allTags().filter((t) => t !== tag && !t.startsWith(tag + "/")).length === 0) return toast("没有可以合并到的其他标签");
+          mode = { kind: act, tag }; paint();
+          const i = body.querySelector("[data-new]"); if (i) { i.focus(); i.select(); }
+        }));
+        const cancel = body.querySelector("[data-cancel]"); if (cancel) cancel.onclick = () => { mode = null; paint(); };
+        const ok = body.querySelector("[data-ok]");
+        if (ok) ok.onclick = () => { if ((mode.kind === "rename" ? renameTag(mode.tag, body.querySelector("[data-new]").value) : mergeTag(mode.tag, body.querySelector("[data-target]").value)) !== false) { mode = null; paint(); } };
+        const ni = body.querySelector("[data-new]"); if (ni) ni.onkeydown = (e) => { if (e.key === "Enter") ok.click(); if (e.key === "Escape") body.querySelector("[data-cancel]").click(); };
+        body.querySelector("[data-regen]").onclick = () => regenerate(paint);
+        const ub = body.querySelector("[data-undo-regen]"); if (ub) ub.onclick = () => { undoRegen(); paint(); };
+      };
+      paint();
+    } });
+  }
+  function renameTag(from, raw) {
+    const to = PA.normTag(raw);
+    if (!to) { toast("请输入新名称"); return false; }
+    if (to === from) return;
+    if (to.includes("/") && PA.allTags().some((t) => t.startsWith(from + "/"))) { toast("这个标签下面还有子标签，只能改成一级名称"); return false; }
+    const r = retagAll(from, to); remember(from, to);
+    state.userTags = [...new Set(userTags().map((t) => mapTag(t, from, to)).concat(to))];
+    state.blockedTags = blocked().filter((t) => t !== to);
+    if (sel === from || sel.startsWith(from + "/")) sel = mapTag(sel, from, to);
+    save(); log("修改标签", `改名「${from}」→「${to}」：${r.nf} 个文件、${r.nt} 个待办`); toast(`已改名为「${to}」`); render();
+  }
+  function mergeTag(from, to) {
+    if (!to) return false;
+    const r = retagAll(from, to); remember(from, to);
+    state.userTags = userTags().filter((t) => !(t === from || t.startsWith(from + "/")));
+    if (sel === from || sel.startsWith(from + "/")) sel = to;
+    save(); log("修改标签", `合并「${from}」到「${to}」：${r.nf} 个文件、${r.nt} 个待办`); toast(`已合并到「${to}」`); render();
+  }
+  function delTag(tag, after) {
+    const u = usage(tag), hasSub = PA.allTags().some((t) => t.startsWith(tag + "/"));
+    PA.confirmBox("删除标签", `从 ${u.nf} 个文件${u.nt ? `、${u.nt} 个待办` : ""}上去掉「${esc(tag)}」${hasSub ? "及其子标签" : ""}。<b>文件本身不会删除。</b>${tagSource(tag) !== "user" ? "<br><span class='hint'>这是模型生成的标签，删除后以后不会再自动使用。</span>" : ""}`, () => {
+      const gone = PA.allTags().filter((t) => t === tag || t.startsWith(tag + "/"));
+      retagAll(tag, null);
+      gone.forEach((t) => { if (!userTags().includes(t) && !blocked().includes(t)) blocked().push(t); });
+      state.userTags = userTags().filter((t) => !gone.includes(t));
+      if (sel === tag || sel.startsWith(tag + "/")) sel = "";
+      save(); log("修改标签", `删除标签「${tag}」：${u.nf} 个文件、${u.nt} 个待办`); toast("已删除标签"); render(); after();
+    }, "删除", true);
+  }
+
+  // ---------------- 重新生成标签（原型：规则模拟两步模型调用） ----------------
+  const summary = (f) => [f.content, f.ocr, f.transcript, f.desc].filter(Boolean).join(" ").slice(0, 300);
+  function proposal() {
+    const flatUser = userTags().filter((t) => !t.includes("/") && !blocked().includes(t));
+    const styleUsed = new Set(), next = {};
+    let skipped = 0;
+    state.files.forEach((f) => {
+      if (f.tagLocked) { skipped++; next[f.id] = f.tags || []; return; }
+      const text = f.name + (f.meeting ? " 会议" : "") + " " + summary(f);
+      const style = flatUser.filter((t) => text.includes(t));
+      style.forEach((t) => styleUsed.add(t));
+      // 文件上已有的用户标签保留，保证“用户建的标签不被删除”
+      const keepUser = (f.tags || []).filter((t) => userTags().includes(t) && !style.includes(t));
+      const fixed = [...new Set([...keepUser, ...style])];
+      const auto = [...new Set(PA.autoTags(text, [], f.cat).map(applyRenames))].filter((t) => !fixed.includes(t) && !blocked().includes(t));
+      next[f.id] = [...auto.slice(0, Math.max(0, 3 - fixed.length)), ...fixed];
+    });
+    const todoTags = liveTodos().flatMap((t) => t.tags || []);
+    const before = new Set(PA.allTags());
+    const after = new Set([...userTags(), ...todoTags, ...Object.values(next).flat()]);
+    const changes = state.files.filter((f) => !f.tagLocked && [...(f.tags || [])].sort().join("|") !== [...next[f.id]].sort().join("|"));
+    return { next, skipped, changes, styleUsed: [...styleUsed], added: [...after].filter((t) => !before.has(t)), removed: [...before].filter((t) => !after.has(t)) };
+  }
+  function modelName(key) {
+    const m = state.models.find((x) => x.key === key), llm = state.models.find((x) => x.key === "llm");
+    return m && m.model ? m.model : `LLM 主模型 ${llm ? llm.model : ""}`.trim();
+  }
+  function regenerate(afterApply) {
+    const locked = state.files.filter((f) => f.tagLocked).length;
+    PA.modal({ title: "重新生成标签", wide: true, body: `<div id="rg"></div>`, onMount: (m, close) => {
+      const box = m.querySelector("#rg");
+      box.innerHTML = `<ul style="margin:0 0 10px;padding-left:18px" class="small">
+          <li>会参考你手动设置的标签风格重新整理；</li><li>你手动建的标签不会删除；</li>
+          <li>你手动设置过标签的文件（🔒，共 ${locked} 个）不会改动；</li><li>生成后先预览，确认才生效，可撤销。</li></ul>
+        <div class="row"><span class="spacer"></span><button class="btn" data-x>取消</button><button class="btn primary" data-go>开始生成</button></div>`;
+      box.querySelector("[data-x]").onclick = close;
+      box.querySelector("[data-go]").onclick = () => {
+        box.innerHTML = `<div class="step run" data-s1>第 1 步 整理标签体系（标签整理模型：${esc(modelName("tagorg"))}）…</div><div class="step" data-s2>第 2 步 给文件打标签（文件管理模型：${esc(modelName("filemgr"))}）</div>`;
+        setTimeout(() => {
+          if (!box.isConnected) return;
+          box.querySelector("[data-s1]").className = "step done"; box.querySelector("[data-s1]").textContent = "✓ " + box.querySelector("[data-s1]").textContent.replace(/…$/, "");
+          box.querySelector("[data-s2]").className = "step run"; box.querySelector("[data-s2]").textContent += "…";
+          setTimeout(() => { if (box.isConnected) preview(box, close, afterApply); }, 800);
+        }, 800);
+      };
+    } });
+  }
+  function preview(box, close, afterApply) {
+    const p = proposal();
+    const chip = (t, cls) => `<span class="tag ${cls}">${esc(t)}</span>`;
+    box.innerHTML = `<div class="step done">✓ 生成完成，请确认下面的变化</div>
+      ${p.styleUsed.length ? `<div class="note" style="margin:8px 0">参考了你的标签风格：${p.styleUsed.map((t) => "「" + esc(t) + "」").join("")}</div>` : ""}
+      <div class="small" style="margin-top:6px"><b>新增的标签：</b>${p.added.map((t) => chip(t, "new")).join("") || '<span class="muted">无</span>'}</div>
+      <div class="small" style="margin-top:6px"><b>不再使用的标签：</b>${p.removed.map((t) => chip(t, "gone")).join("") || '<span class="muted">无</span>'}</div>
+      <div class="diff-box">${p.changes.map((f) => `<div class="ln">${PA.fileIcon(f)} ${esc(f.name)}：${PA.tagChips(f.tags) || '<span class="muted">无</span>'} → ${p.next[f.id].map((t) => chip(t, (f.tags || []).includes(t) ? "" : "new")).join("") || '<span class="muted">无</span>'}</div>`).join("") || '<div class="ln muted">没有文件的标签需要变化</div>'}
+        ${p.skipped ? `<div class="ln muted">🔒 ${p.skipped} 个文件因手动设置过而跳过</div>` : ""}</div>
+      <div class="row" style="margin-top:12px"><span class="spacer"></span><button class="btn" data-x>取消</button><button class="btn primary" data-apply ${p.changes.length ? "" : "disabled"}>应用</button></div>`;
+    box.querySelector("[data-x]").onclick = close;
+    box.querySelector("[data-apply]").onclick = () => {
+      state.tagHistory = [{ at: PA.nowStr(), before: Object.fromEntries(state.files.map((f) => [f.id, [...(f.tags || [])]])), after: Object.fromEntries(p.changes.map((f) => [f.id, p.next[f.id]])) }];
+      p.changes.forEach((f) => (f.tags = [...p.next[f.id]]));
+      save(); log("重新生成标签", `${p.changes.length} 个文件的标签有变化，跳过 ${p.skipped} 个手动设置过的文件`);
+      close(); render(); afterApply && afterApply();
+      PA.undoToast(`已重新生成（${p.changes.length} 个文件）`, () => { undoRegen(); document.querySelector(".modal-mask #mt-body") && afterApply && afterApply(); });
+    };
+  }
+  function undoRegen() {
+    const h = (state.tagHistory || [])[0];
+    if (!h) return;
+    let n = 0;
+    // 只恢复重新生成之后没再被改过的文件，避免冲掉之后的手动修改
+    Object.entries(h.after).forEach(([id, tags]) => { const f = PA.fileById(id); if (f && (f.tags || []).join("|") === tags.join("|")) { f.tags = h.before[id] || []; n++; } });
+    state.tagHistory = [];
+    save(); log("重新生成标签", `撤销上次重新生成：恢复 ${n} 个文件`); toast(`已撤销，恢复了 ${n} 个文件的标签`); render();
+  }
+
+  document.getElementById("mgr").onclick = (e) => { e.preventDefault(); openManager(); };
+  kw.oninput = render;
+  document.getElementById("cats").addEventListener("change", render);
+  document.addEventListener("pa:files-changed", render);
+  render();
+  const fid = PA.qs("file");
+  if (fid) { const row = tbl.querySelector(`[data-row="${fid}"]`); if (row) { row.style.background = "var(--warn-weak)"; row.scrollIntoView({ block: "center" }); } }
+}
+</script>
+<script>
+// S07：知识库主搜索框改为“问助手”（按意思找），提交后跳到助手页；原有的文件名/标签筛选保留在下面作为次要功能。
+(function () {
+  const PA = window.PA, col = document.querySelector(".files-layout > div:nth-child(2)");
+  if (!PA || !col || !PA.state.session) return;
+  const bar = document.createElement("div");
+  bar.className = "askbar";
+  bar.innerHTML = '<div class="ask-main"><input class="input ask-input" id="ask" placeholder="用一句话描述你要找的内容"><button class="btn primary" id="ask-go">问助手</button></div>'
+    + '<span class="ask-note">按意思找：不用记文件名和关键字，回车就交给助手</span>';
+  col.insertBefore(bar, col.firstChild);
+  const input = PA.bindAsk(bar.querySelector("#ask"));
+  bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
+</body>
+</html>

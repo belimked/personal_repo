@@ -174,10 +174,15 @@
         "tests/smoke.test.mjs",
         "docs/ITER1/review/原型评审变更记录.md"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "7f9ecc3709",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-29T12:44:22.213Z",
+      "model_used": "main",
+      "actual_min": 8.6,
+      "last_error": null,
+      "finished_at": "2026-10-29T12:52:57.122Z"
     },
     {
       "id": "S02",

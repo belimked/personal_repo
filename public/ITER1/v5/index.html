@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="login-page">
+  <form class="login-card" id="form" novalidate>
+    <h1>个人日常助手</h1>
+    <div class="muted" style="margin-bottom:20px">请登录。系统不开放注册，账号由管理员创建。</div>
+    <div class="field"><label>邮箱或手机号</label><input class="input" id="acct" autocomplete="username" placeholder="name@example.com / 13800000000"></div>
+    <div class="field"><label>密码</label><input class="input" id="pwd" type="password" autocomplete="current-password" placeholder="8~16 位"></div>
+    <div class="err" id="err" style="min-height:18px"></div>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:6px" type="submit">登录</button>
+    <div class="row" style="margin-top:12px"><span class="spacer"></span><a href="forgot.html">忘记密码？</a></div>
+    <div class="row small" style="margin-top:10px"><span class="badge blue">ITER1 · 原型 v5</span><span class="spacer"></span><a href="../../">查看所有版本</a></div>
+    <div class="demo-accts">
+      <b>原型演示账号</b>（密码均为 <code>demo1234</code>）<br>
+      管理员：<a data-acct="admin@demo.com">admin@demo.com</a>（也可用手机号 13800000001）<br>
+      一般用户：<a data-acct="lily@demo.com">lily@demo.com</a><br>
+      已禁用：<a data-acct="chen@demo.com">chen@demo.com</a>（演示禁用后无法登录）
+    </div>
+  </form>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const { state, save, log } = PA;
+  if (state.session) location.href = "home.html";
+  document.querySelectorAll("[data-acct]").forEach((a) => (a.onclick = () => { acct.value = a.dataset.acct; pwd.value = "demo1234"; }));
+  const fails = () => +sessionStorage.getItem("pa5_fail") || 0;
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const sec = state.config.security;
+    const lockUntil = +sessionStorage.getItem("pa5_lock_until") || 0;
+    if (sec.lockEnabled && Date.now() < lockUntil) { err.textContent = `登录失败次数过多，账号已锁定，请 ${Math.ceil((lockUntil - Date.now()) / 60000)} 分钟后再试。`; return; }
+    const a = acct.value.trim(), p = pwd.value;
+    if (!a) { err.textContent = "请输入邮箱或手机号"; return; }
+    if (p.length < 8 || p.length > 16) { err.textContent = "密码长度应为 8~16 位"; return; }
+    const u = state.users.find((x) => x.email === a.toLowerCase() || (x.phone && x.phone === a));
+    if (!u || p !== (u.password || "demo1234")) {
+      const n = fails() + 1; sessionStorage.setItem("pa5_fail", n);
+      if (sec.lockEnabled && n >= sec.lockAttempts) { sessionStorage.setItem("pa5_lock_until", Date.now() + sec.lockMinutes * 60000); sessionStorage.setItem("pa5_fail", 0); err.textContent = `连续 ${n} 次失败，账号已锁定 ${sec.lockMinutes} 分钟。`; return; }
+      err.textContent = "账号或密码错误" + (sec.lockEnabled ? `（再失败 ${sec.lockAttempts - n} 次将锁定）` : "");
+      return;
+    }
+    if (u.status !== "active") { err.textContent = "该账号已被管理员禁用，请联系管理员。"; return; }
+    sessionStorage.setItem("pa5_fail", 0);
+    state.session = { email: u.email, role: u.role };
+    save(); log("登录", "登录成功");
+    location.href = "home.html";
+  };
+</script>
+</body>
+</html>

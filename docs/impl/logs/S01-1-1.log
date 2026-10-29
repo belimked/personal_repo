@@ -1,0 +1,3 @@
+$ npm --prefix tests install --no-audit --no-fund
+
+up to date in 2s

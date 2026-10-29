@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>重置密码 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div id="step1">
+      <h1>忘记密码</h1>
+      <div class="muted" style="margin-bottom:20px">输入登录邮箱或手机号，我们会向该账号绑定的邮箱发送重置链接（30 分钟内有效）。</div>
+      <div class="field"><label>邮箱或手机号</label><input class="input" id="acct"></div>
+      <div class="err" id="err1" style="min-height:18px"></div>
+      <button class="btn primary" style="width:100%;justify-content:center" id="send">发送重置邮件</button>
+      <div class="hint" style="margin-top:12px">也可以联系管理员直接为你设置新密码。</div>
+    </div>
+    <div id="step2" class="hidden">
+      <h1>邮件已发送</h1>
+      <div class="muted" style="margin:10px 0 20px">如果该账号存在，重置邮件已发送到 <b id="masked"></b>。为防止账号被探测，账号不存在时也显示同样的提示。</div>
+      <div class="note">原型演示：点击下面的链接模拟打开邮件中的重置链接。</div>
+      <button class="btn" id="open-link">打开邮件中的重置链接</button>
+    </div>
+    <div id="step3" class="hidden">
+      <h1>设置新密码</h1>
+      <div class="field" style="margin-top:16px"><label>新密码（8~16 位）</label><input class="input" type="password" id="p1"></div>
+      <div class="field"><label>确认新密码</label><input class="input" type="password" id="p2"></div>
+      <div class="err" id="err3" style="min-height:18px"></div>
+      <button class="btn primary" style="width:100%;justify-content:center" id="setpwd">保存新密码</button>
+    </div>
+    <div class="row" style="margin-top:16px"><a href="index.html">← 返回登录</a><span class="spacer"></span><span class="badge blue small">ITER1 · 原型 v5</span></div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  let target = null;
+  send.onclick = () => {
+    const a = acct.value.trim();
+    if (!a) { err1.textContent = "请输入邮箱或手机号"; return; }
+    target = PA.state.users.find((u) => u.email === a.toLowerCase() || u.phone === a);
+    const email = target ? target.email : a.includes("@") ? a : "你的邮箱";
+    masked.textContent = email.replace(/^(.).*(@.*)$/, "$1***$2");
+    step1.classList.add("hidden"); step2.classList.remove("hidden");
+  };
+  document.getElementById("open-link").onclick = () => { step2.classList.add("hidden"); step3.classList.remove("hidden"); };
+  setpwd.onclick = () => {
+    if (p1.value.length < 8 || p1.value.length > 16) { err3.textContent = "密码长度应为 8~16 位"; return; }
+    if (p1.value !== p2.value) { err3.textContent = "两次输入的密码不一致"; return; }
+    if (target) { target.password = p1.value; PA.save(); }
+    PA.toast("密码已重置，请用新密码登录");
+    setTimeout(() => (location.href = "index.html"), 1200);
+  };
+</script>
+</body>
+</html>
