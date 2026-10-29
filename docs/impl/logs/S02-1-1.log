@@ -1,0 +1,15 @@
+$ node --test tests/v5-data.test.mjs
+✔ v5 演示数据：所有未删除的待办都有 date；期限待办 date = deadline.to、全天 (1919.599713ms)
+✔ v5 演示数据：state.ideas 含演示条目，新能源车保留星标和 2 条想法记录 (963.260473ms)
+✔ 期限显示：whenText / deadlineText 显示“M/D 前”与“截止”，inDeadlineWindow 基于截止日 (571.781175ms)
+✔ todoFromIdea 生成带 ideaId 的待办，标签一致，ideaProgress 计数正确，updatedAt 更新 (584.608444ms)
+✔ todoToIdea：待办消失，新想做的事标题一致，保留想法记录、附件、标签、备注 (465.80564ms)
+✔ 灵光一现：演示数据与规则判断；不影响文件和待办的标签；tagsRemoved 不再加回 (628.354046ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7213.457244

@@ -1,0 +1,2 @@
+$ git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples
+

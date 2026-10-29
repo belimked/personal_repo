@@ -8,9 +8,9 @@
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.version === 6) return s;
+      if (s && s.version === 7) return s;
     } catch (e) {}
-    const s = clone({ version: 6, files: SEED.files, todos: SEED.todos, inbox: SEED.inbox, users: SEED.users, fileTypes: SEED.fileTypes, models: SEED.models, logs: SEED.logs, config: SEED.config, uploads: [], session: null, prefs: { tz: "UTC+8", dailyMail: true, mailTime: "08:00", weeklyNudge: true, identity: [] }, userTags: ["合同"], blockedTags: [], tagHistory: [], tagRenames: {} });
+    const s = clone({ version: 7, files: SEED.files, todos: SEED.todos, ideas: SEED.ideas, inbox: SEED.inbox, users: SEED.users, fileTypes: SEED.fileTypes, models: SEED.models, logs: SEED.logs, config: SEED.config, uploads: [], session: null, prefs: { tz: "UTC+8", dailyMail: true, mailTime: "08:00", weeklyNudge: true, identity: [] }, userTags: ["合同"], blockedTags: [], tagHistory: [], tagRenames: {} });
     localStorage.setItem(KEY, JSON.stringify(s));
     return s;
   }
@@ -104,7 +104,8 @@
   const canPreview = (f) => ["text", "image", "pdf"].includes(f.cat);
   const fileById = (id) => state.files.find((f) => f.id === id);
   const todoById = (id) => state.todos.find((t) => t.id === id);
-  const linkedTodos = (fid) => state.todos.filter((t) => (t.attachments || []).includes(fid));
+  // 传文件编号：引用该文件的待办；传想做的事（对象）：由它生成的未删除待办（S02）
+  const linkedTodos = (x) => (x && typeof x === "object" ? state.todos.filter((t) => t.ideaId === x.id && t.status !== "deleted") : state.todos.filter((t) => (t.attachments || []).includes(x)));
   const uid = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const nowStr = () => { const d = new Date(); return `${today()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   const qs = (k) => new URLSearchParams(location.search).get(k);
@@ -510,17 +511,21 @@
     return null;
   }
   const daysLeft = (t) => (t.deadline ? diffDays(t.deadline.to, today()) : null);
-  const inDeadlineWindow = (t) => t.status === "open" && !t.date && !!t.deadline && daysLeft(t) <= 6;
+  // 期限待办（S02）：date = deadline.to，按截止日处理；最后 7 天（含截止当天）进“期限快到了”，过了截止日按逾期处理
+  const mdText = (ds) => (ds ? `${+ds.slice(5, 7)}/${+ds.slice(8)}` : "");
+  const dueOf = (t) => t.date || (t.deadline ? t.deadline.to : "");
+  const inDeadlineWindow = (t) => t.status === "open" && !!t.deadline && !!t.date && diffDays(t.date, today()) >= 0 && diffDays(t.date, today()) <= 6;
   function deadlineText(t, withLeft = true) {
     if (!t.deadline) return "";
-    const left = daysLeft(t);
-    const tail = !withLeft || left > 6 ? "" : left < 0 ? "（已过期限）" : left === 0 ? "（今天截止）" : `（还剩 ${left} 天）`;
-    return `期限：${t.deadline.label}${tail}`;
+    const left = diffDays(dueOf(t), today());
+    const tail = !withLeft || left > 6 ? "" : left < 0 ? "（已逾期）" : left === 0 ? "（今天截止）" : `（还剩 ${left} 天）`;
+    return `截止：${mdText(dueOf(t))} 前${tail}`;
   }
-  // 待办的“时间”一行文字：具体日期 / 期限 / 待安排
+  // 待办的“时间”一行文字：具体日期 / 截止日
   function whenText(t) {
+    if (t.deadline) return `${mdText(dueOf(t))} 前（截止）`;
     if (t.date) return `${cnDate(t.date)} ${t.time ? timeRange(t) : "全天"}`;
-    return t.deadline ? `待安排 · ${deadlineText(t)}` : "待安排";
+    return "未定日期";
   }
 
   // ---------------- 时间识别（原型中模拟 LLM 的结构化输出：只提取时间及精度，归类由规则决定） ----------------
@@ -574,7 +579,7 @@
     [...w.used, du.used].filter(Boolean).forEach((u) => (title = title.replace(u, "")));
     if (loc) title = title.replace("在" + loc, "").replace("去" + loc, "").replace("到" + loc, "");
     title = title.replace(/^(提醒我|记得|帮我|我要|要|得)/, "").replace(/^(要|得|需要)/, "").replace(/[，,]?\s*(大概|大约|预计|约)?\s*$/, "").replace(/了[。！!]?$/, "").replace(/^[，,。\s]+|[，,。\s]+$/g, "").trim() || text;
-    return { title, date: w.date, time: w.time, duration: du.min, deadline: w.deadline, precision: w.precision, location: loc, used: [...w.used, du.used, loc].filter(Boolean) };
+    return { title, date: w.date || (w.deadline ? w.deadline.to : ""), time: w.time, duration: du.min, deadline: w.deadline, precision: w.precision, location: loc, used: [...w.used, du.used, loc].filter(Boolean) };
   }
 
   // ---------------- 标签 ----------------
@@ -584,6 +589,7 @@
     const set = new Set(state.userTags || []);
     state.files.forEach((f) => (f.tags || []).forEach((t) => set.add(t)));
     state.todos.filter((t) => t.status !== "deleted").forEach((t) => (t.tags || []).forEach((x) => set.add(x)));
+    (state.ideas || []).forEach((i) => (i.tags || []).forEach((x) => set.add(x)));
     return [...set].sort((a, b) => a.localeCompare(b, "zh"));
   }
   // 侧栏树：父标签数量按条目去重
@@ -618,6 +624,14 @@
     fileIds.map(fileById).filter(Boolean).forEach((f) => (f.tags || []).slice(0, 1).forEach((t) => !out.includes(t) && out.push(t)));
     if (!out.length && cat) out.push({ image: "生活/照片", video: "资料/视频", audio: "资料/参考", pdf: "资料/参考", text: "资料/参考" }[cat] || "资料/参考");
     return out.filter((t) => !(state.blockedTags || []).includes(t)).slice(0, 3);
+  }
+  // 想做的事的自动标签（S02）：在 autoTags 之外按说法规则判断“灵光一现”；idea.tagsRemoved 里的标签不再加回
+  const SPARK_TAG = "灵光一现";
+  const SPARK_RE = /可以加|可以试试|要是能|做个|搞个|突然想到|点子|灵感|也许可以/;
+  function autoIdeaTags(text, idea) {
+    const removed = (idea && idea.tagsRemoved) || [];
+    const out = [...(SPARK_RE.test(text) ? [SPARK_TAG] : []), ...autoTags(text)];
+    return out.filter((t) => !removed.includes(t) && !(state.blockedTags || []).includes(t)).slice(0, 3);
   }
   // 标签编辑：点 × 去掉，点 ＋ 输入（自动补全已有标签和预设库，没有就新建）
   function tagEditor(el, { value = [], onChange } = {}) {
@@ -655,13 +669,15 @@
   }
   // 用户手动点过的项记为 touched，之后从待办内容识别出的结果不再覆盖它
   function dateTimePicker(el, init = {}, { onChange, allowDeadline = true } = {}) {
-    let v = { date: init.date || "", time: init.time || "", duration: +init.duration || 0, deadline: init.deadline || null };
+    // 期限待办存的是 date = deadline.to：在选择器里按“期限”模式显示，取值时再把截止日放回 date（S02）
+    const dlMode = (x) => !!(x.deadline && !x.time && (!x.date || x.date === x.deadline.to));
+    let v = { date: dlMode(init) ? "" : init.date || "", time: init.time || "", duration: +init.duration || 0, deadline: init.deadline || null };
     let customTime = !!(v.time && !TIME_PRESETS.includes(v.time)), showDateInput = false, dp = null;
     const touched = new Set(), flash = new Set();
     const syncDur = () => { if (dp && v.time) v.duration = dp.value(); };
     const fire = () => onChange && onChange(value());
-    const value = () => { syncDur(); return { date: v.date, time: v.date ? v.time : "", duration: v.date && v.time ? v.duration || DEFAULT_DUR : 0, deadline: v.date ? null : v.deadline }; };
-    const result = () => { const x = value(); return x.date ? `${cnDate(x.date)} ${x.time ? `${x.time}–${toHM(Math.min(1440, toMin(x.time) + x.duration))}` : "全天"}` : x.deadline ? `待安排 · 期限 ${x.deadline.label}（${x.deadline.to.slice(5).replace("-", "/")} 前）` : "待安排（没有日期，不进日历和每日提醒）"; };
+    const value = () => { syncDur(); return { date: v.date || (v.deadline ? v.deadline.to : ""), time: v.date ? v.time : "", duration: v.date && v.time ? v.duration || DEFAULT_DUR : 0, deadline: v.date ? null : v.deadline }; };
+    const result = () => { const x = value(); return x.date ? `${cnDate(x.date)} ${x.time ? `${x.time}–${toHM(Math.min(1440, toMin(x.time) + x.duration))}` : "全天"}` : x.deadline ? `截止 ${mdText(x.deadline.to)} 前（${x.deadline.label}）` : "还没选日期（待办必须有日期或截止日）"; };
     function paint() {
       syncDur();
       const chips = dateChips(), onChip = chips.some(([, d]) => d === v.date);
@@ -698,6 +714,7 @@
       // auto=true：来自内容识别，只填用户没手动改过的项，并闪一下提示
       set(nv, { auto = false } = {}) {
         syncDur();
+        if (nv.deadline && dlMode(nv)) nv = Object.assign({}, nv, { date: "" });
         ["date", "time", "duration", "deadline"].forEach((k) => {
           if (!(k in nv) || (auto && touched.has(k))) return;
           const val = k === "duration" ? +nv[k] || 0 : nv[k] || (k === "deadline" ? null : "");
@@ -878,8 +895,10 @@
     return {
       overdue: open.filter((t) => t.date < d0).sort(sort),
       days: [["今天", d0], ["明天", d1], ["后天", d2]].map(([label, date]) => ({ label, date, list: open.filter((t) => t.date === date).sort(sort) })),
-      deadlines: state.todos.filter(inDeadlineWindow).sort((a, b) => a.deadline.to.localeCompare(b.deadline.to)),
-      unscheduled: state.todos.filter((t) => t.status === "open" && !t.date),
+      // 截止日已在“今天/明天/后天”里的不重复列出
+      deadlines: state.todos.filter((t) => inDeadlineWindow(t) && t.date > d2).sort((a, b) => a.date.localeCompare(b.date)),
+      // 兼容旧页面：待办都有日期后不再有“待安排”（S02）
+      unscheduled: [],
     };
   }
   const upcomingCount = () => { const u = upcoming(); return u.overdue.length + u.days.reduce((s, d) => s + d.list.length, 0) + u.deadlines.length; };
@@ -887,13 +906,13 @@
     const u = me(), up = upcoming();
     const item = (t) => `<li style="margin:4px 0">${t.date ? (t.time ? timeRange(t) : "全天") : esc(deadlineText(t))} ${esc(t.title)}${t.location ? "（" + esc(t.location) + "）" : ""} <a href="#" data-mail-done="${t.id}" style="font-size:12px;margin-left:6px">✓ 完成</a></li>`;
     const sec = (title, list) => (list.length ? `<h4 style="margin:12px 0 6px">${title}</h4><ul style="margin:0;padding-left:18px">${list.map(item).join("")}</ul>` : "");
-    const unsched = up.unscheduled.sort((a, b) => !!b.starred - !!a.starred);
+    const unsched = (state.ideas || []).filter((i) => i.status === "active" && !isSpark(i)).sort((a, b) => !!b.starred - !!a.starred || (b.updatedAt || "").localeCompare(a.updatedAt || ""));
     const body = sec("已逾期", up.overdue) + up.days.map((d) => sec(`${d.label}（${cnDate(d.date)}）`, d.list)).join("") + sec("期限快到了", up.deadlines);
     modal({
       title: "邮件预览", wide: true,
       body: `<div class="small muted">发件人：${esc(state.config.mail.fromName)} &lt;${esc(state.config.mail.from)}&gt;<br>收件人：${esc(u.email)}<br>主题：【日常助手】最近 3 天待办提醒（${today()}）</div><hr style="border:none;border-top:1px solid var(--border)">
         <div>你好 ${esc(u.name)}，以下是你最近 3 天的待办：</div>${body || '<p class="muted">最近 3 天没有待办。</p>'}
-        <div style="margin-top:14px;padding:10px;background:var(--bg);border-radius:6px"><b>每周一附加：你有 ${unsched.length} 件待安排的事</b>，要排进这周吗？<ul style="margin:6px 0 0;padding-left:18px">${unsched.slice(0, 5).map((t) => `<li>${t.starred ? "⭐ " : ""}${esc(t.title)}${t.deadline ? ` <span style="color:var(--muted)">${esc(deadlineText(t))}</span>` : ""}</li>`).join("")}</ul><div class="hint">超过 30 天没有动静的事项，会顺带问一句“还要做吗？”</div></div>
+        <div style="margin-top:14px;padding:10px;background:var(--bg);border-radius:6px"><b>每周一附加：你有 ${unsched.length} 件想做的事</b>，有要排进这周的吗？<ul style="margin:6px 0 0;padding-left:18px">${unsched.slice(0, 5).map((t) => `<li>${t.starred ? "⭐ " : ""}${esc(t.title)}</li>`).join("")}</ul><div class="hint">不含灵光一现；超过 90 天没有动静的，每月顺带问一句“还留着吗？”</div></div>
         <div class="note" style="margin-top:12px">“✓ 完成”是免登录的一次性链接（带签名、有有效期）。原型里点击会直接完成该待办；是否实现在需求阶段决定。</div>`,
       onMount: (m) => m.querySelectorAll("[data-mail-done]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); const t = todoById(a.dataset.mailDone); if (t && t.status === "open") { completeTodos([t], { toastMsg: `已通过邮件链接完成：${t.title}` }); todosChanged(); a.outerHTML = '<span style="color:var(--success);font-size:12px;margin-left:6px">已完成</span>'; } })),
     });
@@ -904,12 +923,39 @@
     if (e.key !== KEY || !e.newValue || ticking) return;
     try {
       const n = JSON.parse(e.newValue);
-      ["files", "todos", "inbox", "uploads", "userTags", "blockedTags", "tagHistory", "tagRenames"].forEach((k) => (state[k] = n[k]));
+      ["files", "todos", "ideas", "inbox", "uploads", "userTags", "blockedTags", "tagHistory", "tagRenames"].forEach((k) => (state[k] = n[k]));
       updateBadges();
       document.dispatchEvent(new CustomEvent("pa:files-changed"));
       document.dispatchEvent(new CustomEvent("pa:todos-changed"));
     } catch (err) {}
   });
+
+  // ---------------- 想做的事（S02） ----------------
+  const ideaById = (id) => (state.ideas || []).find((i) => i.id === id);
+  const isSpark = (idea) => !!idea && (idea.tags || []).includes(SPARK_TAG);
+  function ideaProgress(idea) {
+    const list = linkedTodos(idea), done = list.filter((t) => t.status === "done").length;
+    return { scheduled: list.length, done, text: list.length ? `已排 ${list.length} 条 · 完成 ${done}` : "还没排时间" };
+  }
+  // 由想做的事生成一条关联待办（继承标签）；想做的事保留
+  function todoFromIdea(idea, { date, time = "", duration, title } = {}) {
+    if (!idea || !date) return null;
+    const t = { id: uid("t"), title: (title || idea.title).trim(), date, time: time || "", duration: time ? +duration || DEFAULT_DUR : 0, deadline: null, location: "", status: "open", source: "manual", attachments: [], notes: "", tags: [...(idea.tags || [])].filter((x) => x !== SPARK_TAG), records: [], ideaId: idea.id, createdAt: nowStr(), updatedAt: nowStr() };
+    state.todos.push(t);
+    idea.updatedAt = nowStr();
+    save();
+    return t;
+  }
+  // 待办转为想做的事：保留想法记录、附件、标签、备注，并删除这条待办
+  function todoToIdea(todo) {
+    if (!todo) return null;
+    state.ideas = state.ideas || [];
+    const idea = { id: uid("i"), title: todo.title, notes: todo.notes || "", records: clone(todo.records || []), attachments: [...(todo.attachments || [])], tags: [...(todo.tags || [])], tagsRemoved: [], starred: !!todo.starred, status: "active", source: "todo", sourceNote: `由待办转来（原日期 ${todo.date || "无"}）`, createdAt: nowStr(), updatedAt: nowStr(), askedDone: [] };
+    state.ideas.unshift(idea);
+    state.todos = state.todos.filter((t) => t !== todo);
+    save();
+    return idea;
+  }
 
   // ---------------- layout ----------------
   const NAV_USER = [
@@ -993,6 +1039,7 @@
     parseWhen, parseDur, parseLocation, parseTodo,
     PRESET_FULL, normTag, allTags, tagTree, hasTag, tagChips, autoTags, tagEditor,
     TIME_PRESETS, dateTimePicker, undoToast, todosChanged, setStatus, completeTodos, deleteTodo, purgeTodo, tickHTML,
+    ideaById, ideaProgress, todoFromIdea, todoToIdea, isSpark, autoIdeaTags, SPARK_TAG, SPARK_RE, mdText,
     linkify, relTime, addRecord, recordsBox, attachBox, kbPicker, upcoming, upcomingCount, previewMail,
     ADMIN_TYPES: SEED.logTypesAdmin,
     SOURCE_LABEL: { text: "文字输入", manual: "手动创建", meeting: "会议录音" },

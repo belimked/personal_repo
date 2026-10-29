@@ -13,6 +13,8 @@
   const weekEnd = () => { const d = now(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); return ymd(d); };
   const nextMonth = () => { const n = now(); const a = new Date(n.getFullYear(), n.getMonth() + 1, 1), b = new Date(n.getFullYear(), n.getMonth() + 2, 0); return { from: ymd(a), to: ymd(b), label: `${a.getMonth() + 1}月内` }; };
 
+  const dlNext = nextMonth();
+
   const svgImg = (label, c1, c2, sub) =>
     "data:image/svg+xml;charset=utf-8," +
     encodeURIComponent(
@@ -118,12 +120,26 @@
     { id: "t12", duration: 45, title: "和李总在星巴克见面", date: dayStr(4), time: "15:00", location: "星巴克（静安寺店）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 20:00", tags: ["生意/客户"] },
     { id: "t13", title: "交水电费", date: dayStr(-3), time: "", location: "", status: "done", source: "manual", attachments: [], notes: "", createdAt: dayStr(-8) + " 12:00", tags: ["财务/账单"] },
     { id: "t14", duration: 30, title: "银行办理转账", date: dayStr(0), time: "15:00", location: "招商银行（南京西路支行）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 21:00", tags: ["财务/账单"] },
-    { id: "t20", duration: 30, title: "联系平安的客户经理", date: dayStr(0), time: "11:00", location: "", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-3) + " 09:30", tags: ["生活/保险"] },
-    { id: "t15", title: "整理家里的旧衣服", date: "", time: "", location: "", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-7) + " 22:00", tags: ["家庭"], updatedAt: dayStr(-7) + " 22:00" },
-    { id: "t16", title: "研究新能源车的购车补贴", date: "", time: "", location: "", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-6) + " 22:30", tags: ["生活/出行旅游"], starred: true, updatedAt: dayStr(-1) + " 21:15", records: [{ id: "r1", at: dayStr(-1) + " 21:15", text: "4S 店说今年置换补贴最高 1.5 万，要在年底前提车。政策原文：https://example.gov.cn/nev-subsidy", files: [] }, { id: "r2", at: dayStr(-6) + " 22:30", text: "先比较一下比亚迪和特斯拉的落地价", files: [] }] },
-    { id: "t18", title: "买车险", date: "", time: "", location: "", status: "open", source: "text", attachments: [], notes: "去年在平安买的，到期前一个月可以续保", createdAt: dayStr(-2) + " 20:10", tags: ["生活/保险"], deadline: nextMonth(), updatedAt: dayStr(-2) + " 20:10", records: [] },
-    { id: "t19", title: "更新简历", date: "", time: "", location: "", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-5) + " 23:00", tags: ["求职/简历"], starred: true, deadline: { from: dayStr(-5), to: weekEnd(), label: "本周内" }, updatedAt: dayStr(-3) + " 23:10", records: [{ id: "r4", at: dayStr(-3) + " 23:10", text: "把客户管理系统二期项目写进去，突出数据导出模块", files: [] }] },
-    { id: "t17", title: "预约年底体检", date: "", time: "", location: "", status: "open", source: "manual", attachments: ["f4"], notes: "", createdAt: dayStr(-4) + " 10:00", tags: ["生活/健康医疗"], deadline: { from: dayStr(0), to: yearEnd(), label: "年底前" }, updatedAt: dayStr(-4) + " 10:00", records: [{ id: "r3", at: dayStr(-4) + " 10:00", text: "上次体检血脂偏高，医生建议三个月后复查，这次加做颈动脉彩超", files: ["f4"] }] },
+    { id: "t20", duration: 30, title: "联系平安的客户经理", date: dayStr(0), time: "11:00", location: "", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-3) + " 09:30", tags: ["生活/保险"], ideaId: "i3" },
+    // 有期限的待办：date 取期限最后一天，deadline 只作“截止”说明（S02）
+    { id: "t18", title: "买车险", date: dlNext.to, time: "", location: "", status: "open", source: "text", attachments: [], notes: "去年在平安买的，到期前一个月可以续保", createdAt: dayStr(-2) + " 20:10", tags: ["生活/保险"], deadline: dlNext, updatedAt: dayStr(-2) + " 20:10", records: [] },
+    { id: "t19", title: "更新简历", date: weekEnd(), time: "", location: "", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-5) + " 23:00", tags: ["求职/简历"], deadline: { from: dayStr(-5), to: weekEnd(), label: "本周内" }, updatedAt: dayStr(-3) + " 23:10", records: [{ id: "r4", at: dayStr(-3) + " 23:10", text: "把客户管理系统二期项目写进去，突出数据导出模块", files: [] }] },
+    { id: "t17", title: "预约年底体检", date: yearEnd(), time: "", location: "", status: "open", source: "manual", attachments: ["f4"], notes: "", createdAt: dayStr(-4) + " 10:00", tags: ["生活/健康医疗"], deadline: { from: dayStr(0), to: yearEnd(), label: "年底前" }, updatedAt: dayStr(-4) + " 10:00", records: [{ id: "r3", at: dayStr(-4) + " 10:00", text: "上次体检血脂偏高，医生建议三个月后复查，这次加做颈动脉彩超", files: ["f4"] }] },
+  ];
+
+  // 想做的事（S02）：没有日期，与待办平级；可生成关联待办（todo.ideaId）
+  const idea = (o) => Object.assign({ notes: "", records: [], attachments: [], tags: [], tagsRemoved: [], starred: false, status: "active", source: "text", sourceNote: "", askedDone: [] }, o);
+  const ideas = [
+    idea({ id: "i1", title: "整理家里的旧衣服", tags: ["家庭"], createdAt: dayStr(-7) + " 22:00", updatedAt: dayStr(-7) + " 22:00" }),
+    idea({ id: "i2", title: "研究新能源车的购车补贴", source: "manual", tags: ["生活/出行旅游"], starred: true, createdAt: dayStr(-6) + " 22:30", updatedAt: dayStr(-1) + " 21:15",
+      records: [{ id: "r1", at: dayStr(-1) + " 21:15", text: "4S 店说今年置换补贴最高 1.5 万，要在年底前提车。政策原文：https://example.gov.cn/nev-subsidy", files: [] }, { id: "r2", at: dayStr(-6) + " 22:30", text: "先比较一下比亚迪和特斯拉的落地价", files: [] }] }),
+    idea({ id: "i3", title: "研究一下保险", tags: ["生活/保险"], notes: "重疾险和医疗险都看看，家里人也一起考虑", createdAt: dayStr(-10) + " 21:00", updatedAt: dayStr(-3) + " 09:30",
+      records: [{ id: "r5", at: dayStr(-3) + " 09:30", text: "同事推荐了平安的客户经理，先约着聊一次", files: [] }] }),
+    // 超过 90 天没动静（供每月“还留着吗？”回顾演示）
+    idea({ id: "i4", title: "想学游泳", tags: ["生活/健康医疗"], createdAt: dayStr(-120) + " 20:00", updatedAt: dayStr(-120) + " 20:00" }),
+    idea({ id: "i5", title: "带孩子去趟云南", tags: ["生活/出行旅游", "家庭/孩子教育"], createdAt: dayStr(-15) + " 22:10", updatedAt: dayStr(-15) + " 22:10" }),
+    idea({ id: "i6", title: "周报可以加个图表", tags: ["灵光一现", "工作/报告"], createdAt: dayStr(-4) + " 18:20", updatedAt: dayStr(-4) + " 18:20" }),
+    idea({ id: "i7", title: "做个记家里开销的小程序", tags: ["灵光一现", "家庭/家庭账本"], createdAt: dayStr(-20) + " 23:05", updatedAt: dayStr(-20) + " 23:05" }),
   ];
 
   const inbox = [
@@ -220,9 +236,10 @@
     { top: "家庭", subs: ["孩子教育", "老人照护", "宠物", "菜谱", "家庭账本"], who: "家庭主妇、白领" },
     { top: "生活", subs: ["健康医疗", "证件", "保险", "房屋租住", "出行旅游", "照片"], who: "全部" },
     { top: "资料", subs: ["视频", "收藏", "参考"], who: "全部" },
+    { top: "灵光一现", subs: [], who: "全部（只用于想做的事）" },
   ];
 
-  window.PA_SEED = { presetTags, files, todos, inbox, users, fileTypes, models, logs: genLogs(), config, logTypesUser, logTypesAdmin, dayStr, MB, svgImg };
+  window.PA_SEED = { presetTags, files, todos, ideas, inbox, users, fileTypes, models, logs: genLogs(), config, logTypesUser, logTypesAdmin, dayStr, MB, svgImg };
 })();
 
 // 节日表（程序查表告诉“模型”，不让模型自己判断）：公历按月日；农历节日按演示年份写死公历日期

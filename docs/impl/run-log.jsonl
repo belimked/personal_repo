@@ -1,3 +1,8 @@
 {"t":"2026-10-29T12:44:05.188Z","pv":1,"ev":"plan_created","msg":"11 步；变更步骤 11"}
 {"t":"2026-10-29T12:44:22.216Z","pv":1,"ev":"begin","step":"S01","msg":"main"}
 {"t":"2026-10-29T12:52:57.126Z","pv":1,"ev":"done","step":"S01","min":8.6,"msg":"main"}
+{"t":"2026-10-29T12:53:17.230Z","pv":1,"ev":"begin","step":"S02","msg":"main"}
+{"t":"2026-10-29T13:08:43.302Z","pv":1,"ev":"fail","step":"S02","msg":"改动超出本步范围：.github/workflows/shots.yml、tools/stitch-shots/shoot.mjs（测试产物请加进 .gitignore；用户批准的改动用 allow 登记；其他文件请撤销改动，或在补全模式中调整 files_owned）"}
+{"t":"2026-10-29T13:28:44.362Z","pv":1,"ev":"fail","step":"S02","msg":"改动超出本步范围：.gitignore（测试产物请加进 .gitignore；用户批准的改动用 allow 登记；其他文件请撤销改动，或在补全模式中调整 files_owned）"}
+{"t":"2026-10-29T13:31:06.380Z","pv":1,"ev":"fix","step":"S02","min":22.4}
+{"t":"2026-10-29T13:31:06.385Z","pv":1,"ev":"done","step":"S02","min":15.4,"msg":"main"}
