@@ -1,0 +1,695 @@
+{
+  "meta": {
+    "name": "proto-v5",
+    "lang": "zh",
+    "mode": "lite",
+    "design": {
+      "path": "docs/design/原型v5-设计.md",
+      "version": "v1",
+      "sha256": "fa79ae6728dffdaff0ffe7f83afeb5aa6bf50a22b2e00959ff7646fff9bdb488",
+      "sealed_at": "2026-10-29T12:44:05.180Z"
+    },
+    "milestones": {
+      "M1": "原型 v5：想做的事、标签树、菜单按钮",
+      "M2": "测试与发布"
+    },
+    "smoke": {
+      "command": "node --test tests/v5-smoke.test.mjs",
+      "owner": "S01"
+    },
+    "shared_files": [
+      "public/ITER1/v5/assets/app.js",
+      "public/ITER1/v5/assets/app.css",
+      "public/ITER1/v5/assets/data.js",
+      "public/ITER1/v5/assets/chat.js",
+      "public/ITER1/v5/home.html",
+      "public/ITER1/v5/todos.html",
+      "public/ITER1/v5/todo.html",
+      "public/ITER1/v5/files.html",
+      "tests/helpers.mjs",
+      "docs/test/测试方案.md"
+    ],
+    "step_timeout_min": 30,
+    "history": [
+      {
+        "pv": 1,
+        "design_version": "v1",
+        "design_sha": "fa79ae6728dffdaff0ffe7f83afeb5aa6bf50a22b2e00959ff7646fff9bdb488",
+        "date": "2026-10-29",
+        "note": "初始生成 11 步"
+      }
+    ],
+    "plan_version": 1,
+    "sections": {
+      "§1": {
+        "l": "4-13",
+        "h": "92f772a5b7"
+      },
+      "§1.1": {
+        "l": "5-6",
+        "h": "4019565270"
+      },
+      "§1.2": {
+        "l": "7-13",
+        "h": "558935567e"
+      },
+      "§2": {
+        "l": "14-20",
+        "h": "c52c294b60"
+      },
+      "§3": {
+        "l": "21-77",
+        "h": "c6350fe8fb"
+      },
+      "§3.1": {
+        "l": "22-25",
+        "h": "b9f148b674"
+      },
+      "§3.2": {
+        "l": "26-34",
+        "h": "52f05cc9ae"
+      },
+      "§3.3": {
+        "l": "35-42",
+        "h": "519beba9f5"
+      },
+      "§3.4": {
+        "l": "43-51",
+        "h": "823371cabe"
+      },
+      "§3.5": {
+        "l": "52-61",
+        "h": "9e855147ae"
+      },
+      "§3.6": {
+        "l": "62-69",
+        "h": "a17e0a35e7"
+      },
+      "§3.7": {
+        "l": "70-73",
+        "h": "cb0d14f2d3"
+      },
+      "§3.8": {
+        "l": "74-77",
+        "h": "23ecd49052"
+      },
+      "§4": {
+        "l": "78-84",
+        "h": "7554357b26"
+      },
+      "§5": {
+        "l": "85-91",
+        "h": "d0146eef28"
+      },
+      "§6": {
+        "l": "92-95",
+        "h": "e30eb93cee"
+      },
+      "§7": {
+        "l": "96-101",
+        "h": "f830ae61f7"
+      },
+      "§8": {
+        "l": "102-108",
+        "h": "719dbb5679"
+      }
+    }
+  },
+  "gaps": [],
+  "steps": [
+    {
+      "id": "S01",
+      "milestone": "M1",
+      "order": 1,
+      "title": "复制 v4 为 v5，测试工具支持 v5，菜单收起按钮改图标",
+      "goal": "public/ITER1/v5/ 成为可用的原型 v5（独立演示数据），测试工具能加载 v5 页面；菜单底部收起/展开按钮改为醒目的图标按钮。",
+      "deps": [],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "high",
+      "difficulty_reason": "第一个步骤，建立 v5 目录与测试模式",
+      "model_tier": "main",
+      "sections": [
+        "§3.1",
+        "§4"
+      ],
+      "files_owned": [
+        "public/ITER1/v5/admin-filetypes.html",
+        "public/ITER1/v5/admin-logs.html",
+        "public/ITER1/v5/admin-models.html",
+        "public/ITER1/v5/admin-system.html",
+        "public/ITER1/v5/admin-usage.html",
+        "public/ITER1/v5/admin-users.html",
+        "public/ITER1/v5/forgot.html",
+        "public/ITER1/v5/index.html",
+        "public/ITER1/v5/inbox.html",
+        "public/ITER1/v5/reminders.html",
+        "public/ITER1/v5/profile.html",
+        "tests/v5-smoke.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "cp -r public/ITER1/v4 public/ITER1/v5，再改 KEY 为 pa_ITER1_v5、sessionStorage 前缀 pa4_ 改为 pa5_（含 index.html 等页面内联脚本）、所有“原型 v4”字样改为“原型 v5”",
+        "tests/helpers.mjs：loadPage 增加 version 选项（默认 \"v4\"，旧测试不改），STATE_KEY 随版本（pa_ITER1_v5）；导出 V5_DIR、stateKey(version)；relTarget 增加 version 参数（默认 v4）",
+        "tests/v5-smoke.test.mjs：逐个加载 v5 全部 HTML（同 tests/smoke.test.mjs 的做法），断言无错误、含“原型 v5”、不含“原型 v4”；再测菜单按钮：#nav-toggle 含 svg、不含 » «，title 收起时“展开菜单”、展开时“收起菜单”，点击后切换并记住",
+        "按钮图标用内联 SVG（侧栏框 + 箭头），两种方向；大小、颜色、悬停与 .nav-item 一致；展开时显示“收起菜单”文字（评审第 11 项）",
+        "不改 v1–v4 和 samples 的任何文件；不做第 12、13 项（S02 起负责）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "npm --prefix tests install --no-audit --no-fund",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples",
+          "grep -q pa_ITER1_v5 public/ITER1/v5/assets/app.js"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "tests/helpers.mjs",
+        "tests/smoke.test.mjs",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "7f9ecc3709",
+      "pv": 1
+    },
+    {
+      "id": "S02",
+      "milestone": "M1",
+      "order": 2,
+      "title": "数据模型：想做的事、待办必须有日期、灵光一现",
+      "goal": "v5 的数据里有了“想做的事”（与待办平级、可生成关联待办），所有待办都有日期，期限按截止日处理；“灵光一现”标签能自动判断。",
+      "deps": [
+        "S01"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "high",
+      "difficulty_reason": "数据结构是后续页面和助手的基础，迁移规则有陷阱",
+      "model_tier": "main",
+      "sections": [
+        "§3.2",
+        "§5"
+      ],
+      "files_owned": [
+        "tests/v5-data.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "演示数据在 data.js 里改（种子数据），不要写运行时迁移；PA.SEED / PA_SEED 中新增 ideas 并进 state（与 todos 相同的初始化方式）",
+        "函数名和语义按 §3.2 列出的写，导出到 PA；todoFromIdea 也要更新 idea.updatedAt；todoToIdea 保留想法记录、附件、标签、备注",
+        "期限待办：date = deadline.to，time 为空（全天）；PA.whenText / deadlineText 改为显示“M/D 前”与“截止”，inDeadlineWindow 改为基于 deadline 且有 date 的待办；检查 app.js 里所有用 !t.date 判断“待安排”的地方，改为不再产生无日期待办",
+        "灵光一现：PRESET 标签库加“灵光一现”；autoTags 对想做的事额外按关键词规则判断（autoIdeaTags 或给 autoTags 加参数），不影响文件和待办的打标签结果；tagsRemoved 里的标签不再加回",
+        "本步只改数据和公共函数，页面上的待安排 UI 由 S04/S05 处理；为了不让现有页面报错，可以保留旧函数名作兼容（返回空列表）",
+        "测试用 loadPage(..., {version:'v5', today: 固定日期})，覆盖 §3.2 完成标准的每一条"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-data.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "8f181c8c09",
+      "pv": 1
+    },
+    {
+      "id": "S03",
+      "milestone": "M1",
+      "order": 3,
+      "title": "“想做的事”列表页与详情页",
+      "goal": "菜单新增 💡“想做的事”，ideas.html 用一列卡片显示、按标签小块筛选、排个时间生成关联待办；idea.html 显示详情、想法记录、关联待办和状态操作。",
+      "deps": [
+        "S02"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "新页面，照着 v4 的页面结构写",
+      "model_tier": "main",
+      "sections": [
+        "§3.3"
+      ],
+      "files_owned": [
+        "public/ITER1/v5/ideas.html",
+        "public/ITER1/v5/idea.html",
+        "tests/v5-ideas.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "页面框架照 v5 的 files.html / todo.html：PA.shell 之类的公共布局，菜单项在 app.js 的 NAV_USER 里加在“待办事项”后",
+        "排个时间的日期快捷选项沿用 app.js 已有的日期快捷选项（今天/明天/本周六/下周一 + 选日期），生成后用 PA.undoToast 可撤销",
+        "想法记录用 v4 的 PA.recordsBox；标签用 PA.tagEditor；样式加到 app.css，朴素卡片风格，与待安排卡片相近",
+        "已做成 / 已放下默认收起，底部一行展开",
+        "页面也放“问助手”入口（同 todos.html 顶部的样式）：示例说法“保险那件事，排到周六上午”",
+        "不做：助手里的想做的事（S06/S07）、待办页改动（S04/S05）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-ideas.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "public/ITER1/v5/todo.html",
+        "public/ITER1/v5/files.html"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "cb58ce6d62",
+      "pv": 1
+    },
+    {
+      "id": "S04",
+      "milestone": "M1",
+      "order": 4,
+      "title": "待办页去掉待安排，日期必填，详情显示来源与“先不做了”",
+      "goal": "待办页只剩有日期的待办：没有待安排页签、分组和侧栏；新建/编辑必须有日期，没日子的可直接放进想做的事；待办详情显示“来自：…”和“先不做了”。",
+      "deps": [
+        "S03"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "改动分散在列表、日历、表单、详情，规格明确",
+      "model_tier": "main",
+      "sections": [
+        "§3.4"
+      ],
+      "files_owned": [
+        "tests/v5-todos.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "只做 §3.4 的前三条（待安排去除、日期必填、详情）；左侧标签树由 S05 做，本步保留 v4 的标签下拉框不动",
+        "todos.html 里删掉 unsched 相关的 CSS、页签、分组、侧栏、拖回清除日期，?tab=unscheduled 改为跳转 ideas.html",
+        "日期快捷选项里选期限：date 自动取期限最后一天；表单无日期时禁用保存，并显示“还没定日子？放进想做的事 ›”",
+        "todo.html 与右侧详情：去掉星标；有 ideaId 显示“来自：标题 ›”（链到 idea.html?id=）；`先不做了` 调用 PA.todoToIdea 或只删除（有来源时），带撤销",
+        "日历上带截止日的待办显示“截止”字样"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-todos.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "public/ITER1/v5/todos.html"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "a432536f69",
+      "pv": 1
+    },
+    {
+      "id": "S05",
+      "milestone": "M1",
+      "order": 5,
+      "title": "待办页左侧标签树（多选、全选 / 排除）",
+      "goal": "待办页左侧有与知识库一致的标签树：点名只看一类、勾选多选、默认全选可排除，列表和日历共用筛选，可收起，窄屏收成按钮。",
+      "deps": [
+        "S04"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "全选/排除两种模式与新标签默认勾选的状态逻辑容易出错",
+      "model_tier": "main",
+      "sections": [
+        "§3.4"
+      ],
+      "files_owned": [
+        "tests/v5-tagtree.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "参照样例 public/ITER1/samples/todo-tags/todos.html 的标签树实现（把相关代码移植到 v5 的 todos.html，不改样例）；样例里“不勾 = 全部”的做法要改为评审第 12 项第 3 条的规则",
+        "程序记录模式 mode: 'exclude'|'only' 和勾选集合；新标签按模式决定默认勾选；筛选行文字按模式变化",
+        "件数跟随当前页签（列表）或当前显示范围（日历）",
+        "选择在本次会话内记住（sessionStorage，前缀 pa5_）",
+        "替换 v4 的“全部标签”下拉框"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-tagtree.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "public/ITER1/samples/todo-tags/todos.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "size_reason": "移植样例的标签树并新增全选/排除两种模式与对应测试",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "7ec63b8566",
+      "pv": 1
+    },
+    {
+      "id": "S06",
+      "milestone": "M1",
+      "order": 6,
+      "title": "助手：记成想做的事、排时间、追加与查询",
+      "goal": "助手把没有时间的说法记成想做的事并可一键排时间，时间段说法按截止日成为待办；能对想做的事追加想法、排期、按意思查到它；最近安排面板改为链到想做的事。",
+      "deps": [
+        "S05"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "改 chat.js 的归类、目标匹配和查询，容易破坏 v4 的已有能力",
+      "model_tier": "main",
+      "sections": [
+        "§3.5"
+      ],
+      "files_owned": [
+        "tests/v5-chat-ideas.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "归类在 chat.js 的 renderCreate / placeText；目标匹配 pickTarget 要能返回想做的事（先匹配想做的事，再匹配待办）",
+        "结果卡片的撤销沿用 applyUndo；新增撤销类型时一并处理想做的事",
+        "查询 searchTodos/searchRecords 加入想做的事，结果卡片标“想做的事”，带“排个时间”",
+        "最近安排面板底部改为“想做的事 N 件 · 看看 ›”链到 ideas.html；不再出现“待安排”字样",
+        "chat.js 里所有提到“待安排”的文案都改掉（会议确认的文案由 S07 改）",
+        "💡 提示沿用 v4 的 tipsShown 机制"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-chat-ideas.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "size_reason": "助手页多处能力要改为支持想做的事，并保住 v4 已有对话能力",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "0025267a7f",
+      "pv": 1
+    },
+    {
+      "id": "S07",
+      "milestone": "M1",
+      "order": 7,
+      "title": "助手：逾期“先不做了”、做成了、会议日期、回顾",
+      "goal": "逾期消息可以“先不做了”；关联待办都完成后助手问“算做成了吗”；会议确认时每条带日期，没日期的放进想做的事；每周一和每月 1 日的回顾可用 ?review= 演示。",
+      "deps": [
+        "S06"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "在已有消息类型上扩展，规则逐条给全",
+      "model_tier": "main",
+      "sections": [
+        "§3.6"
+      ],
+      "files_owned": [
+        "tests/v5-chat-review.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "逾期消息的按钮在 overdueAct 附近；“先不做了”与 S04 的规则一致（用 PA.todoToIdea）",
+        "会议确认在 confirmMeeting 和会议消息的勾选卡片里；有 due 的条目直接显示日期；条目的日期选择用日期快捷选项",
+        "回顾消息在问候之后发；reviewShown 防止同一周/同一月重复；?review=week|month 时无视 reviewShown 立即发",
+        "“算做成了吗”只问一次（idea.askedDone 记已问过的那批待办 id）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v5-chat-review.test.mjs",
+          "node --test tests/v5-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/samples"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "c24a51a91a",
+      "pv": 1
+    },
+    {
+      "id": "S08",
+      "milestone": "M1",
+      "order": 8,
+      "title": "版本登记：README、原型首页、评审记录",
+      "goal": "README、原型首页和评审记录登记原型 v5，写清 v5 的模拟方式和与评审规则的差异。",
+      "deps": [
+        "S07"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "文档登记，照 v4 的写法",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.7"
+      ],
+      "files_owned": [
+        "README.md",
+        "public/index.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "照 v4 的登记方式：README 版本索引与目录结构、原型首页卡片（v5 最新、v4 冻结）、评审记录头部与状态",
+        "原型首页 v5 卡片写明：想做的事、回顾演示地址 ITER1/v5/home.html?review=week 与 ?review=month、标签树、菜单按钮",
+        "“v5 原型实现说明”写：灵光一现关键词模拟、回顾演示参数、第 12 项待定各点的处理（见设计 §1.2）、演示数据迁移",
+        "标签在本步提交之后由主代理打（git tag ITER1-proto-v5），本步不打"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "grep -q 'ITER1/v5' README.md",
+          "grep -q 'ITER1-proto-v5' README.md",
+          "grep -q 'ITER1/v5/' public/index.html",
+          "grep -q '已改原型（v5）' docs/ITER1/review/原型评审变更记录.md",
+          "grep -q 'v5 原型实现说明' docs/ITER1/review/原型评审变更记录.md",
+          "node --test \"tests/*.test.mjs\""
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "docs/design/原型v4-设计.md"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "6a71c0cdfe",
+      "pv": 1
+    },
+    {
+      "id": "S09",
+      "milestone": "M2",
+      "order": 9,
+      "title": "测试方案与浏览器测试代码",
+      "goal": "写出测试方案（用例表）和 GitHub 上运行的浏览器测试，本机检查全部通过。",
+      "deps": [
+        "S08"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "low",
+      "difficulty_reason": "按 site-test 模板写，样板代码为主",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.8",
+        "§4"
+      ],
+      "files_owned": [
+        "docs/test/测试方案.md",
+        "package.json",
+        "package-lock.json",
+        "playwright.config.ts",
+        ".github/workflows/test.yml",
+        ".gitignore"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "按 site-test skill（/root/.agents/skills/site-test/SKILL.md）第 2、3 节：先写方案再写代码；不运行远端测试（S10 负责），本机不装浏览器",
+        "根目录 package.json：private，devDependencies @playwright/test、wrangler；scripts.test = 'npm --prefix tests install --no-audit --no-fund && node --test \"tests/*.test.mjs\"'；不要 build 脚本",
+        "e2e 用例针对 /ITER1/v5/：登录 lily@demo.com/demo1234；用例覆盖 §3.8 列出的流程；每个测试标题以 TC-xx 开头，每个用例自己准备数据（新开页面、清 localStorage）",
+        "保留 e2e/smoke.spec.ts（首页 / 能打开、无脚本报错）",
+        "服务命令：npx wrangler dev --local --port 4173（static 架构）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "npm install --no-audit --no-fund",
+          "npx playwright test --list",
+          "npm test"
+        ]
+      },
+      "gaps": [],
+      "dirs_owned": [
+        "e2e"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "43b835aca1",
+      "pv": 1
+    },
+    {
+      "id": "S10",
+      "milestone": "M2",
+      "order": 10,
+      "title": "在 GitHub 上运行浏览器测试",
+      "goal": "浏览器测试在 GitHub Actions 上全部通过。",
+      "deps": [
+        "S09"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "运行脚本并等待结果",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.8"
+      ],
+      "files_owned": [
+        "docs/test/远端测试结果.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "运行 bash /root/.agents/skills/site-test/scripts/run-remote.sh .（仓库已存在，不加 --create-repo）",
+        "失败时按 site-test 第 5 节：测试写错可以修 e2e/ 下的测试（最多 2 次）；网站 bug 不改网站代码、不放宽断言，回复 FAIL 并写清用例、期望、实际",
+        "结果写到 docs/test/远端测试结果.md：运行链接、通过/失败数、每个用例编号的结果（测试方案.md 是共享文件，也可回填其“结果”表）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "bash /root/.agents/skills/site-test/scripts/run-remote.sh ."
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "4135c3272e",
+      "pv": 1
+    },
+    {
+      "id": "S11",
+      "milestone": "M2",
+      "order": 11,
+      "title": "发布并推送版本标签",
+      "goal": "原型 v5 发布到预览地址并能访问，标签 ITER1-proto-v5 推到 GitHub。",
+      "deps": [
+        "S10"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "运行发布脚本",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.8",
+        "§4"
+      ],
+      "files_owned": [
+        "docs/test/发布记录.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "运行 bash /root/.agents/skills/site-builder/scripts/publish.sh -m \"ITER1 原型 v5：想做的事、待办必须有日期、标签树、菜单按钮\" .（bash 超时至少 600 秒）",
+        "发布后 git push origin ITER1-proto-v5；不改任何业务文件",
+        "发布成功后把预览地址、备用 workers.dev 地址、发布时间写进 docs/test/发布记录.md，再由主代理提交"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "bash /root/.agents/skills/site-builder/scripts/publish.sh -m \"ITER1 原型 v5：想做的事、待办必须有日期、标签树、菜单按钮\" .",
+          "curl -sfL -o /dev/null https://daily-assistant-proto.accrepo.com/ITER1/v5/",
+          "git push origin ITER1-proto-v5"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "83490c1740",
+      "pv": 1
+    }
+  ],
+  "post_run": [
+    {
+      "id": "A01",
+      "kind": "manual",
+      "title": "在浏览器里试用 v5",
+      "after": "S11",
+      "src": "§2",
+      "steps": [
+        "打开 https://daily-assistant-proto.accrepo.com/ITER1/v5/ ，用 lily@demo.com / demo1234 登录",
+        "依次试：对助手说“想研究一下保险”并排时间、💡 想做的事页、待办页标签树、菜单收起按钮、home.html?review=week"
+      ],
+      "pass": [
+        "评审第 11、12、13 项在页面上都能找到对应表现",
+        "视觉朴素、无明显错位或遮挡"
+      ],
+      "affects": [
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07"
+      ]
+    }
+  ]
+}
