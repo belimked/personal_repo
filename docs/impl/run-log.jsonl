@@ -21,3 +21,10 @@
 {"t":"2026-10-29T15:32:44.074Z","pv":1,"ev":"done","step":"S08","min":10.7,"msg":"cheap"}
 {"t":"2026-10-29T15:33:05.064Z","pv":1,"ev":"begin","step":"S09","msg":"cheap"}
 {"t":"2026-10-29T15:50:14.700Z","pv":1,"ev":"done","step":"S09","min":17.2,"msg":"cheap"}
+{"t":"2026-10-29T15:50:35.938Z","pv":1,"ev":"begin","step":"S10","msg":"cheap"}
+{"t":"2026-10-29T16:03:33.245Z","pv":1,"ev":"fail","step":"S10","msg":"改动超出本步范围：e2e/auth.spec.ts、e2e/helpers.ts、e2e/ideas.spec.ts（测试产物请加进 .gitignore；用户批准的改动用 allow 登记；其他文件请撤销改动，或在补全模式中调整 files_owned）"}
+{"t":"2026-10-29T16:04:01.764Z","pv":1,"ev":"allow","step":"S10","msg":"e2e/auth.spec.ts：site-test 第 5 节：测试写错（URL 规整、来源断言位置），修测试不改网站"}
+{"t":"2026-10-29T16:04:01.992Z","pv":1,"ev":"allow","step":"S10","msg":"e2e/helpers.ts：site-test 第 5 节：测试写错（URL 规整、来源断言位置），修测试不改网站"}
+{"t":"2026-10-29T16:04:02.209Z","pv":1,"ev":"allow","step":"S10","msg":"e2e/ideas.spec.ts：site-test 第 5 节：测试写错（URL 规整、来源断言位置），修测试不改网站"}
+{"t":"2026-10-29T16:06:09.160Z","pv":1,"ev":"fix","step":"S10","min":2.6}
+{"t":"2026-10-29T16:06:09.165Z","pv":1,"ev":"done","step":"S10","min":13,"msg":"cheap"}

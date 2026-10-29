@@ -48,5 +48,14 @@ test("TC-07 想做的事页筛选与生成待办", async ({ page }) => {
   await page.goto(`${V5}todos.html`);
   const table = page.getByRole("table");
   await expect(table).toContainText("周报可以加个图表");
-  await expect(table).toContainText("来自：周报可以加个图表");
+
+  // 列表行不显示来源行，“来自：…”在待办详情里（tc 方案 TC-07 的“标注来自”）
+  const row = table.locator("tr").filter({ hasText: "周报可以加个图表" }).first();
+  await row.getByRole("link", { name: "详情" }).click();
+  await expect(page).toHaveURL(/todo(\.html)?\?id=/);
+  const from = page.locator("[data-from]");
+  await expect(from).toContainText("来自：");
+  await expect(
+    from.getByRole("link", { name: /周报可以加个图表/ }),
+  ).toBeVisible();
 });

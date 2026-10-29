@@ -14,5 +14,6 @@ export async function login(page: Page, email = LOGIN_EMAIL, password = LOGIN_PA
   await page.getByPlaceholder("name@example.com / 13800000000").fill(email);
   await page.getByPlaceholder("8~16 位").fill(password);
   await page.getByRole("button", { name: "登录" }).click();
-  await expect(page).toHaveURL(/home\.html$/);
+  // wrangler 静态资源会把 home.html 规整成 /home（有无扩展名都接受）
+  await expect(page).toHaveURL(/home(\.html)?$/);
 }

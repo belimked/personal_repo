@@ -19,6 +19,6 @@ test("TC-03 菜单按钮：展开后有 5 个入口，点“待办事项”能�
     await expect(page.getByRole("link", { name: new RegExp(name) }).first()).toBeVisible();
   }
   await page.getByRole("link", { name: /待办事项/ }).first().click();
-  await expect(page).toHaveURL(/todos\.html$/);
+  await expect(page).toHaveURL(/todos(\.html)?$/);
   await expect(page.getByRole("button", { name: "＋ 新建待办" })).toBeVisible();
 });
