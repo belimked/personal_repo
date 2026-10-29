@@ -68,8 +68,9 @@
     if (u.op === "fields") u.items.forEach(([id, before]) => { const t = PA.todoById(id); if (t) Object.assign(t, before, { updatedAt: PA.nowStr() }); });
     else if (u.op === "status") u.items.forEach(([id, s]) => { const t = PA.todoById(id); if (t) { t.status = s; t.updatedAt = PA.nowStr(); } });
     else if (u.op === "remove") { const t = PA.todoById(u.id); state.todos = state.todos.filter((x) => x.id !== u.id); if (t) log("彻底删除待办", `撤销新建：${t.title}`); if (followUp?.todoId === u.id) followUp = null; }
+    else if (u.op === "idea") { const i = PA.ideaById(u.id); state.ideas = (state.ideas || []).filter((x) => x.id !== u.id); state.todos = state.todos.filter((x) => x.ideaId !== u.id || !(u.todos || []).includes(x.id)); if (i) log("文字输入·新增待办", `撤销记成想做的事：${i.title}`); }
     else if (u.op === "record") {
-      const t = PA.todoById(u.id);
+      const t = itemById(u.id);
       if (t) { t.records = (t.records || []).filter((r) => r.id !== u.recId); t.attachments = u.before; }
       u.pending.forEach((id) => { const up = state.uploads.find((x) => x.id === id); if (up) up.todoIds = (up.todoIds || []).filter((x) => x !== u.id); });
     }
@@ -79,11 +80,13 @@
   // ---------- 通用片段 ----------
   const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   const rangeText = (t) => (t.time ? PA.timeRange(t) : "全天");
-  const placeText = (t) => (t.date ? `已加入待办：${PA.cnDate(t.date)} ${rangeText(t)} · ${t.title}` : t.deadline ? `已放入待安排，期限 ${t.deadline.label} · ${t.title}` : `已放入待安排 · ${t.title}`);
+  const itemById = (id) => PA.todoById(id) || PA.ideaById(id);
+  const isIdea = (x) => !!x && !!PA.ideaById(x.id) && PA.ideaById(x.id) === x;
+  const placeText = (t) => (t.deadline && t.date ? `已加入待办：${PA.cnDate(t.date)}前 · ${t.title}` : t.date ? `已加入待办：${PA.cnDate(t.date)} ${rangeText(t)} · ${t.title}` : `已记下 · ${t.title}`);
   const todoLine = (t) => `<b>${esc(t.title)}</b> <span class="muted small">${esc(PA.whenText(t))}${t.location ? " · " + esc(t.location) : ""}</span>`;
   const snapshot = (t) => JSON.parse(JSON.stringify({ date: t.date, time: t.time, duration: t.duration, deadline: t.deadline || null, title: t.title, location: t.location }));
   const shortDate = (ds) => PA.cnDate(ds).replace(/（.*/, "");
-  const rowHTML = (t, tail = "") => `<div class="crow ${t.status !== "open" ? "done" : ""}" data-todo-row>${PA.tickHTML(t)}<span class="ct">${t.date && t.date !== PA.today() ? esc(shortDate(t.date)) + " " : ""}${t.date ? rangeText(t) : "待安排"}</span><a class="ci" href="todo.html?id=${t.id}">${esc(t.title)}</a>${t.location ? `<span class="cl" title="${esc(t.location)}">📍${esc(t.location)}</span>` : ""}${tail}</div>`;
+  const rowHTML = (t, tail = "") => `<div class="crow ${t.status !== "open" ? "done" : ""}" data-todo-row>${PA.tickHTML(t)}<span class="ct">${t.date && t.date !== PA.today() ? esc(shortDate(t.date)) + " " : ""}${t.date ? rangeText(t) : "未定日期"}</span><a class="ci" href="todo.html?id=${t.id}">${esc(t.title)}</a>${t.location ? `<span class="cl" title="${esc(t.location)}">📍${esc(t.location)}</span>` : ""}${tail}</div>`;
   const newTodo = (o) => ({ id: PA.uid("t"), title: "", date: "", time: "", duration: 0, deadline: null, location: "", status: "open", source: "text", attachments: [], notes: "", tags: [], records: [], starred: false, createdAt: PA.nowStr(), updatedAt: PA.nowStr(), ...o });
 
   function editForm(host, t, onSaved) {
@@ -199,8 +202,8 @@
       <div class="rc-meta">${t.location ? `<span>📍 ${esc(t.location)}</span>` : ""}${(t.tags || []).length ? `<span>🏷</span>${PA.tagChips(t.tags)}` : ""}</div>
       <div class="rc-files"></div>${atts.length ? `<div class="rc-files">${atts.map((f) => `<div>📎 ${esc(f.name)}</div>`).join("")}</div>` : ""}
       <div class="rc-edit"></div>
-      <div class="actions">${phase === "open" ? `${d.fresh ? '<button class="btn sm" data-a="undo">撤销</button>' : ""}<button class="btn sm" data-a="edit">修改</button>${!t.date ? '<button class="btn sm" data-a="edit">设具体日期</button>' : ""}<button class="btn sm" data-a="done">完成</button><button class="btn sm" data-a="del">删除</button>` : `<button class="btn sm" data-a="restore">撤销${phase === "done" ? "完成" : "删除"}</button>`}<a class="btn ghost sm" href="todo.html?id=${t.id}">查看详情</a></div>
-      ${d.ask && phase === "open" && !t.date ? `<div class="ask">💬 ${esc(d.ask)}</div>` : ""}`;
+      <div class="actions">${phase === "open" ? `${d.fresh ? '<button class="btn sm" data-a="undo">撤销</button>' : ""}<button class="btn sm" data-a="edit">修改</button>${t.deadline ? '<button class="btn sm" data-a="edit">设具体日期</button>' : ""}<button class="btn sm" data-a="done">完成</button><button class="btn sm" data-a="del">删除</button>` : `<button class="btn sm" data-a="restore">撤销${phase === "done" ? "完成" : "删除"}</button>`}<a class="btn ghost sm" href="todo.html?id=${t.id}">查看详情</a></div>
+      ${d.ask && phase === "open" && t.deadline ? `<div class="ask">💬 ${esc(d.ask)}</div>` : ""}`;
     if (uploads.length) liveFiles(host.querySelector(".rc-files"), uploads);
     const on = (a, fn) => host.querySelectorAll(`[data-a="${a}"]`).forEach((x) => (x.onclick = fn));
     const openEdit = () => editForm(host.querySelector(".rc-edit"), t, () => renderMsg(m));
@@ -236,9 +239,20 @@
       const { s, hit } = score(hay, terms); return { f, s, hitTerms: hit, hay };
     }).filter((x) => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 4);
   }
+  function matchIdeas(text) {
+    const q = bigrams(text);
+    return (state.ideas || []).filter((i) => i.status === "active").map((t) => {
+      let s = 0; bigrams(t.title).forEach((x) => { if (q.has(x) && !STOP.has(x)) s++; }); return { t, s };
+    }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s);
+  }
+  function searchIdeas(text) {
+    const terms = searchTerms(text);
+    return (state.ideas || []).filter((i) => i.status === "active").map((t) => ({ t, ...score([t.title, t.notes, ...(t.tags || [])].filter(Boolean).join("\n"), terms) }))
+      .filter((x) => x.s >= 1).sort((a, b) => b.s - a.s).slice(0, 5);
+  }
   function searchRecords(text) {
     const terms = searchTerms(text);
-    return state.todos.filter((t) => t.status !== "deleted").flatMap((t) => (t.records || []).map((r) => ({ t, r, ...score(r.text, terms) })))
+    return [...state.todos.filter((t) => t.status !== "deleted"), ...(state.ideas || []).filter((i) => i.status === "active")].flatMap((t) => (t.records || []).map((r) => ({ t, r, ...score(r.text, terms) })))
       .filter((x) => x.s >= 2).sort((a, b) => b.s - a.s).slice(0, 4);
   }
   function searchTodos(text) {
@@ -259,6 +273,8 @@
     /^关于(.+?)[，,\s]+(?:再|帮我)?记(?:一下|一笔)?[:：，,\s]*([\s\S]*)$/,
   ];
   const SCHED_RE = /^(?:帮我)?把(.+?)(?:排到|安排到|排在|安排在|放到|定在|定到)(.+)$/;
+  const SCHED_RES = [SCHED_RE, /^(.+?)(?:那件事|那个事|这件事|那事)儿?[，,\s]*(?:就|帮我)?(?:排到|安排到|排在|安排在|放到|定在|定到)(.+)$/];
+  const schedMatch = (text) => SCHED_RES.map((r) => text.match(r)).find(Boolean);
   const POSTPONE_RE = /(推迟|延后|往后[推挪延]|延期|顺延)/;
   function scopeOf(text) {
     const m = text.match(/今天|昨天|明天|本周|这周|这个星期|这礼拜/);
@@ -283,7 +299,7 @@
   const isLookup = (text) => LOOKUP_RE.test(text) && !NOT_LOOKUP.test(text) && PA.parseWhen(text).precision === "none";
   function detectIntent(text) {
     if (NOTE_RES.some((r) => r.test(text))) return "note";
-    if (SCHED_RE.test(text)) return "schedule";
+    if (schedMatch(text)) return "schedule";
     if (/(待确认会议|确认会议|处理会议|会议录音.*确认)/.test(text)) return "meeting";
     if (postponeScope(text)) return "postpone";
     if (isLookup(text) || /(查一下|查查|查询|查找|帮我查|找一下|找找|帮我找|搜|有没有|在哪|什么时候|说了什么|是多少|多少钱|哪份|哪个文件|有哪些|[?？]$)/.test(text)) return "search";
@@ -319,7 +335,7 @@
 
   function tryFollowUp(text) {
     const t = PA.todoById(followUp.todoId);
-    if (!t || t.status !== "open" || t.date) { followUp = null; return false; }
+    if (!t || t.status !== "open" || !t.deadline) { followUp = null; return false; }
     const w = PA.parseWhen(text);
     if (!w.date) return false;
     let rest = text; w.used.forEach((u) => (rest = rest.replace(u, "")));
@@ -328,7 +344,7 @@
     const old = snapshot(t);
     Object.assign(t, { date: w.date, time: w.time, duration: w.time ? t.duration || PA.DEFAULT_DUR : 0, deadline: null, updatedAt: PA.nowStr() });
     save(); log("文字输入·更新待办", `${t.title}：设为 ${t.date}`); PA.todosChanged();
-    bot("result", "", { html: `✅ 好的，「${esc(t.title)}」的日期设为 <b>${esc(PA.cnDate(t.date))} ${rangeText(t)}</b>，到时会出现在每日提醒里。`, undo: { op: "fields", items: [[t.id, old]] }, editId: t.id, undoneMsg: "已撤销，仍放在待安排中。" });
+    bot("result", "", { html: `✅ 好的，「${esc(t.title)}」的日期设为 <b>${esc(PA.cnDate(t.date))} ${rangeText(t)}</b>，到时会出现在每日提醒里。`, undo: { op: "fields", items: [[t.id, old]] }, editId: t.id, undoneMsg: "已撤销，仍按原来的截止日。" });
     return true;
   }
 
@@ -346,13 +362,14 @@
       }
       title = `处理《${files[0].name}》`;
     }
-    const t = newTodo({ title, date: p.date, time: p.time, duration: p.time ? p.duration || PA.DEFAULT_DUR : 0, deadline: p.date ? null : p.deadline, location: p.location });
+    if (p.precision === "none") return createIdea(text, title, files);
+    const t = newTodo({ title, date: p.date, time: p.time, duration: p.time ? p.duration || PA.DEFAULT_DUR : 0, deadline: p.precision === "range" ? p.deadline : null, location: p.location });
     state.todos.push(t);
     const res = files.length ? plain(PA.startUpload(files, { quiet: true, todoId: t.id })) : [];
     t.tags = PA.autoTags(text, res.filter((r) => r.fileId).map((r) => r.fileId));
     save(); log("文字输入·新增待办", `“${text}” → ${t.title}${files.length ? `（附件 ${files.length} 个）` : ""}`); PA.todosChanged();
     let ask = "";
-    const m = !t.date && t.deadline && t.title.match(ASK_RE);
+    const m = t.deadline && !t.time && t.title.match(ASK_RE);
     if (m) { ask = `${m[0] === "到期" ? "" : m[0]}几号到期？告诉我可以按到期日提醒你（不说也没关系）`; followUp = { todoId: t.id }; }
     bot("todo", "", { todoId: t.id, fresh: true, uploads: res, ask });
   }
@@ -397,7 +414,12 @@
   };
 
   // 只有一个明确匹配时直接执行，否则让用户选
-  function pickTarget(text, statuses, intent, extra, prefer) {
+  function pickTarget(text, statuses, intent, extra, prefer, withIdeas) {
+    if (withIdeas) {
+      const il = matchIdeas(text);
+      if (il.length === 1 || (il.length > 1 && il[0].s >= il[1].s + 2)) return ACTIONS[intent](il[0].t, extra);
+      if (il.length > 1) { bot("pick", "", { intent, extra, ids: [...il.slice(0, 3).map((x) => x.t), ...matchTodos(text, statuses).slice(0, 2).map((x) => x.t)].map((t) => t.id), found: true }); return; }
+    }
     let list = matchTodos(text, statuses);
     if (prefer && list.length > 1) list = list.sort((a, c) => c.s - a.s || prefer(c.t) - prefer(a.t));
     if (list.length === 1 || (list.length > 1 && list[0].s >= list[1].s + 2)) return ACTIONS[intent](list[0].t, extra);
@@ -407,16 +429,16 @@
   KINDS.pick = (b, m) => {
     const d = m.data;
     if (d.cancelled) { b.innerHTML = '<span class="muted">已取消，没有改动。</span>'; return; }
-    if (d.picked) { b.innerHTML = `<p>好的，是「${esc(PA.todoById(d.picked)?.title || "")}」。</p>`; return; }
+    if (d.picked) { b.innerHTML = `<p>好的，是「${esc(itemById(d.picked)?.title || "")}」。</p>`; return; }
     const rn = "c" + m.id;
     b.innerHTML = `<p>${d.found ? "找到多个可能的待办，是哪一个？" : "没有找到明确匹配的待办，请从最近的待办中选择："}</p>
-      <div class="result-card">${d.ids.map(PA.todoById).filter(Boolean).map((t) => `<label class="row" style="padding:4px 0;cursor:pointer;gap:8px"><input type="radio" name="${rn}" value="${t.id}"> ${todoLine(t)}</label>`).join("")}
+      <div class="result-card">${d.ids.map(itemById).filter(Boolean).map((t) => `<label class="row" style="padding:4px 0;cursor:pointer;gap:8px"><input type="radio" name="${rn}" value="${t.id}"> ${isIdea(t) ? `<span class="badge">想做的事</span> <b>${esc(t.title)}</b>` : todoLine(t)}</label>`).join("")}
       <div class="actions"><button class="btn sm primary" data-a="pick">就是它</button><button class="btn sm" data-a="no">取消</button></div></div>`;
     b.querySelector('[data-a="pick"]').onclick = () => {
       const r = b.querySelector("input:checked");
       if (!r) { toast("请先选择一个待办"); return; }
       setData(m, { picked: r.value });
-      reply(() => ACTIONS[d.intent](PA.todoById(r.value), d.extra));
+      reply(() => ACTIONS[d.intent](itemById(r.value), d.extra));
     };
     b.querySelector('[data-a="no"]').onclick = () => { if (d.extra.held) held.delete(d.extra.held); setData(m, { cancelled: true }); };
   };
@@ -425,7 +447,7 @@
     update(t, { text }) {
       const w = PA.parseWhen(text); const loc = PA.parseLocation(text.replace(/^.*?(改到|改成|改为|换到|挪到)/, "在"));
       const changes = [];
-      if (w.date && w.date !== t.date) changes.push(["日期", t.date ? PA.cnDate(t.date) : "待安排", PA.cnDate(w.date), "date", w.date]);
+      if (w.date && w.date !== t.date) changes.push(["日期", t.date ? PA.cnDate(t.date) : "未定日期", PA.cnDate(w.date), "date", w.date]);
       if (w.time && w.time !== t.time) changes.push(["时间", t.time || "全天", w.time, "time", w.time]);
       if (loc && !w.used.some((u) => loc.includes(u)) && loc !== t.location) changes.push(["地点", t.location || "—", loc, "location", loc]);
       if (!changes.length) return bot("todo", "", { todoId: t.id, lead: `没听出「${t.title}」要改成什么。可以直接说“改到后天下午3点”“地点改到星巴克”，或者在这里改：`, editOpen: true });
@@ -447,12 +469,17 @@
       bot("result", "", { html: `🗑 已删除：${todoLine(t)}<div class="hint">删除后不再出现在待办列表和提醒中，可在“已删除”中恢复。附件仍保留在知识库中。</div>`, undo: { op: "status", items }, undoneMsg: "已撤销，待办已恢复。" });
     },
     schedule(t, { text }) {
-      const whenStr = text.match(SCHED_RE)[2];
+      const whenStr = schedMatch(text)[2];
       const w = PA.parseWhen(whenStr);
       let time = w.time, note = "";
       const pm = !time && whenStr.match(/上午|早上|中午|下午|晚上/);
       if (pm) { time = { 上午: "09:00", 早上: "08:00", 中午: "12:00", 下午: "14:00", 晚上: "20:00" }[pm[0]]; note = `“${pm[0]}”先按 ${time} 安排，可以在详情里调整。`; }
       const du = PA.parseDur(whenStr).min;
+      if (isIdea(t)) {
+        const nt = PA.todoFromIdea(t, { date: w.date, time, duration: du });
+        log("文字输入·新增待办", `想做的事「${t.title}」排到 ${nt.date} ${nt.time || "全天"}`); PA.todosChanged();
+        return bot("result", "", { html: `✅ 已排到 <b>${esc(PA.cnDate(nt.date))} ${rangeText(nt)}</b> · ${esc(nt.title)}<div class="hint">${esc(note)}想做的事「<a href="idea.html?id=${t.id}">${esc(t.title)}</a>」还在，以后还能再排。</div>`, undo: { op: "remove", id: nt.id }, editId: nt.id, undoneMsg: `已撤销，「${t.title}」仍在想做的事里。` });
+      }
       const old = snapshot(t);
       Object.assign(t, { date: w.date, time, duration: time ? du || t.duration || PA.DEFAULT_DUR : 0, deadline: null, updatedAt: PA.nowStr() });
       save(); log("文字输入·更新待办", `${t.title}：排到 ${t.date} ${t.time || "全天"}`); PA.todosChanged();
@@ -463,22 +490,23 @@
       if (hk) held.delete(hk);
       const content = NOTE_RES.map((r) => text.match(r)).find(Boolean)[2].trim();
       const before = [...(t.attachments || [])];
-      const raw = files.length ? PA.startUpload(files, { quiet: true, todoId: t.id }) : [];
+      const idea = isIdea(t), href = idea ? `idea.html?id=${t.id}` : `todo.html?id=${t.id}`;
+      const raw = files.length ? PA.startUpload(files, idea ? { quiet: true } : { quiet: true, todoId: t.id }) : [];
       const fids = raw.filter((r) => r.fileId).map((r) => r.fileId), pend = raw.filter((r) => !r.fileId && r.uploadId).map((r) => r.uploadId);
       PA.addRecord(t, content || "（附件）", fids, pend);
       const rec = t.records[0];
       log("文字输入·追加想法", `${t.title}：${content.slice(0, 40)}${files.length ? `（附件 ${files.length} 个）` : ""}`); PA.todosChanged();
       bot("result", "", {
-        html: `📝 已追加到「<a href="todo.html?id=${t.id}">${esc(t.title)}</a>」的想法记录：<div class="rec-hit">${PA.linkify(rec.text)}</div><div class="hint">这条事项现在有 ${t.records.length} 条想法记录。</div>`,
-        uploads: plain(raw), undo: { op: "record", id: t.id, recId: rec.id, before, pending: pend }, editId: t.id, undoneMsg: "已撤销这条想法记录（文件仍保留在知识库中）。",
+        html: `📝 已追加到${idea ? "想做的事" : ""}「<a href="${href}">${esc(t.title)}</a>」的想法记录：<div class="rec-hit">${PA.linkify(rec.text)}</div><div class="hint">这条事项现在有 ${t.records.length} 条想法记录。</div>`,
+        uploads: plain(raw), undo: { op: "record", id: t.id, recId: rec.id, before, pending: pend }, editId: idea ? "" : t.id, undoneMsg: "已撤销这条想法记录（文件仍保留在知识库中）。",
       });
     },
   };
 
   function renderSchedule(text) {
-    const [, key, whenStr] = text.match(SCHED_RE);
+    const [, key0, whenStr] = schedMatch(text), key = key0.trim();
     if (!PA.parseWhen(whenStr).date) { bot("text", `要把「${key}」排到哪天？比如“周六上午”“明天下午3点”。`); return; }
-    pickTarget(key, ["open"], "schedule", { text }, (t) => (t.date ? 0 : 1));
+    pickTarget(key, ["open"], "schedule", { text }, null, true);
   }
   function renderNote(text, files = []) {
     const m = NOTE_RES.map((r) => text.match(r)).find(Boolean);
@@ -486,7 +514,7 @@
     if (!content && !files.length) { bot("text", `要给「${key}」记点什么？把内容接在冒号后面就行，比如“${key}那件事，再记一下：……”`); return; }
     let hk = "";
     if (files.length) { hk = PA.uid("h"); held.set(hk, files); }
-    pickTarget(key, ["open"], "note", { text, held: hk });
+    pickTarget(key, ["open"], "note", { text, held: hk }, null, true);
   }
 
   // ---------- 批量完成 / 批量推迟：范围 + “除了…” ----------
@@ -595,16 +623,17 @@
 
   // ---------- 查询：文件、待办、想法记录 ----------
   function renderSearch(text) {
-    const hits = searchFiles(text), recs = searchRecords(text), todos = searchTodos(text);
-    log("文字输入·知识库查询", `“${text}” → 命中 ${hits.length} 个文件、${todos.length} 条待办、${recs.length} 条想法记录`, 900 + Math.floor(Math.random() * 1500));
+    const hits = searchFiles(text), recs = searchRecords(text), todos = searchTodos(text), ideas = searchIdeas(text);
+    log("文字输入·知识库查询", `“${text}” → 命中 ${hits.length} 个文件、${todos.length} 条待办、${ideas.length} 件想做的事、${recs.length} 条想法记录`, 900 + Math.floor(Math.random() * 1500));
     bot("search", "", { text });
     const firstImg = hits.find((h) => h.f.cat === "image" || h.f.cat === "pdf");
     if (firstImg) PA.openPreview(firstImg.f.id, firstImg.hitTerms);
   }
   KINDS.search = (b, m) => {
-    const text = m.data.text, hits = searchFiles(text), recs = searchRecords(text), todos = searchTodos(text);
-    if (!hits.length && !recs.length && !todos.length) { b.innerHTML = "<p>在你上传的文件、待办和想法记录里都没有找到相关内容。可以换个说法，或先上传文件。</p>"; return; }
+    const text = m.data.text, hits = searchFiles(text), recs = searchRecords(text), todos = searchTodos(text), ideas = searchIdeas(text);
+    if (!hits.length && !recs.length && !todos.length && !ideas.length) { b.innerHTML = "<p>在你上传的文件、待办和想法记录里都没有找到相关内容。可以换个说法，或先上传文件。</p>"; return; }
     b.innerHTML = (todos.length ? `<p>相关的待办有 ${todos.length} 件：</p><div class="ccard">${todos.map(({ t }) => rowHTML(t, t.status === "done" ? '<span class="cl">已完成</span>' : "")).join("")}</div>` : "")
+      + (ideas.length ? `<p>相关的想做的事有 ${ideas.length} 件：</p><div class="ccard">${ideas.map(({ t }) => ideaRowHTML(t)).join("")}</div>` : "")
       + (hits.length ? `<p>找到 ${hits.length} 个相关文件：</p>` : "") + hits.map(({ f, hitTerms, hay }) => {
         const links = PA.linkedTodos(f.id), media = f.cat === "audio" || f.cat === "video";
         return `<div class="hit">${f.img ? `<img class="thumb" src="${f.img}" alt="">` : PA.fileIcon(f)}
@@ -613,10 +642,11 @@
           ${links.length ? `<div class="small muted">关联待办：${links.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、")}</div>` : ""}
           <div class="actions" style="margin-top:6px;display:flex;gap:8px">${PA.canPreview(f) ? `<button class="btn sm" data-prev="${f.id}">预览</button>` : '<span class="hint">多媒体文件 V1 仅提供下载</span>'}<button class="btn sm" data-dl="${f.id}">下载</button></div></div></div>`;
       }).join("")
-      + (recs.length ? `<p style="margin-top:10px"><b>相关待办的想法记录</b></p>` + recs.map(({ t, r, hit }) => `<div class="rec-hit"><a href="todo.html?id=${t.id}">${esc(t.title)}</a> <span class="small muted">${esc(PA.relTime(r.at))}</span><div>${PA.highlight(r.text, hit)}</div></div>`).join("") : "")
+      + (recs.length ? `<p style="margin-top:10px"><b>相关的想法记录</b></p>` + recs.map(({ t, r, hit }) => `<div class="rec-hit">${isIdea(t) ? `<span class="badge">想做的事</span> <a href="idea.html?id=${t.id}">` : `<a href="todo.html?id=${t.id}">`}${esc(t.title)}</a>${isIdea(t) ? ` <button class="btn ghost sm" data-plan="${t.id}">排个时间</button>` : ""} <span class="small muted">${esc(PA.relTime(r.at))}</span><div>${PA.highlight(r.text, hit)}</div></div>`).join("") : "")
       + '<p class="hint">只在你本人上传的文件和你的待办里找，按意思匹配。</p>';
     b.querySelectorAll("[data-prev]").forEach((x) => (x.onclick = () => { const h = hits.find((y) => y.f.id === x.dataset.prev); PA.openPreview(x.dataset.prev, h.hitTerms); }));
     b.querySelectorAll("[data-dl]").forEach((x) => (x.onclick = () => PA.download(PA.fileById(x.dataset.dl))));
+    b.querySelectorAll("[data-plan]").forEach((x) => (x.onclick = () => planIdea(x.dataset.plan)));
   };
 
   // ---------- 待确认会议 ----------
@@ -720,7 +750,60 @@
     window.PA_CHAT.opening();
   }
 
-  window.PA_CHAT = { start, send, messages, kinds: KINDS, push, bot, reply, renderMsg, setData, applyUndo, idle: () => queue, opening, confirmMeeting };
+  // ---------- 想做的事（S06）：没有时间的说法记成想做的事；卡片上一键排时间 ----------
+  const ideaRowHTML = (t) => `<div class="crow" data-idea-row="${t.id}"><span class="badge">想做的事</span><a class="ci" href="idea.html?id=${t.id}">${esc(t.title)}</a><span class="cl">${esc(PA.ideaProgress(t).text)}</span><button class="btn ghost sm" data-plan="${t.id}">排个时间</button></div>`;
+  function createIdea(text, title, files = []) {
+    const now = PA.nowStr();
+    const res = files.length ? plain(PA.startUpload(files, { quiet: true })) : [];
+    const idea = { id: PA.uid("i"), title, notes: "", records: [], attachments: res.filter((r) => r.fileId).map((r) => r.fileId), tags: PA.autoIdeaTags(text), tagsRemoved: [], starred: false, status: "active", source: "text", sourceNote: "", createdAt: now, updatedAt: now, askedDone: [] };
+    state.ideas = state.ideas || [];
+    state.ideas.unshift(idea);
+    save(); log("文字输入·新增待办", `“${text}” → 记成想做的事：${title}`); PA.todosChanged();
+    bot("idea", "", { ideaId: idea.id, fresh: true, todos: [], uploads: res });
+  }
+  function planIdea(id) {
+    const i = PA.ideaById(id);
+    if (!i) return;
+    push("user", "text", `给「${i.title}」排个时间`);
+    reply(() => bot("idea", "", { ideaId: id, fresh: false, todos: [] }));
+  }
+  function ideaDates() {
+    const d0 = PA.today(), dow = new Date(d0 + "T00:00:00").getDay();
+    const sat = dow === 0 ? d0 : PA.addDays(d0, 6 - dow);
+    return [["today", "今天", d0], ["tomorrow", "明天", PA.addDays(d0, 1)], ["weekend", "这周末", sat], ["nextweek", "下周", PA.addDays(d0, dow === 0 ? 1 : 8 - dow)]];
+  }
+  KINDS.idea = (b, m) => {
+    const d = m.data, i = PA.ideaById(d.ideaId);
+    if (d.undone || !i) { b.innerHTML = `<div class="result-card"><span class="muted">${d.undone ? "已撤销，这件想做的事已移除。" : "这件想做的事已经不在了。"}</span></div>`; return; }
+    const t = d.todoId && PA.todoById(d.todoId);
+    const link = `<a href="idea.html?id=${i.id}">${esc(i.title)}</a>`;
+    if (t) {
+      b.innerHTML = `<div class="result-card"><div class="rc-head">✅ 已排到 <b>${esc(PA.cnDate(t.date))} ${rangeText(t)}</b> · ${esc(t.title)}</div><div class="hint">想做的事「${link}」还在，做完一次以后还能再排。</div>
+        <div class="actions"><button class="btn sm" data-ia="unsched">撤销</button><a class="btn ghost sm" href="todo.html?id=${t.id}">查看待办</a></div></div>`;
+      b.querySelector('[data-ia="unsched"]').onclick = () => { applyUndo({ op: "remove", id: t.id }); setData(m, { todoId: "", todos: (d.todos || []).filter((x) => x !== t.id) }); };
+      return;
+    }
+    b.innerHTML = `<p>${d.fresh ? "记成想做的事了，要定个时间去做吗？" : `「${esc(i.title)}」想排在哪天？`}</p><div class="result-card"><div class="rc-head">💡 ${link}</div>
+      ${(i.tags || []).length ? `<div class="rc-meta"><span>🏷</span>${PA.tagChips(i.tags)}</div>` : ""}<div class="rc-files"></div>
+      <div class="actions">${ideaDates().map(([k, l]) => `<button class="btn sm" data-id="${k}">${l}</button>`).join("")}<button class="btn sm" data-ia="pick">选日期</button>${d.fresh ? '<button class="btn sm" data-ia="undo">撤销</button>' : ""}</div>
+      <div class="ia-date hidden"><input class="input" type="date" data-ia="date" min="${PA.today()}" style="max-width:180px"></div>
+      <div class="hint">没排日期，不算待办，也不会提醒你；想做了随时说“${esc(i.title.slice(0, 6))}那件事排到周六”。</div></div>`;
+    if ((d.uploads || []).length) liveFiles(b.querySelector(".rc-files"), d.uploads);
+    const sched = (date) => {
+      if (!date) return;
+      const nt = PA.todoFromIdea(i, { date });
+      log("文字输入·新增待办", `想做的事「${i.title}」排到 ${date}`); PA.todosChanged();
+      setData(m, { todoId: nt.id, todos: [...(d.todos || []), nt.id] });
+    };
+    const dates = Object.fromEntries(ideaDates().map(([k, , ds]) => [k, ds]));
+    b.querySelectorAll("[data-id]").forEach((x) => (x.onclick = () => sched(dates[x.dataset.id])));
+    b.querySelector('[data-ia="pick"]').onclick = () => b.querySelector(".ia-date").classList.toggle("hidden");
+    b.querySelector('[data-ia="date"]').onchange = (e) => sched(e.target.value);
+    const u = b.querySelector('[data-ia="undo"]');
+    if (u) u.onclick = () => { applyUndo({ op: "idea", id: i.id, todos: d.todos || [] }); setData(m, { undone: true }); };
+  };
+
+  window.PA_CHAT = { start, send, messages, kinds: KINDS, push, bot, reply, renderMsg, setData, applyUndo, idle: () => queue, opening, confirmMeeting, planIdea };
 })();
 
 // 建议说法、💡 随用随提示、“📅 最近安排”按钮与面板（面板内容不进聊天记录）
@@ -743,16 +826,18 @@
     "search-todo": "查到后可以接着说“把重疾险排到周六上午”。",
     postpone: "也可以说“除了周会，明天的都推迟”。",
     batch: "也可以说“今天除了买保险的事儿，都搞完了”。",
+    idea: "没定时间的事我记在‘想做的事’里，不会催你；想做了就说‘XX 那件事排到周六’。",
   };
   const shown = () => (state.tipsShown = state.tipsShown || []);
   // 返回 null 表示这条消息还没到能判断的时候（如确认卡片未确认）
   function tipsFor(m, b) {
     if (m.kind === "todo") return m.data.fresh ? ["add"] : [];
+    if (m.kind === "idea") return m.data.fresh ? ["idea"] : [];
     if (m.kind === "search") return [b.querySelector(".hit") && "kb", b.querySelector(".ccard") && "search-todo"].filter(Boolean);
     if (m.kind === "postpone" || m.kind === "batch") return m.data.done ? [m.kind] : m.data.cancelled ? [] : null;
     return [];
   }
-  ["todo", "search", "postpone", "batch"].forEach((k) => {
+  ["todo", "search", "postpone", "batch", "idea"].forEach((k) => {
     const orig = C.kinds[k];
     C.kinds[k] = (b, m) => {
       orig(b, m);
@@ -766,7 +851,7 @@
 
   const dock = document.createElement("div");
   dock.className = "dock";
-  dock.innerHTML = `<div class="recent-sheet hidden" id="recent-sheet"><div class="sheet-head"><b>📅 最近安排</b><span class="muted small">已逾期 · 今天 · 明天 · 后天 · 期限快到</span><span class="spacer"></span><button class="x" data-sheet-x title="关闭">×</button></div><div id="recent-body"></div></div>
+  dock.innerHTML = `<div class="recent-sheet hidden" id="recent-sheet"><div class="sheet-head"><b>📅 最近安排</b><span class="muted small">已逾期 · 今天 · 明天 · 后天 · 期限快到了</span><span class="spacer"></span><button class="x" data-sheet-x title="关闭">×</button></div><div id="recent-body"></div></div>
     <div class="dockrow"><button class="recent" id="recent-btn" title="查看最近 3 天的安排">📅 最近安排 <span class="n" data-recent-n></span><span class="over hidden" data-recent-over title="已逾期"></span></button>
     <div class="says" id="says">${SUGGESTIONS.map((s) => `<button class="say" data-say="${esc(s)}">${esc(s)}</button>`).join("")}</div></div>`;
   cbox.before(dock);
@@ -782,8 +867,8 @@
     const mail = state.prefs.dailyMail ? `每天 ${esc(state.prefs.mailTime || "08:00")} 邮件提醒` : "邮件提醒已关闭";
     return (u.overdue.length ? sec(`已逾期 ${u.overdue.length} 项`, u.overdue, (t) => `${shortDate(t.date)} ${timeOf(t)}`, "red") : "")
       + u.days.map((d) => sec(`${d.label} · ${shortDate(d.date)}`, d.list, timeOf)).join("")
-      + (u.deadlines.length ? sec("期限快到", u.deadlines, (t) => PA.deadlineText(t).replace(/^期限：/, "")) : "")
-      + `<div class="sheet-foot"><a href="todos.html">去待办页 ›</a><span>待安排 <b data-unsched>${u.unscheduled.length}</b> 件 · <a href="todos.html?tab=unscheduled">看看 ›</a></span><span>${mail} · <a href="profile.html#reminder">设置</a></span></div>`;
+      + (u.deadlines.length ? sec("期限快到了", u.deadlines, (t) => PA.deadlineText(t).replace(/^期限：/, "")) : "")
+      + `<div class="sheet-foot"><a href="todos.html">去待办页 ›</a><span>想做的事 <b data-ideas-n>${(state.ideas || []).filter((i) => i.status === "active").length}</b> 件 · <a href="ideas.html">看看 ›</a></span><span>${mail} · <a href="profile.html#reminder">设置</a></span></div>`;
   }
   function refresh() {
     const u = PA.upcoming(), n = u.days[0].list.length, od = u.overdue.length;

@@ -417,7 +417,8 @@
       "model_used": "main",
       "actual_min": 17.6,
       "last_error": null,
-      "finished_at": "2026-10-29T14:10:15.941Z"
+      "finished_at": "2026-10-29T14:10:15.941Z",
+      "commit": "7dc72a5"
     },
     {
       "id": "S06",
@@ -462,10 +463,15 @@
       },
       "gaps": [],
       "size_reason": "助手页多处能力要改为支持想做的事，并保住 v4 已有对话能力",
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "0025267a7f",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-29T14:10:37.534Z",
+      "model_used": "main",
+      "actual_min": 25.8,
+      "last_error": null,
+      "finished_at": "2026-10-29T14:36:24.370Z"
     },
     {
       "id": "S07",
