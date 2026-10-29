@@ -688,7 +688,8 @@
       "model_used": "cheap",
       "actual_min": 13,
       "last_error": null,
-      "finished_at": "2026-10-29T16:06:09.162Z"
+      "finished_at": "2026-10-29T16:06:09.162Z",
+      "commit": "c670934"
     },
     {
       "id": "S11",
@@ -729,10 +730,13 @@
         ]
       },
       "gaps": [],
-      "status": "pending",
-      "attempts": 0,
+      "status": "in_progress",
+      "attempts": 1,
       "spec_sha": "83490c1740",
-      "pv": 1
+      "pv": 1,
+      "actual_base": 0,
+      "started_at": "2026-10-29T16:06:32.898Z",
+      "model_used": "cheap"
     }
   ],
   "post_run": [
