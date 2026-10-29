@@ -1,0 +1,7 @@
+$ bash /root/.agents/skills/site-builder/scripts/publish.sh -m "ITER1 原型 v5：想做的事、待办必须有日期、标签树、菜单按钮" .
+[32m==>[0m 已提交：ITER1 原型 v5：想做的事、待办必须有日期、标签树、菜单按钮
+[32m==>[0m 已推送 7c36222
+[32m==>[0m 发布中：https://github.com/alangao2025-dev/daily-assistant-proto/actions/runs/40908785543
+[32m==>[0m 发布成功
+[32m==>[0m 可访问：https://daily-assistant-proto.accrepo.com
+[32m==>[0m 可访问：https://daily-assistant-proto.alangao2025.workers.dev
