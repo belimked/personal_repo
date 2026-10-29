@@ -7,7 +7,7 @@
       "path": "docs/design/原型v5-设计.md",
       "version": "v1",
       "sha256": "fa79ae6728dffdaff0ffe7f83afeb5aa6bf50a22b2e00959ff7646fff9bdb488",
-      "sealed_at": "2026-10-29T12:44:05.180Z"
+      "sealed_at": "2026-10-29T13:52:28.221Z"
     },
     "milestones": {
       "M1": "原型 v5：想做的事、标签树、菜单按钮",
@@ -37,6 +37,13 @@
         "design_sha": "fa79ae6728dffdaff0ffe7f83afeb5aa6bf50a22b2e00959ff7646fff9bdb488",
         "date": "2026-10-29",
         "note": "初始生成 11 步"
+      },
+      {
+        "pv": 1,
+        "design_version": "v1",
+        "design_sha": "fa79ae6728dffdaff0ffe7f83afeb5aa6bf50a22b2e00959ff7646fff9bdb488",
+        "date": "2026-10-29",
+        "note": "补全：S07 补充：todo.html 会议行动项转待办不再生成无日期待办（S04 遗留）"
       }
     ],
     "plan_version": 1,
@@ -353,7 +360,8 @@
       "model_used": "main",
       "actual_min": 10,
       "last_error": null,
-      "finished_at": "2026-10-29T13:52:12.951Z"
+      "finished_at": "2026-10-29T13:52:12.951Z",
+      "commit": "2f1dc5f"
     },
     {
       "id": "S05",
@@ -482,7 +490,8 @@
         "逾期消息的按钮在 overdueAct 附近；“先不做了”与 S04 的规则一致（用 PA.todoToIdea）",
         "会议确认在 confirmMeeting 和会议消息的勾选卡片里；有 due 的条目直接显示日期；条目的日期选择用日期快捷选项",
         "回顾消息在问候之后发；reviewShown 防止同一周/同一月重复；?review=week|month 时无视 reviewShown 立即发",
-        "“算做成了吗”只问一次（idea.askedDone 记已问过的那批待办 id）"
+        "“算做成了吗”只问一次（idea.askedDone 记已问过的那批待办 id）",
+        "todo.html 会议记录里的行动项“转为我的待办”（S04 遗留）：行动项没有 due 时不再生成无日期待办，改为先选日期，或放进想做的事（PA.ideas，来源注明会议名）；补对应测试"
       ],
       "acceptance": {
         "type": "auto",
@@ -496,7 +505,7 @@
       "gaps": [],
       "status": "pending",
       "attempts": 0,
-      "spec_sha": "c24a51a91a",
+      "spec_sha": "cb2247fd59",
       "pv": 1
     },
     {
