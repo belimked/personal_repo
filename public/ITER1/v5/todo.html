@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="assets/app.css">
 <style>
   .when-line { margin: -4px 0 12px; color: var(--muted); font-size: 13px; }
-  .card-head .star { font-size: 18px; }
+  .from-line { margin: -6px 0 10px; font-size: 13px; }
   .att-drop.over { outline: 2px dashed var(--primary); outline-offset: -4px; background: var(--primary-weak); }
 </style>
 </head>
@@ -30,12 +30,15 @@ if (PA.mount({ page: "todos", title: "待办详情" })) {
       shownStatus = t.status;
       const src = t.sourceFile && PA.fileById(t.sourceFile);
       const del = t.status === "deleted";
+      const idea = t.ideaId && PA.ideaById(t.ideaId);
       view.innerHTML = `
       <div class="card">
-        <div class="card-head"><span class="star ${t.starred ? "on" : ""}" data-star title="${t.starred ? "取消星标" : "标为重要（待安排里排在前面）"}">★</span><h2>${esc(t.title)}</h2><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span><span class="badge">${PA.SOURCE_LABEL[t.source]}</span><span class="spacer"></span>
+        <div class="card-head"><h2>${esc(t.title)}</h2><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span><span class="badge">${PA.SOURCE_LABEL[t.source]}</span><span class="spacer"></span>
           ${t.status === "open" ? '<button class="btn" data-op="done">✓ 标记完成</button>' : t.status === "done" ? '<button class="btn" data-op="reopen">改回未完成</button>' : ""}
+          ${t.status === "open" ? `<button class="btn" data-op="drop" title="${idea ? "只删除这条待办，想做的事还在" : "转成想做的事，以后再排"}">先不做了</button>` : ""}
           ${del ? '<button class="btn primary" data-op="restore">恢复</button><button class="btn danger" data-op="purge">彻底删除</button>' : '<button class="btn danger" data-op="delete">删除</button>'}</div>
         <div class="when-line">🕒 ${esc(PA.whenText(t))}${del ? " · 已删除，不出现在待办列表和提醒中" : ""}</div>
+        ${idea ? `<div class="from-line" data-from>来自：<a href="idea.html?id=${esc(idea.id)}">${esc(idea.title)} ›</a></div>` : ""}
         <div class="grid2">
           <div class="field"><label>待办内容</label><input class="input" data-k="title" value="${esc(t.title)}"></div>
           <div class="field"><label>地点</label><input class="input" data-k="location" value="${esc(t.location)}"></div>
@@ -58,12 +61,12 @@ if (PA.mount({ page: "todos", title: "待办详情" })) {
         PA.todosChanged();
       } });
       PA.recordsBox(q("#d-rec"), t, { compact: !!t.date, onChange: () => { renderAtt(); PA.todosChanged(); } });
-      q("[data-star]").onclick = (e) => { t.starred = !t.starred; save(); log("手动更新待办", `${t.title}：${t.starred ? "加星标" : "取消星标"}`); e.currentTarget.classList.toggle("on", t.starred); PA.todosChanged(); };
       q('[data-op="save"]').onclick = () => {
         const v = {}; view.querySelectorAll("[data-k]").forEach((i) => (v[i.dataset.k] = i.value.trim()));
         if (!v.title) { toast("待办内容不能为空"); return; }
         const w = dtp.value();
-        Object.assign(t, v, { date: w.date, time: w.time, duration: w.duration, deadline: w.date ? null : w.deadline, updatedAt: PA.nowStr() });
+        if (!w.date) { toast("待办必须有日期；没日子的可以点“先不做了”放进想做的事"); return; }
+        Object.assign(t, v, { date: w.date, time: w.time, duration: w.duration, deadline: w.deadline || null, updatedAt: PA.nowStr() });
         save(); log("手动更新待办", t.title); toast("已保存"); PA.todosChanged(); render();
       };
       const op = (k, fn) => { const b = q(`[data-op="${k}"]`); if (b) b.onclick = fn; };
@@ -71,6 +74,24 @@ if (PA.mount({ page: "todos", title: "待办详情" })) {
       op("reopen", () => { PA.setStatus([t], "open"); toast("已改回未完成"); PA.todosChanged(); });
       op("restore", () => { PA.setStatus([t], "open"); toast("已恢复为未完成"); PA.todosChanged(); });
       op("delete", () => PA.deleteTodo(t));
+      // 先不做了：有来源只删除这条待办；没有来源转成想做的事（离开本页去想做的事详情），都可撤销
+      op("drop", () => {
+        if (idea) {
+          const undo = PA.setStatus([t], "deleted", "先不做了");
+          PA.undoToast(`先不做了：${t.title}（“${idea.title}”仍在想做的事里）`, undo);
+          PA.todosChanged();
+          return;
+        }
+        const idx = state.todos.indexOf(t), ni = PA.todoToIdea(t);
+        log("先不做了", `${t.title} → 想做的事`);
+        PA.todosChanged();
+        PA.undoToast(`已放进想做的事：${t.title}`, () => {
+          state.ideas = state.ideas.filter((i) => i !== ni);
+          if (!state.todos.includes(t)) state.todos.splice(Math.min(idx, state.todos.length), 0, t);
+          save(); PA.todosChanged(); render();
+        });
+        view.innerHTML = `<div class="card empty">已放进想做的事：<a href="idea.html?id=${ni.id}">${esc(ni.title)} ›</a></div>`;
+      });
       op("purge", () => PA.purgeTodo(t, () => (location.href = "todos.html?view=list&tab=deleted")));
       view.querySelectorAll("[data-conv]").forEach((b) => (b.onclick = () => {
         const a = t.actionItems[+b.dataset.conv], now = PA.nowStr();

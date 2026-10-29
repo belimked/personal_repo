@@ -298,7 +298,8 @@
       "model_used": "main",
       "actual_min": 10.4,
       "last_error": null,
-      "finished_at": "2026-10-29T13:41:53.712Z"
+      "finished_at": "2026-10-29T13:41:53.712Z",
+      "commit": "b49d076"
     },
     {
       "id": "S04",
@@ -344,10 +345,15 @@
       "reads": [
         "public/ITER1/v5/todos.html"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "a432536f69",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-29T13:42:14.315Z",
+      "model_used": "main",
+      "actual_min": 10,
+      "last_error": null,
+      "finished_at": "2026-10-29T13:52:12.951Z"
     },
     {
       "id": "S05",
