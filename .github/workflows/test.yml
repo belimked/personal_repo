@@ -1,0 +1,52 @@
+name: Test
+
+on:
+  push:
+    branches: ['test/**']
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci
+          elif [ -f package.json ]; then npm install
+          fi
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Unit tests
+        run: npm test --if-present
+
+      - name: E2E tests
+        run: |
+          if [ -d e2e ]; then
+            npx playwright install --with-deps chromium
+            npx playwright test
+          else
+            echo "No e2e directory"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -581,7 +581,8 @@
       "model_used": "cheap",
       "actual_min": 10.7,
       "last_error": null,
-      "finished_at": "2026-10-29T15:32:44.068Z"
+      "finished_at": "2026-10-29T15:32:44.068Z",
+      "commit": "1b9a2e1"
     },
     {
       "id": "S09",
@@ -632,10 +633,15 @@
       "dirs_owned": [
         "e2e"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "43b835aca1",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-29T15:33:05.060Z",
+      "model_used": "cheap",
+      "actual_min": 17.2,
+      "last_error": null,
+      "finished_at": "2026-10-29T15:50:14.696Z"
     },
     {
       "id": "S10",

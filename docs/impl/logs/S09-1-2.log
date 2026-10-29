@@ -1,0 +1,11 @@
+$ npx playwright test --list
+Listing tests:
+  auth.spec.ts:4:5 › TC-02 登录 lily 后进入助手页
+  auth.spec.ts:12:5 › TC-03 菜单按钮：展开后有 5 个入口，点“待办事项”能跳转
+  ideas.spec.ts:4:5 › TC-04 记一件想做的事并排时间
+  ideas.spec.ts:28:5 › TC-07 想做的事页筛选与生成待办
+  review.spec.ts:4:5 › TC-08 每周回顾演示：列想做的事、不含灵光一现、可点“排个时间”
+  smoke.spec.ts:4:5 › TC-01 首页能打开、无脚本报错
+  todos.spec.ts:4:5 › TC-05 待办页没有“待安排”栏
+  todos.spec.ts:19:5 › TC-06 标签树取消“工作”即排除这类待办
+Total: 8 tests in 5 files
