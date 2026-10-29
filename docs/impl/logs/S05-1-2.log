@@ -1,0 +1,30 @@
+$ node --test tests/v5-smoke.test.mjs
+✔ v5 包含全部页面 (7.950679ms)
+✔ v5 冒烟：admin-filetypes.html (1259.949996ms)
+✔ v5 冒烟：admin-logs.html (847.274061ms)
+✔ v5 冒烟：admin-models.html (624.219725ms)
+✔ v5 冒烟：admin-system.html (346.763601ms)
+✔ v5 冒烟：admin-usage.html (385.212265ms)
+✔ v5 冒烟：admin-users.html (286.476818ms)
+✔ v5 冒烟：files.html (667.531414ms)
+✔ v5 冒烟：forgot.html (211.996357ms)
+✔ v5 冒烟：home.html (611.946498ms)
+✔ v5 冒烟：idea.html (250.505885ms)
+✔ v5 冒烟：ideas.html (255.282139ms)
+✔ v5 冒烟：inbox.html (54.285474ms)
+✔ v5 冒烟：index.html (120.097586ms)
+✔ v5 冒烟：profile.html (298.370089ms)
+✔ v5 冒烟：reminders.html (52.496554ms)
+✔ v5 冒烟：todo.html (178.756343ms)
+✔ v5 冒烟：todos.html (679.112626ms)
+✔ v5 使用独立的演示数据键 (184.563886ms)
+✔ v5 未登录访问会跳转到登录页 (291.875906ms)
+✔ 菜单收起/展开按钮是图标，title 随状态切换并记住 (819.668739ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10579.014133

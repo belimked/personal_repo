@@ -25,6 +25,35 @@
   .n-noday { margin-top: 6px; font-size: 13px; }
   .n-parsed { min-height: 18px; margin-top: 4px; }
   .peek-tags { margin-top: 2px; }
+  /* S05：左侧标签树（勾选 = 看，取消 = 排除） */
+  .todo-layout { grid-template-columns: 210px minmax(0, 1fr); }
+  .tag-side { position: sticky; top: 12px; }
+  .tree-item .caret { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+  .tree-item.untagged, .tree-item.bare { color: var(--muted); }
+  .tree-item.off { color: var(--muted); }
+  .tcb { width: 14px; height: 14px; flex: none; border: 1.5px solid #c3c9d4; border-radius: 3px; background: #fff; position: relative; }
+  .tcb:hover { border-color: var(--primary); }
+  .tcb.on { background: var(--primary); border-color: var(--primary); }
+  .tcb.on::after { content: ""; position: absolute; left: 3.5px; top: .5px; width: 3px; height: 7px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .tcb.part { border-color: var(--primary); }
+  .tcb.part::after { content: ""; position: absolute; left: 2px; right: 2px; top: 4.5px; height: 2px; background: var(--primary); }
+  #tagsum .tag { margin-right: 2px; }
+  .tag-none { background: var(--warn-weak, #fff7e6); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 13px; }
+  .tag-side-h { display: flex; align-items: center; gap: 6px; padding: 0 4px 6px; font-size: 13px; color: var(--muted); }
+  .todo-layout.tag-collapsed { grid-template-columns: 36px minmax(0, 1fr); }
+  .tag-collapsed .tag-side .tree, .tag-collapsed .tag-side .hint, .tag-collapsed .tag-side-h .lbl { display: none; }
+  .tag-collapsed .tag-side-h { padding: 0; justify-content: center; }
+  .tag-collapsed #tag-toggle { position: relative; width: 34px; height: 34px; border: 1px solid var(--border); background: #fff; border-radius: 8px; }
+  #tag-toggle .n { position: absolute; top: -7px; right: -7px; min-width: 16px; height: 16px; line-height: 16px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 10px; padding: 0 4px; }
+  #tag-mbtn { display: none; margin-bottom: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 640px) {
+    .todo-layout, .todo-layout.tag-collapsed { grid-template-columns: minmax(0, 1fr); }
+    #tag-mbtn { display: inline-block; }
+    .tag-side { position: static; display: none; }
+    .todo-layout.tag-open .tag-side { display: block; }
+    .tag-side-h #tag-toggle { display: none; }
+    .tag-collapsed .tag-side .tree, .tag-collapsed .tag-side .hint, .tag-collapsed .tag-side-h .lbl { display: revert; }
+  }
 </style>
 </head>
 <body>
@@ -35,16 +64,25 @@
     <span class="legend"><span><i style="background:#2f6fed"></i>文字输入</span><span><i style="background:#0f9f8f"></i>手动创建</span><span><i style="background:#d97706"></i>会议录音</span><span><i style="background:var(--danger)"></i>已逾期</span></span>
     <button class="btn primary" id="new">＋ 新建待办</button>
   </div>
+  <button class="btn" id="tag-mbtn"></button>
+  <div class="files-layout todo-layout" id="todo-layout">
+  <div class="tag-side" id="tag-side">
+    <div class="tag-side-h"><span class="lbl">🏷️ 按标签看</span><span class="spacer lbl"></span><button class="icon-btn" id="tag-toggle"></button></div>
+    <div class="tree" id="tagtree"></div>
+    <div class="hint" style="padding:8px 4px">点标签名只看这一类；<b>勾选方框</b>决定看哪些，取消勾选即排除这一类。标签由模型按内容自动打，可以随时修改。</div>
+  </div>
+  <div style="min-width:0">
   <div class="tabs" id="tabs"></div>
   <div class="row" style="margin-bottom:14px">
     <input class="input inline" id="kw" placeholder="按标题、地点、备注、想法、标签筛选" style="width:240px">
     <div id="src"></div>
-    <select class="input inline" id="tagf" title="按标签筛选（选一级标签包含其下的二级标签）"></select>
+    <span class="small" id="tagsum"></span>
     <span class="list-only row" style="gap:8px"><span class="date-only row" style="gap:8px"><span class="muted small">日期</span><input class="input inline" type="date" id="d1"><span class="muted">~</span><input class="input inline" type="date" id="d2"></span>
       <label class="row small" style="gap:4px" id="grp-wrap"><input type="checkbox" id="grp">按日期分组</label></span>
     <span class="cal-only row small" style="gap:12px"><label class="row" style="gap:4px"><input type="checkbox" id="show-done">显示已完成</label><label class="row" style="gap:4px"><input type="checkbox" id="show-del">显示已删除</label></span>
     <span class="hint list-only" style="margin-left:auto">筛选条件在列表和日历之间共用</span>
   </div>
+  <div class="tag-none hidden" id="tag-none">没有勾选任何标签 · <a href="#" data-tag-all>全选</a></div>
   <div id="list-view"><div class="table-wrap" id="tbl-wrap"><table class="table nowrap" id="tbl"></table></div></div>
   <div id="cal-view" class="cal-wrap">
     <div class="cal-main">
@@ -58,6 +96,8 @@
       </div>
       <div id="c-body"></div>
     </div>
+  </div>
+  </div>
   </div>
 </div>
 <script src="assets/data.js"></script>
@@ -76,10 +116,10 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
   const today = PA.today();
   const WD = "日一二三四五六";
   const $ = (id) => document.getElementById(id);
-  const tabs = $("tabs"), tbl = $("tbl"), kw = $("kw"), d1 = $("d1"), d2 = $("d2"), grp = $("grp"), tagf = $("tagf");
+  const tabs = $("tabs"), tbl = $("tbl"), kw = $("kw"), d1 = $("d1"), d2 = $("d2"), grp = $("grp"), tagtree = $("tagtree");
 
-  const vs = Object.assign({ view: "list", mode: "week", cursor: today, showDone: false, showDel: false, group: true, tag: "" }, JSON.parse(sessionStorage.getItem("pa5_todo_view") || "{}"));
-  delete vs.showArch; delete vs.uCollapsed;
+  const vs = Object.assign({ view: "list", mode: "week", cursor: today, showDone: false, showDel: false, group: true }, JSON.parse(sessionStorage.getItem("pa5_todo_view") || "{}"));
+  delete vs.showArch; delete vs.uCollapsed; delete vs.tag;
   if (PA.qs("view")) vs.view = PA.qs("view");
   const saveVs = () => sessionStorage.setItem("pa5_todo_view", JSON.stringify(vs));
   let tab = { archived: "deleted" }[PA.qs("tab")] || PA.qs("tab") || "open";
@@ -87,10 +127,136 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
   if (PA.qs("tab")) vs.view = "list";
   const srcSel = PA.multiSelect($("src"), [{ value: "text", label: "文字输入" }, { value: "manual", label: "手动创建" }, { value: "meeting", label: "会议录音" }], "全部来源");
   const searchText = (t) => [t.title, t.location, t.notes, ...(t.records || []).map((r) => r.text), ...(t.tags || [])].join(" ").toLowerCase();
-  const base = (t) => {
+  const baseNoTag = (t) => {
     const k = kw.value.trim().toLowerCase(), s = srcSel.values();
-    return (!k || searchText(t).includes(k)) && (!s.length || s.includes(t.source)) && (!vs.tag || PA.hasTag(t, vs.tag));
+    return (!k || searchText(t).includes(k)) && (!s.length || s.includes(t.source));
   };
+  const base = (t) => baseNoTag(t) && tagOk(t);
+
+  // ---------------- 标签筛选（S05） ----------------
+  // 勾选集合按“叶子”记：二级标签 full、只打了一级的 top、未打标签 NONE_TAG。
+  // mode：exclude = 从全选里取消了几类（新标签默认勾上）；only = 只看勾上的几类（新标签默认不勾）
+  const NONE_TAG = "__none__", TF_KEY = "pa5_todo_tags";
+  const tf = Object.assign({ mode: "exclude", checked: null, known: [] }, JSON.parse(sessionStorage.getItem(TF_KEY) || "{}"));
+  const saveTf = () => sessionStorage.setItem(TF_KEY, JSON.stringify({ mode: tf.mode, checked: [...checked], known: [...known] }));
+  let checked = new Set(tf.checked || []), known = new Set(tf.known || []);
+  let tagModel = null;
+  function buildTagModel() {
+    const nodes = PA.tagTree(state.todos);
+    const bare = new Set();
+    state.todos.forEach((t) => (t.tags || []).forEach((x) => { if (!x.includes("/")) bare.add(x); }));
+    nodes.forEach((n) => { n.leaves = n.subs.map((x) => x.full); if (bare.has(n.top) || !n.subs.length) n.leaves.push(n.top); n.hasBare = bare.has(n.top) && n.subs.length > 0; });
+    const all = [...nodes.flatMap((n) => n.leaves), NONE_TAG];
+    // 新出现的标签：排除模式下默认勾上，只看模式下默认不勾
+    const fresh = tf.checked === null;
+    all.forEach((k) => { if (!known.has(k)) { known.add(k); if (fresh || tf.mode === "exclude") checked.add(k); } });
+    tf.checked = [];
+    tagModel = { nodes, all };
+    saveTf();
+    return tagModel;
+  }
+  const leafKeys = (t) => ((t.tags || []).length ? t.tags : [NONE_TAG]);
+  const tagOk = (t) => {
+    const ks = leafKeys(t);
+    return tf.mode === "exclude" ? ks.every((k) => checked.has(k)) : ks.some((k) => checked.has(k));
+  };
+  const allOn = () => tagModel.all.every((k) => checked.has(k));
+  function setChecked(next, mode) {
+    checked = new Set(next);
+    if (mode) tf.mode = mode;
+    if (allOn()) tf.mode = "exclude";
+    else if (!tagModel.all.some((k) => checked.has(k))) tf.mode = "only";
+    saveTf(); render();
+  }
+  // 筛选行：二级全选中时合并为一级
+  // byOrder：只看模式下按勾选先后排列
+  function tagLabels(inSet, byOrder) {
+    const out = [], ord = [...checked], pos = (ks) => Math.min(...ks.map((k) => (ord.includes(k) ? ord.indexOf(k) : 1e9)));
+    tagModel.nodes.forEach((n) => {
+      const hit = n.leaves.filter(inSet);
+      if (!hit.length) return;
+      if (hit.length === n.leaves.length) out.push([n.top, pos(hit)]);
+      else hit.forEach((k) => out.push([k === n.top ? `${n.top}（未细分）` : k, pos([k])]));
+    });
+    if (inSet(NONE_TAG)) out.push(["未打标签", pos([NONE_TAG])]);
+    if (byOrder) out.sort((a, b) => a[1] - b[1]);
+    return out.map((x) => x[0]);
+  }
+  function tagSummary() {
+    if (allOn()) return { text: "", html: "" };
+    if (tf.mode === "exclude") {
+      const l = tagLabels((k) => !checked.has(k));
+      return { text: `标签：除了 ${l.join("、")}`, html: `<span class="muted">标签：除了 </span>${l.map((x) => `<span class="tag">${esc(x)}</span>`).join("、")}` };
+    }
+    const l = tagLabels((k) => checked.has(k), true);
+    if (!l.length) return { text: "标签：一个都没勾", html: '<span class="muted">标签：一个都没勾</span>' };
+    return { text: `标签：${l.join(" + ")}`, html: `<span class="muted">标签：</span>${l.map((x) => `<span class="tag">${esc(x)}</span>`).join(" + ")}` };
+  }
+  // 件数跟随当前页签（列表）或当前显示范围（日历）
+  function calRange() {
+    if (vs.mode === "month") {
+      const first = vs.cursor.slice(0, 8) + "01", start = monday(first), m = D(first).getMonth();
+      const end = addD(first, new Date(D(first).getFullYear(), m + 1, 0).getDate() - 1);
+      const weeks = Math.ceil(((D(end) - D(start)) / 86400000 + 1) / 7);
+      return [start, addD(start, weeks * 7 - 1)];
+    }
+    return [vs.cursor, addD(vs.cursor, vs.mode === "week" ? 6 : vs.mode === "day" ? 0 : 13)];
+  }
+  const calShow = (t) => t.status === "open" || (t.status === "done" && vs.showDone) || (t.status === "deleted" && vs.showDel);
+  function countPool() {
+    if (vs.view === "cal") { const [a, b] = calRange(); return state.todos.filter((t) => t.date && t.date >= a && t.date <= b && calShow(t) && baseNoTag(t)); }
+    return state.todos.filter((t) => inTab(t, tab) && baseNoTag(t) && (!d1.value || (t.date && t.date >= d1.value)) && (!d2.value || (t.date && t.date <= d2.value)));
+  }
+  const expanded = new Set();
+  function renderTagTree() {
+    const { nodes, all } = tagModel;
+    const pool = countPool();
+    const st = (keys) => { const n = keys.filter((k) => checked.has(k)).length; return n === keys.length ? "on" : n ? "part" : ""; };
+    const cb = (s) => `<span class="tcb ${s}" data-cb="1" title="勾上 = 看这一类，取消 = 排除"></span>`;
+    const item = (kind, key, label, n, s, { extra = "", caret = "", pad = "" } = {}) =>
+      `<div class="tree-item ${s ? "" : "off"} ${extra}" data-kind="${kind}" data-k="${esc(key)}" ${pad}>${caret}${cb(s)}${label}<span class="n">${n}</span></div>`;
+    let html = item("all", "", "📋 全部待办", pool.length, st(all), { extra: allOn() ? "active" : "" });
+    for (const n of nodes) {
+      const s = st(n.leaves);
+      if (s === "part") expanded.add(n.top);
+      const open = expanded.has(n.top), cnt = pool.filter((t) => PA.hasTag(t, n.top)).length;
+      html += item("top", n.top, `🏷️ ${esc(n.top)}`, cnt, s, { caret: `<span class="caret" data-toggle="${esc(n.top)}">${n.subs.length ? (open ? "▼" : "▶") : ""}</span>` });
+      if (!open) continue;
+      html += n.subs.map((x) => item("leaf", x.full, esc(x.name), pool.filter((t) => PA.hasTag(t, x.full)).length, st([x.full]), { pad: 'style="padding-left:34px"' })).join("");
+      if (n.hasBare) html += item("leaf", n.top, "（未细分）", pool.filter((t) => (t.tags || []).includes(n.top)).length, st([n.top]), { extra: "bare", pad: 'style="padding-left:34px"' });
+    }
+    html += item("leaf", NONE_TAG, "未打标签", pool.filter((t) => !(t.tags || []).length).length, st([NONE_TAG]), { extra: "untagged", caret: '<span class="caret"></span>' });
+    tagtree.innerHTML = html;
+    const sum = tagSummary();
+    $("tagsum").innerHTML = sum.html ? `${sum.html} <a href="#" id="tag-clear">清除</a>` : "";
+    if (sum.html) $("tag-clear").onclick = (e) => { e.preventDefault(); setChecked(all, "exclude"); };
+    $("tag-none").classList.toggle("hidden", all.some((k) => checked.has(k)));
+    $("tag-mbtn").textContent = `🏷️ ${sum.text || "标签：全部"} ▼`;
+    renderTagSide();
+  }
+  function onTreeClick(e) {
+    const { nodes, all } = tagModel;
+    const tg = e.target.closest("[data-toggle]");
+    if (tg && tg.dataset.toggle) { const t = tg.dataset.toggle; expanded.has(t) ? expanded.delete(t) : expanded.add(t); return renderTagTree(); }
+    const el = e.target.closest(".tree-item");
+    if (!el) return;
+    const kind = el.dataset.kind, k = el.dataset.k;
+    const keys = kind === "all" ? all : kind === "top" ? nodes.find((n) => n.top === k).leaves : [k];
+    if (kind === "top") expanded.add(k);
+    if (!e.target.closest("[data-cb]")) return setChecked(keys, kind === "all" ? "exclude" : "only"); // 点名字：只看这一类
+    if (kind === "all") return setChecked(allOn() ? [] : all); // 全选 ⇄ 全不选
+    const s2 = new Set(checked), on = keys.every((x) => s2.has(x));
+    keys.forEach((x) => (on ? s2.delete(x) : s2.add(x)));
+    setChecked([...s2]);
+  }
+  tagtree.addEventListener("click", onTreeClick);
+  document.addEventListener("click", (e) => { const a = e.target.closest("[data-tag-all]"); if (a) { e.preventDefault(); setChecked(tagModel.all, "exclude"); } });
+  function renderTagSide() {
+    $("todo-layout").classList.toggle("tag-collapsed", !!vs.tagCollapsed);
+    const b = $("tag-toggle"), n = allOn() ? 0 : tagModel.all.filter((k) => checked.has(k)).length;
+    b.innerHTML = vs.tagCollapsed ? `🏷️${allOn() ? "" : `<span class="n">${n}</span>`}` : "⇤";
+    b.title = vs.tagCollapsed ? "展开标签栏" : "收起标签栏（筛选仍然有效）";
+  }
   const overdue = (t) => t.status === "open" && t.date && t.date < today;
   const cls = (t) => `src-${t.source} ${overdue(t) ? "overdue" : ""} ${t.status !== "open" ? t.status : ""}`;
   // 期限待办（date = 截止日）：列表显示“截止：11/30 前”，日历上标“截止”
@@ -150,12 +316,6 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
       <td><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span></td>
       <td style="white-space:nowrap">${del ? `<button class="btn sm" data-restore="${t.id}">恢复</button> <button class="btn sm danger" data-purge="${t.id}">彻底删除</button>` : `<a href="todo.html?id=${t.id}">详情</a>`}</td></tr>`;
   }
-  function renderTagOptions() {
-    const tree = PA.tagTree(state.todos.filter((t) => t.status !== "deleted"));
-    const opts = tree.flatMap((n) => [[n.top, `${n.top}（${n.count}）`], ...n.subs.map((s) => [s.full, `　└ ${s.name}（${s.count}）`])]);
-    if (vs.tag && !opts.some(([v]) => v === vs.tag)) opts.push([vs.tag, `${vs.tag}（0）`]);
-    tagf.innerHTML = `<option value="">全部标签</option>` + opts.map(([v, l]) => `<option value="${esc(v)}" ${v === vs.tag ? "selected" : ""}>${esc(l)}</option>`).join("");
-  }
   const inTab = (t, k) => (k === "all" ? t.status !== "deleted" : t.status === k);
   function renderList() {
     const cnt = (k) => state.todos.filter((t) => inTab(t, k) && base(t)).length;
@@ -174,7 +334,7 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
         body += `<tr class="group-row ${k === "overdue" ? "overdue" : ""}"><td colspan="8">${l}<span class="gc">${items.length}</span>${k === "overdue" ? ' <button class="btn sm" data-resched style="margin-left:10px">全部改到今天</button>' : ""}</td></tr>` + items.map(row).join("");
       });
     } else body = list.map(row).join("");
-    tbl.innerHTML = `<tr><th></th><th>待办</th><th>日期时间</th><th>地点</th><th>来源</th><th>附件</th><th>状态</th><th></th></tr>` + (body || `<tr><td colspan="8" class="empty">没有符合条件的待办</td></tr>`);
+    tbl.innerHTML = `<tr><th></th><th>待办</th><th>日期时间</th><th>地点</th><th>来源</th><th>附件</th><th>状态</th><th></th></tr>` + (body || `<tr><td colspan="8" class="empty">${tagModel.all.some((k) => checked.has(k)) ? "没有符合条件的待办" : '没有勾选任何标签 · <a href="#" data-tag-all>全选</a>'}</td></tr>`);
     const rs = tbl.querySelector("[data-resched]");
     if (rs) rs.onclick = () => {
       const items = list.filter((t) => bucket(t) === "overdue"), old = items.map((t) => t.date);
@@ -184,7 +344,7 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
   }
 
   // ---------------- 日历 ----------------
-  const calItems = () => state.todos.filter((t) => t.date && base(t) && (t.status === "open" || (t.status === "done" && vs.showDone) || (t.status === "deleted" && vs.showDel)));
+  const calItems = () => state.todos.filter((t) => t.date && base(t) && calShow(t));
   const byDay = (items, day) => items.filter((t) => t.date === day).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
   const smTick = (t) => PA.tickHTML(t).replace('class="tick', 'class="tick sm');
   const chip = (t) => `<span class="ev ${cls(t)}" draggable="true" data-id="${t.id}" data-todo-row title="${esc(t.title)}${t.location ? " · " + esc(t.location) : ""}">${smTick(t)}${t.time ? `<span class="t">${t.time}</span>` : ""}${dlTag(t)}${t.location ? "📍" : ""}${esc(t.title)}</span>`;
@@ -558,7 +718,8 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
     tabs.classList.toggle("hidden", cal);
     document.querySelectorAll(".list-only").forEach((el) => el.classList.toggle("hidden", cal));
     document.querySelectorAll(".cal-only").forEach((el) => el.classList.toggle("hidden", !cal));
-    renderTagOptions();
+    buildTagModel();
+    renderTagTree();
     cal ? renderCal() : renderList();
   }
   document.addEventListener("pa:todos-changed", () => {
@@ -595,7 +756,8 @@ else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
   sd.onchange = () => { vs.showDone = sd.checked; saveVs(); render(); };
   sdel.onchange = () => { vs.showDel = sdel.checked; saveVs(); render(); };
   grp.onchange = () => { vs.group = grp.checked; saveVs(); render(); };
-  tagf.onchange = () => { vs.tag = tagf.value; saveVs(); render(); };
+  $("tag-toggle").onclick = () => { vs.tagCollapsed = !vs.tagCollapsed; saveVs(); render(); };
+  $("tag-mbtn").onclick = () => $("todo-layout").classList.toggle("tag-open");
   [kw, d1, d2].forEach((el) => (el.oninput = render));
   $("src").addEventListener("change", render);
   render();
