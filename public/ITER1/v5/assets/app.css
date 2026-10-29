@@ -603,3 +603,8 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .idea-todo { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
 .idea-todo:last-child { border-bottom: none; }
 .idea-todo.done a { color: var(--muted); text-decoration: line-through; }
+/* S07：会议条目日期、没定日期的提示 */
+.mt-due { font-size: 12px; color: var(--primary); }
+.mt-review .mt-due.on { border-color: var(--primary); }
+.mt-dpick { flex-basis: 100%; margin: 2px 0 4px 24px; align-items: center; }
+.mt-ask .actions { margin-top: 6px; display: flex; gap: 8px; }

@@ -51,7 +51,7 @@ if (PA.mount({ page: "todos", title: "待办详情" })) {
       <div class="card"><div class="card-head"><h3>想法记录</h3><span class="hint">追加式，新的在上；网址自动变成链接，带的文件同时归入附件</span></div><div id="d-rec"></div></div>
       ${t.actionItems ? `<div class="card"><div class="card-head"><h3>会议行动项</h3><span class="hint">由会议录音识别，保存为本会议的备注</span></div>
         ${t.actionItems.map((a, i) => `<div class="ai-item"><span class="owner ${a.owner === "我" ? "me" : ""}">${esc(a.owner)}</span><div style="flex:1">${esc(a.text)}${a.due ? ` <span class="muted small">· ${fmtDate(a.due)}</span>` : ""}</div>
-          ${a.converted ? `<a class="small" href="todo.html?id=${a.converted}">已转为我的待办 →</a>` : `<button class="btn sm" data-conv="${i}">转为我的待办</button>`}</div>`).join("")}</div>` : ""}
+          ${a.converted ? `<a class="small" href="todo.html?id=${a.converted}">已转为我的待办 →</a>` : a.idea && PA.ideaById(a.idea) ? `<a class="small" href="idea.html?id=${a.idea}">已放进想做的事 →</a>` : `<button class="btn sm" data-conv="${i}">转为我的待办</button>`}</div>`).join("")}</div>` : ""}
       <div class="card att-drop" id="att-card"></div>`;
       const q = (s) => view.querySelector(s);
       const dtp = PA.dateTimePicker(q("#d-dtp"), { date: t.date, time: t.time, duration: t.duration, deadline: t.deadline });
@@ -93,11 +93,33 @@ if (PA.mount({ page: "todos", title: "待办详情" })) {
         view.innerHTML = `<div class="card empty">已放进想做的事：<a href="idea.html?id=${ni.id}">${esc(ni.title)} ›</a></div>`;
       });
       op("purge", () => PA.purgeTodo(t, () => (location.href = "todos.html?view=list&tab=deleted")));
-      view.querySelectorAll("[data-conv]").forEach((b) => (b.onclick = () => {
-        const a = t.actionItems[+b.dataset.conv], now = PA.nowStr();
+      // 行动项转待办：有 due 直接用；没有 due 先选日期，或放进想做的事（S07）
+      const convTodo = (a, date) => {
+        const now = PA.nowStr();
         const notes = `来自会议：${t.title}${a.owner !== "我" ? "（原负责人：" + a.owner + "）" : ""}`;
-        const nt = { id: PA.uid("t"), title: a.text, date: a.due || "", time: "", location: "", notes, status: "open", source: "meeting", sourceFile: t.sourceFile, attachments: [], tags: PA.autoTags(a.text + " " + notes, []), starred: false, deadline: null, records: [], createdAt: now, updatedAt: now };
-        state.todos.push(nt); a.converted = nt.id; save(); log("手动创建待办", "会议行动项转为待办：" + a.text); toast("已创建待办"); PA.todosChanged(); render();
+        const nt = { id: PA.uid("t"), title: a.text, date, time: "", duration: 0, location: "", notes, status: "open", source: "meeting", sourceFile: t.sourceFile, attachments: [], tags: PA.autoTags(a.text + " " + notes, []), starred: false, deadline: null, records: [], createdAt: now, updatedAt: now };
+        state.todos.push(nt); a.converted = nt.id; if (!a.due) a.due = date; save(); log("手动创建待办", "会议行动项转为待办：" + a.text); toast("已创建待办"); PA.todosChanged(); render();
+      };
+      const convIdea = (a) => {
+        const now = PA.nowStr();
+        const ni = { id: PA.uid("i"), title: a.text, notes: `来自会议：${t.title}${a.owner !== "我" ? "（原负责人：" + a.owner + "）" : ""}`, records: [], attachments: t.sourceFile ? [t.sourceFile] : [], tags: PA.autoIdeaTags(a.text), tagsRemoved: [], starred: false, status: "active", source: "meeting", sourceNote: `来自会议：${t.title}`, createdAt: now, updatedAt: now, askedDone: [] };
+        state.ideas = state.ideas || []; state.ideas.unshift(ni); a.idea = ni.id; save();
+        log("手动创建待办", `会议行动项放进想做的事：${a.text}`); toast("已放进想做的事"); PA.todosChanged(); render();
+      };
+      view.querySelectorAll("[data-conv]").forEach((b) => (b.onclick = () => {
+        const a = t.actionItems[+b.dataset.conv];
+        if (a.due) { convTodo(a, a.due); return; }
+        PA.modal({
+          title: "转为我的待办",
+          body: `<div>「${esc(a.text)}」会议里没提到日期。待办要有日期，选一天；暂时定不了可以先放进想做的事。</div>
+            <div class="chip-list" style="margin-top:10px" data-conv-dates>${PA.dateChips().map(([l, d]) => `<span class="chip" data-cd="${d}">${l}<span class="sub">${+d.slice(5, 7)}/${+d.slice(8)}</span></span>`).join("")}<input class="input inline" type="date" data-cdi min="${PA.today()}"></div>`,
+          actions: [{ label: "取消" }, { label: "放进想做的事", onClick: () => convIdea(a) }],
+          onMount: (mask, close) => {
+            mask.querySelectorAll("[data-cd]").forEach((c) => (c.onclick = () => { close(); convTodo(a, c.dataset.cd); }));
+            const di = mask.querySelector("[data-cdi]");
+            di.onchange = () => { if (di.value) { close(); convTodo(a, di.value); } };
+          },
+        });
       }));
       renderAtt();
     };

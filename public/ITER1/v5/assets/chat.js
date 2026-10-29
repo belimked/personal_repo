@@ -68,6 +68,7 @@
     if (u.op === "fields") u.items.forEach(([id, before]) => { const t = PA.todoById(id); if (t) Object.assign(t, before, { updatedAt: PA.nowStr() }); });
     else if (u.op === "status") u.items.forEach(([id, s]) => { const t = PA.todoById(id); if (t) { t.status = s; t.updatedAt = PA.nowStr(); } });
     else if (u.op === "remove") { const t = PA.todoById(u.id); state.todos = state.todos.filter((x) => x.id !== u.id); if (t) log("彻底删除待办", `撤销新建：${t.title}`); if (followUp?.todoId === u.id) followUp = null; }
+    else if (u.op === "toIdea") { state.ideas = (state.ideas || []).filter((x) => x.id !== u.ideaId); if (!PA.todoById(u.todo.id)) state.todos.splice(Math.min(u.idx, state.todos.length), 0, u.todo); log("手动更新待办", `撤销先不做了：${u.todo.title}`); }
     else if (u.op === "idea") { const i = PA.ideaById(u.id); state.ideas = (state.ideas || []).filter((x) => x.id !== u.id); state.todos = state.todos.filter((x) => x.ideaId !== u.id || !(u.todos || []).includes(x.id)); if (i) log("文字输入·新增待办", `撤销记成想做的事：${i.title}`); }
     else if (u.op === "record") {
       const t = itemById(u.id);
@@ -137,10 +138,12 @@
     b.innerHTML = `<p>${esc(m.data.hi)}${name ? "，" + esc(name) : ""}。${lead}</p>`
       + (list.length ? `<div class="ccard">${list.map((t) => rowHTML(t)).join("")}</div><p class="hint">做完了点一下圆圈，或者直接跟我说“${esc((first || list[0]).title)}做完了”。</p>` : "");
   };
-  const OVER_ACTS = [["today", "改到今天"], ["tomorrow", "改到明天"], ["done", "已经交了"]];
+  const OVER_ACTS = [["today", "改到今天"], ["tomorrow", "改到明天"], ["done", "已经交了"], ["drop", "先不做了"]];
   const overLabel = (ds) => { const n = PA.diffDays(PA.today(), ds); return n === 1 ? "昨天" : n === 2 ? "前天" : `${n} 天前`; };
   KINDS.overdue = (b, m) => {
-    const list = m.data.ids.map(PA.todoById).filter(Boolean);
+    // “先不做了”转成想做的事后待办已不在，用记下的快照显示这一行（S07）
+    const list = m.data.ids.map((id) => PA.todoById(id) || (m.data.gone || {})[id]).filter(Boolean);
+    if (!list.length) { b.innerHTML = '<p class="muted">逾期的事都处理过了。</p>'; return; }
     const lead = list.length === 1 ? `还有一件<b class="red">${esc(overLabel(list[0].date))}到期</b>没做：${esc(list[0].title)}。怎么处理？` : `还有 <b class="red">${list.length} 件</b>过了日期没做，怎么处理？`;
     b.innerHTML = `<p>${lead}</p><div class="ccard">${list.map((t) => {
       const act = m.data.acts[t.id];
@@ -154,7 +157,22 @@
     const t = PA.todoById(id);
     if (!t || t.status !== "open") return;
     let undo, html;
-    if (k === "done") {
+    if (k === "drop") {
+      // 规则同待办详情页的“先不做了”：有来源的只删除这条待办，没有来源的转成想做的事（S07）
+      const src = t.ideaId && PA.ideaById(t.ideaId);
+      if (src) {
+        undo = { op: "status", items: [[t.id, t.status]] };
+        PA.setStatus([t], "deleted", "先不做了");
+        html = `好的，「${esc(t.title)}」先不做了，“<a href="idea.html?id=${src.id}">${esc(src.title)}</a>”还在想做的事里。`;
+      } else {
+        const idx = state.todos.indexOf(t), copy = JSON.parse(JSON.stringify(t));
+        const ni = PA.todoToIdea(t);
+        log("先不做了", `${t.title} → 想做的事`);
+        undo = { op: "toIdea", ideaId: ni.id, todo: copy, idx };
+        m.data.gone = { ...(m.data.gone || {}), [id]: { id, title: t.title, date: t.date, time: t.time, duration: t.duration, location: t.location || "", status: "deleted" } };
+        html = `好的，「${esc(t.title)}」先不做了，放进了<a href="idea.html?id=${ni.id}">想做的事</a>，想做了再排时间。`;
+      }
+    } else if (k === "done") {
       undo = { op: "status", items: [[t.id, t.status]] };
       PA.setStatus([t], "done", "文字输入·完成待办");
       html = `✅ 好的，「${esc(t.title)}」标为已完成。`;
@@ -168,7 +186,7 @@
     m.data.acts[id] = label; save();
     PA.todosChanged();
     push("user", "text", label);
-    reply(() => bot("result", "", { html, undo, editId: k === "done" ? "" : t.id, undoneMsg: "已撤销，恢复原来的样子。" }));
+    reply(() => bot("result", "", { html, undo, editId: k === "done" || k === "drop" ? "" : t.id, undoneMsg: "已撤销，恢复原来的样子。" }));
   }
   function opening() {
     reply(() => bot("greet", "", { hi: hiWord(), ids: PA.upcoming().days[0].list.map((t) => t.id) }));
@@ -650,24 +668,31 @@
   };
 
   // ---------- 待确认会议 ----------
-  function confirmMeeting(mt0, checked) {
+  // dues：{ 条目序号: 日期 }，用户在卡片上选的日期；没有就用录音里提到的 it.due。有日期的变成待办，没日期的变成想做的事（S07）
+  function confirmMeeting(mt0, checked, dues = {}) {
     const [date, time] = (mt0.dateFromAudio || mt0.dateFromFile).split(" ");
     const title = mt0.fileName.replace(/\.\w+$/, "").replace(/[-_]\d+$/, "");
     const fid = PA.fileById(mt0.fileId) ? mt0.fileId : null;
     const mt = newTodo({ title, date, time: time || "", duration: time ? parseInt(mt0.duration) || 0 : 0, status: "done", source: "meeting", sourceFile: fid, attachments: fid ? [fid] : [], notes: "会议摘要：" + mt0.summary, actionItems: [], tags: PA.autoTags(title + "会议", fid ? [fid] : []) });
-    const created = [];
+    const created = [], ideas = [];
     mt0.items.forEach((it, i) => {
-      const ai = { owner: it.owner, text: it.text, due: "" };
-      if (checked.includes(i)) {
-        const nt = newTodo({ title: it.text, source: "meeting", sourceFile: fid, notes: `来自会议：${title}${it.owner !== "我" ? "（原负责人：" + it.owner + "）" : ""}`, tags: PA.autoTags(it.text, fid ? [fid] : []) });
+      const due = (dues || {})[i] || it.due || "";
+      const ai = { owner: it.owner, text: it.text, due };
+      const notes = `来自会议：${title}${it.owner !== "我" ? "（原负责人：" + it.owner + "）" : ""}`;
+      if (checked.includes(i) && due) {
+        const nt = newTodo({ title: it.text, date: due, source: "meeting", sourceFile: fid, notes, tags: PA.autoTags(it.text, fid ? [fid] : []) });
         state.todos.push(nt); ai.converted = nt.id; created.push(nt);
+      } else if (checked.includes(i)) {
+        const now = PA.nowStr();
+        const idea = { id: PA.uid("i"), title: it.text, notes, records: [], attachments: fid ? [fid] : [], tags: PA.autoIdeaTags(it.text), tagsRemoved: [], starred: false, status: "active", source: "meeting", sourceNote: `来自会议：${title}`, createdAt: now, updatedAt: now, askedDone: [] };
+        state.ideas = state.ideas || []; state.ideas.unshift(idea); ai.idea = idea.id; ideas.push(idea);
       }
       mt.actionItems.push(ai);
     });
     state.todos.push(mt);
     state.inbox = state.inbox.filter((x) => x !== mt0);
-    save(); log("确认会议待办", `${mt0.fileName}：创建会议记录 1 条，我的待办 ${created.length} 条`); PA.todosChanged();
-    return { title, created };
+    save(); log("确认会议待办", `${mt0.fileName}：创建会议记录 1 条，我的待办 ${created.length} 条${ideas.length ? `，想做的事 ${ideas.length} 件` : ""}`); PA.todosChanged();
+    return { title, created, ideas };
   }
   KINDS.meetings = (b, m) => {
     const d = m.data, handled = d.handled || {};
@@ -677,7 +702,7 @@
       + Object.values(handled).map((h) => `<div class="result-card">${h}</div>`).join("")
       + list.map((x) => `<div class="result-card" data-m="${x.id}"><div><b>🎙 ${esc(x.fileName)}</b> <span class="muted small">${esc(x.duration)} · 会议时间 ${esc(x.dateFromAudio || x.dateFromFile)}</span></div>
         <div class="muted small" style="margin:4px 0 6px">${esc(x.summary)}</div><div class="small"><b>识别出的行动项</b>（默认勾选负责人是“我”的）</div>
-        <div class="mt-items">${x.items.map((it, i) => `<label><input type="checkbox" data-i="${i}" ${it.owner === "我" ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}</label>`).join("")}</div>
+        <div class="mt-items">${x.items.map((it, i) => `<label><input type="checkbox" data-i="${i}" ${it.owner === "我" ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}${it.due ? ` <span class="mt-due">📅 ${esc(shortDate(it.due))}</span>` : ' <span class="muted small">（没提到日期，勾选后放进想做的事）</span>'}</label>`).join("")}</div>
         <div class="actions"><button class="btn sm primary" data-ok>确认</button><button class="btn sm" data-not>不是会议</button></div></div>`).join("")
       + (list.length ? '<div class="actions" style="display:flex;gap:8px;margin-top:8px"><button class="btn sm primary" data-all>全部确认</button><button class="btn sm" data-later>稍后处理</button></div>' : "")
       + (d.later ? '<p class="muted">好的，会议先放着，想处理时跟我说“处理待确认会议”。</p>' : "");
@@ -685,8 +710,8 @@
       const x = state.inbox.find((y) => y.id === card.dataset.m);
       if (!x) return;
       const checked = [...card.querySelectorAll("[data-i]:checked")].map((c) => +c.dataset.i);
-      const { title, created } = window.PA_CHAT.confirmMeeting(x, checked);
-      acc[x.id] = `✅ 已确认会议「${esc(title)}」，新增 ${created.length} 条我的待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、") : ""}<div class="hint">新待办放在“待安排”里，可以接着说“把…排到周五”。</div>`;
+      const { title, created, ideas = [] } = window.PA_CHAT.confirmMeeting(x, checked);
+      acc[x.id] = `✅ 已确认会议「${esc(title)}」，新增 ${created.length} 条我的待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、") : ""}${ideas.length ? `；${ideas.length} 件没定日期，放进了想做的事：` + ideas.map((i) => `<a href="idea.html?id=${i.id}">${esc(i.title)}</a>`).join("、") : ""}`;
     };
     b.querySelectorAll("[data-m]").forEach((card) => {
       card.querySelector("[data-ok]").onclick = () => { const acc = { ...handled }; doOne(card, acc); setData(m, { handled: acc }); };
@@ -999,12 +1024,22 @@
     const list = meetingsOf(d.ids);
     if (!list.length) { b.innerHTML = '<p class="muted">这些会议录音已经处理过了。</p>'; return; }
     const checked = (mt) => d.checked[mt.id] || defaultChecked(mt);
-    b.innerHTML = `<p>好的，逐条看一下。勾选的会加入你的待办，会议本身保存为一条已完成的记录：</p>` + list.map((mt) => `<div class="result-card mt-review" data-m="${mt.id}">
+    // 每条带日期（S07）：录音里提到的（it.due）直接显示；没提到的显示“选日期”，点开日期快捷选项
+    d.dues = d.dues || {}; d.picking = d.picking || "";
+    const dueOf = (mt, i) => (d.dues[mt.id] || {})[i] || mt.items[i].due || "";
+    const dueHTML = (mt, i) => {
+      const ds = dueOf(mt, i), k = mt.id + ":" + i;
+      const btn = ds ? `<button class="btn ghost sm mt-due on" data-due="${i}" title="改日期">📅 ${esc(shortDate(ds))}</button>` : `<button class="btn ghost sm mt-due" data-due="${i}">选日期</button>`;
+      const chips = d.picking === k ? `<div class="mt-dpick chip-list">${PA.dateChips().map(([l, v]) => `<span class="chip ${v === ds ? "on" : ""}" data-dd="${v}">${l}<span class="sub">${+v.slice(5, 7)}/${+v.slice(8)}</span></span>`).join("")}<input class="input inline" type="date" data-ddi min="${PA.today()}" value="${ds}">${ds ? '<span class="chip" data-dd="">不定日期</span>' : ""}</div>` : "";
+      return btn + chips;
+    };
+    b.innerHTML = `<p>好的，逐条看一下。勾选的会加入你的待办（每条要有日期，没定日期的可以先放进想做的事），会议本身保存为一条已完成的记录：</p>` + list.map((mt) => `<div class="result-card mt-review" data-m="${mt.id}">
         <div><b>🎙 ${esc(mt.fileName)}</b> <span class="muted small">${esc(mt.duration)} · 会议时间 ${esc(mt.dateFromAudio || mt.dateFromFile)}</span></div>
-        ${mt.items.map((it, i) => `<div class="mt-line"><label><input type="checkbox" data-i="${i}" ${checked(mt).includes(i) ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}</label>
-          <button class="btn ghost sm" data-hear="${i}">${d.heard[mt.id + ":" + i] ? "收起原话" : "听原话"}</button>
+        ${mt.items.map((it, i) => `<div class="mt-line" data-line="${i}"><label><input type="checkbox" data-i="${i}" ${checked(mt).includes(i) ? "checked" : ""}><span class="owner ${it.owner === "我" ? "me" : ""}">${esc(it.owner)}</span>${esc(it.text)}</label>
+          ${dueHTML(mt, i)}<button class="btn ghost sm" data-hear="${i}">${d.heard[mt.id + ":" + i] ? "收起原话" : "听原话"}</button>
           ${d.heard[mt.id + ":" + i] ? `<div class="mt-quote">${it.at ? `<span class="muted small">[${esc(it.at)}]</span> ` : ""}“${esc(it.quote || it.text)}”${it.at ? "" : '<span class="muted small">（原型：这段录音没有逐句时间点）</span>'}</div>` : ""}</div>`).join("")}
-      </div>`).join("") + `<div class="actions" style="display:flex;gap:8px;margin-top:8px"><button class="btn sm primary" data-mr="ok"></button><button class="btn sm" data-mr="later">晚点再说</button></div>`;
+      </div>`).join("") + (d.ask ? `<div class="ask mt-ask" data-mt-ask>💬 有 ${d.ask} 条没定日期，先放进想做的事？<div class="actions"><button class="btn sm primary" data-mr="idea">放进想做的事</button><button class="btn sm" data-mr="back">回去选日期</button></div></div>` : "")
+      + `<div class="actions" style="display:flex;gap:8px;margin-top:8px"><button class="btn sm primary" data-mr="ok"></button><button class="btn sm" data-mr="later">晚点再说</button></div>`;
     const ok = b.querySelector('[data-mr="ok"]');
     const sync = () => {
       b.querySelectorAll("[data-m]").forEach((card) => (d.checked[card.dataset.m] = [...card.querySelectorAll("[data-i]:checked")].map((c) => +c.dataset.i)));
@@ -1018,11 +1053,39 @@
       const k = x.closest("[data-m]").dataset.m + ":" + x.dataset.hear;
       C.setData(m, { heard: { ...d.heard, [k]: !d.heard[k] } });
     }));
+    const setDue = (card, i, ds) => {
+      sync();
+      const id = card.dataset.m;
+      d.dues = { ...d.dues, [id]: { ...(d.dues[id] || {}), [i]: ds } };
+      const ck = d.checked[id] || [];
+      if (ds && !ck.includes(+i)) d.checked[id] = [...ck, +i];
+      C.setData(m, { dues: d.dues, picking: "", ask: 0 });
+    };
+    b.querySelectorAll("[data-due]").forEach((x) => (x.onclick = () => {
+      sync();
+      const k = x.closest("[data-m]").dataset.m + ":" + x.dataset.due;
+      C.setData(m, { picking: d.picking === k ? "" : k });
+    }));
+    b.querySelectorAll("[data-dd]").forEach((x) => (x.onclick = () => setDue(x.closest("[data-m]"), x.closest("[data-line]").dataset.line, x.dataset.dd)));
+    b.querySelectorAll("[data-ddi]").forEach((x) => (x.onchange = () => x.value && setDue(x.closest("[data-m]"), x.closest("[data-line]").dataset.line, x.value)));
+    const finish = () => {
+      const done = meetingsOf(d.ids).map((mt) => C.confirmMeeting(mt, d.checked[mt.id] || [], d.dues[mt.id] || {}));
+      const created = done.flatMap((x) => x.created), ideas = done.flatMap((x) => x.ideas || []);
+      C.setData(m, { ask: 0, picking: "", result: `✅ 已处理 ${done.length} 个会议，加入 ${created.length} 条待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>（${esc(shortDate(t.date))}）`).join("、") : ""}${ideas.length ? `<div>💡 ${ideas.length} 件没定日期，放进了想做的事：${ideas.map((i) => `<a href="idea.html?id=${i.id}">${esc(i.title)}</a>`).join("、")}</div>` : ""}` });
+    };
     ok.onclick = () => {
       sync();
-      const done = meetingsOf(d.ids).map((mt) => C.confirmMeeting(mt, d.checked[mt.id] || []));
-      const created = done.flatMap((x) => x.created);
-      C.setData(m, { result: `✅ 已处理 ${done.length} 个会议，加入 ${created.length} 条待办${created.length ? "：" + created.map((t) => `<a href="todo.html?id=${t.id}">${esc(t.title)}</a>`).join("、") : ""}<div class="hint">新待办放在“待安排”里，可以接着说“把…排到周五”。</div>` });
+      const undated = meetingsOf(d.ids).reduce((s, mt) => s + (d.checked[mt.id] || []).filter((i) => !dueOf(mt, i)).length, 0);
+      if (undated) { C.setData(m, { ask: undated, picking: "" }); return; }
+      finish();
+    };
+    const toIdea = b.querySelector('[data-mr="idea"]'), back = b.querySelector('[data-mr="back"]');
+    if (toIdea) toIdea.onclick = () => { sync(); finish(); };
+    if (back) back.onclick = () => {
+      sync();
+      const mt = meetingsOf(d.ids).find((x) => (d.checked[x.id] || []).some((i) => !dueOf(x, i)));
+      const i = mt && (d.checked[mt.id] || []).find((j) => !dueOf(mt, j));
+      C.setData(m, { ask: 0, picking: mt ? mt.id + ":" + i : "" });
     };
     b.querySelector('[data-mr="later"]').onclick = () => {
       laterFor(list);
@@ -1256,3 +1319,100 @@
   };
 })();
 
+
+// S07：想做的事“算做成了吗”、每周 / 每月回顾（?review=week|month 演示时立即触发）
+(function () {
+  const PA = window.PA, C = window.PA_CHAT;
+  if (!PA || !C) return;
+  const { state, esc, save, log } = PA;
+  const STALE_DAYS = 90;
+  const ideaLink = (i) => `<a href="idea.html?id=${i.id}">${esc(i.title)}</a>`;
+  const linked = (i) => state.todos.filter((t) => t.ideaId === i.id && t.status !== "deleted");
+
+  // ---------- 关联待办都完成后问一次“算做成了吗”；askedDone 记已问过的那批待办 id ----------
+  function checkDone() {
+    (state.ideas || []).forEach((i) => {
+      if (i.status !== "active") return;
+      const list = linked(i);
+      if (!list.length || list.some((t) => t.status !== "done")) return;
+      const asked = i.askedDone || [];
+      if (list.every((t) => asked.includes(t.id))) return;
+      i.askedDone = [...new Set([...asked, ...list.map((t) => t.id)])];
+      save();
+      C.reply(() => C.bot("ideaDone", "", { ideaId: i.id, ids: list.map((t) => t.id) }));
+    });
+  }
+  C.kinds.ideaDone = (b, m) => {
+    const d = m.data, i = PA.ideaById(d.ideaId);
+    if (!i) { b.innerHTML = '<p class="muted">这件想做的事已经不在了。</p>'; return; }
+    b.innerHTML = `<p>『${ideaLink(i)}』排的事都做完了，这件事算做成了吗？</p>`
+      + (d.chosen ? `<p class="muted small">已选择：${esc(d.chosen)}</p>` : '<div class="actions"><button class="btn sm primary" data-dn="done">做成了</button><button class="btn sm" data-dn="no">还没</button></div>');
+    const on = (k, fn) => { const x = b.querySelector(`[data-dn="${k}"]`); if (x) x.onclick = fn; };
+    on("done", () => {
+      i.status = "done"; i.updatedAt = PA.nowStr(); save();
+      log("手动更新待办", `想做的事“${i.title}” → 已做成`);
+      C.setData(m, { chosen: "做成了" });
+      C.push("user", "text", "做成了");
+      C.reply(() => C.bot("text", `太好了！「${i.title}」标为做成了，可以在想做的事的“已做成”里找到。`));
+    });
+    on("no", () => {
+      C.setData(m, { chosen: "还没" });
+      C.push("user", "text", "还没");
+      C.reply(() => C.bot("text", `好的，「${i.title}」还留在想做的事里，想做了随时再排。`));
+    });
+  };
+
+  // ---------- 回顾 ----------
+  const R = () => (state.reviewShown = state.reviewShown || {});
+  const weekKey = (ds) => PA.addDays(ds, -((new Date(ds + "T00:00:00").getDay() + 6) % 7));
+  const byRank = (a, b) => !!b.starred - !!a.starred || (b.updatedAt || "").localeCompare(a.updatedAt || "");
+  const active = () => (state.ideas || []).filter((i) => i.status === "active");
+  function weekData() {
+    const list = active().filter((i) => !PA.isSpark(i)).sort(byRank);
+    return { n: list.length, ids: list.slice(0, 5).map((i) => i.id) };
+  }
+  function monthData() {
+    const d0 = PA.today(), first = d0.slice(8) === "01";
+    // 每月 1 日统计上个自然月；演示时（非 1 日）统计最近 30 天
+    const from = first ? PA.addDays(d0, -1).slice(0, 8) + "01" : PA.addDays(d0, -30), to = PA.addDays(d0, -1);
+    const sparks = active().filter((i) => PA.isSpark(i) && (i.createdAt || "").slice(0, 10) >= from && (i.createdAt || "").slice(0, 10) <= to);
+    const stale = active().filter((i) => !PA.isSpark(i) && PA.diffDays(d0, (i.updatedAt || i.createdAt || d0).slice(0, 10)) > STALE_DAYS && !linked(i).some((t) => (t.updatedAt || t.createdAt || "").slice(0, 10) > PA.addDays(d0, -STALE_DAYS)));
+    return { label: first ? "上个月" : "最近 30 天", n: sparks.length, sparkIds: sparks.map((i) => i.id), staleIds: stale.map((i) => i.id), acts: {} };
+  }
+  C.kinds.reviewWeek = (b, m) => {
+    const list = m.data.ids.map(PA.ideaById).filter(Boolean);
+    b.innerHTML = `<p>你有 ${m.data.n} 件想做的事，有要排进这周的吗？</p>`
+      + (list.length ? `<div class="ccard">${list.map((i) => `<div class="crow" data-idea-row="${i.id}"><span class="badge">${i.starred ? "⭐ " : ""}想做的事</span><a class="ci" href="idea.html?id=${i.id}">${esc(i.title)}</a><span class="cl">${esc(PA.ideaProgress(i).text)}</span>${i.status === "active" ? `<button class="btn ghost sm" data-plan="${i.id}">排个时间</button>` : ""}</div>`).join("")}</div>` : "")
+      + '<p class="hint">不含灵光一现；全部想做的事在左侧“想做的事”里。</p>';
+    b.querySelectorAll("[data-plan]").forEach((x) => (x.onclick = () => C.planIdea(x.dataset.plan)));
+  };
+  C.kinds.reviewMonth = (b, m) => {
+    const d = m.data, stale = d.staleIds.map(PA.ideaById).filter(Boolean);
+    b.innerHTML = `<p>${esc(d.label)}记了 ${d.n} 个灵光一现，翻翻看？</p><div class="actions"><a class="btn sm" href="ideas.html" data-rv="look">去看看</a></div>`
+      + (stale.length ? `<p style="margin-top:8px">还有这几件超过 ${STALE_DAYS} 天没动静了，还留着吗？</p><div class="ccard">${stale.map((i) => `<div class="crow" data-stale="${i.id}"><span class="badge">想做的事</span><a class="ci" href="idea.html?id=${i.id}">${esc(i.title)}</a>${d.acts[i.id] ? `<span class="cl">${esc(d.acts[i.id])}</span>` : `<span class="crow-acts"><button class="btn sm" data-keep="${i.id}">留着</button><button class="btn sm" data-drop="${i.id}">放下了</button></span>`}</div>`).join("")}</div>` : "");
+    const act = (id, label, fn) => { const i = PA.ideaById(id); if (!i) return; fn(i); i.updatedAt = PA.nowStr(); save(); C.setData(m, { acts: { ...d.acts, [id]: label } }); };
+    b.querySelectorAll("[data-keep]").forEach((x) => (x.onclick = () => act(x.dataset.keep, "留着", () => {})));
+    b.querySelectorAll("[data-drop]").forEach((x) => (x.onclick = () => act(x.dataset.drop, "已放下", (i) => { i.status = "dropped"; log("手动更新待办", `想做的事“${i.title}” → 已放下`); })));
+  };
+  function reviews() {
+    const d0 = PA.today(), force = PA.qs("review"), r = R();
+    const wk = weekKey(d0), mk = d0.slice(0, 7);
+    const week = force === "week" || (!force && new Date(d0 + "T00:00:00").getDay() === 1 && r.week !== wk);
+    const month = force === "month" || (!force && d0.slice(8) === "01" && r.month !== mk);
+    if (week) { r.week = wk; save(); C.reply(() => C.bot("reviewWeek", "", weekData())); }
+    if (month) { r.month = mk; save(); C.reply(() => C.bot("reviewMonth", "", monthData())); }
+  }
+
+  const origOpening = C.opening;
+  C.opening = function () {
+    origOpening();
+    reviews();
+    checkDone();
+  };
+  const origStart = C.start;
+  C.start = function () {
+    origStart();
+    document.addEventListener("pa:todos-changed", checkDone);
+  };
+  C.checkIdeaDone = checkDone;
+})();
