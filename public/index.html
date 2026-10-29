@@ -20,9 +20,26 @@
   <h2 style="margin:0 0 10px">迭代一（ITER1）</h2>
 
   <div class="card ver">
-    <div class="tag">v4</div>
+    <div class="tag">v5</div>
     <div style="flex:1">
-      <div class="row"><b>原型 v4</b><span class="badge green">最新</span><span class="muted small">2026-10-26</span><span class="spacer"></span><a class="btn primary" href="ITER1/v4/">打开 v4</a></div>
+      <div class="row"><b>原型 v5</b><span class="badge green">最新</span><span class="muted small">2026-10-29</span><span class="spacer"></span><a class="btn primary" href="ITER1/v5/">打开 v5</a></div>
+      <ul>
+        <li>菜单收起 / 展开按钮改为图标（侧栏框 + 箭头），点击区和菜单项一样大，鼠标移上去有浅色底并提示“展开菜单”/“收起菜单”；展开后记住选择</li>
+        <li>图标栏新增“💡 想做的事”：待办必须有日期，没有日期的记在这里（单独一页）；卡片主按钮“排个时间”选了日期即生成一条关联待办，想做的事保留</li>
+        <li>想做的事有“灵光一现”标签（突然冒出的点子，每月翻一次，不催着做），普通想做的事超过 90 天没动静每月顺带问“还留着吗？”</li>
+        <li>助手页能记录、追加想法、排时间、按意思查想做的事；逾期消息加“先不做了”；关联待办都完成后问一次“算做成了吗”；会议行动项带日期，没定日期的可先放进想做的事</li>
+        <li>待办页改为左侧标签树：点标签名只看这一类，勾选方框可多选，点“全部待办”全选 / 全不选（取消即排除）；筛选行写清当前条件，件数跟随当前页签 / 日历范围，标签栏可收起</li>
+        <li>待办页和日历去掉“待安排”，新建必须选日期；待办详情显示“来自：某件想做的事”，可一键转成想做的事</li>
+        <li>回顾演示（先登录）：<a href="ITER1/v5/home.html?review=week">ITER1/v5/home.html?review=week</a>（每周回顾，不含灵光一现）、<a href="ITER1/v5/home.html?review=month">ITER1/v5/home.html?review=month</a>（灵光一现回顾 + 90 天询问）</li>
+      </ul>
+      <div class="hint">变更明细与处理规则：仓库 docs/ITER1/review/原型评审变更记录.md（第 11、12、13 项、v5 原型实现说明）</div>
+    </div>
+  </div>
+
+  <div class="card ver">
+    <div class="tag" style="color:var(--muted)">v4</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v4</b><span class="badge">冻结</span><span class="muted small">2026-10-26</span><span class="spacer"></span><a class="btn" href="ITER1/v4/">打开 v4</a></div>
       <ul>
         <li>助手页整页改为对话：助手先开口、按时段问候并带出今天的待办；有逾期单独一条消息；回复前显示“正在输入”；结果用卡片展示并可撤销 / 修改</li>
         <li>问候语由程序组好再说得像人话：可以带节日、天气开场，件数时间以程序数据为准，出错或超时用固定模板；每天第一次完整问候，之后只补充变化</li>

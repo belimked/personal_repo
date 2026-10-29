@@ -1,25 +1,25 @@
 $ node --test tests/v5-smoke.test.mjs
-✔ v5 包含全部页面 (7.789406ms)
-✔ v5 冒烟：admin-filetypes.html (1225.52616ms)
-✔ v5 冒烟：admin-logs.html (844.556456ms)
-✔ v5 冒烟：admin-models.html (619.603464ms)
-✔ v5 冒烟：admin-system.html (344.727502ms)
-✔ v5 冒烟：admin-usage.html (394.598115ms)
-✔ v5 冒烟：admin-users.html (289.992943ms)
-✔ v5 冒烟：files.html (663.645561ms)
-✔ v5 冒烟：forgot.html (201.30083ms)
-✔ v5 冒烟：home.html (610.974576ms)
-✔ v5 冒烟：idea.html (252.828903ms)
-✔ v5 冒烟：ideas.html (252.1486ms)
-✔ v5 冒烟：inbox.html (53.363983ms)
-✔ v5 冒烟：index.html (119.470839ms)
-✔ v5 冒烟：profile.html (296.761608ms)
-✔ v5 冒烟：reminders.html (50.123944ms)
-✔ v5 冒烟：todo.html (185.496346ms)
-✔ v5 冒烟：todos.html (677.717143ms)
-✔ v5 使用独立的演示数据键 (201.031552ms)
-✔ v5 未登录访问会跳转到登录页 (272.231625ms)
-✔ 菜单收起/展开按钮是图标，title 随状态切换并记住 (810.229425ms)
+✔ v5 包含全部页面 (7.910331ms)
+✔ v5 冒烟：admin-filetypes.html (1236.822837ms)
+✔ v5 冒烟：admin-logs.html (833.741901ms)
+✔ v5 冒烟：admin-models.html (620.074818ms)
+✔ v5 冒烟：admin-system.html (340.550351ms)
+✔ v5 冒烟：admin-usage.html (402.523009ms)
+✔ v5 冒烟：admin-users.html (293.052211ms)
+✔ v5 冒烟：files.html (658.361568ms)
+✔ v5 冒烟：forgot.html (201.828311ms)
+✔ v5 冒烟：home.html (618.69547ms)
+✔ v5 冒烟：idea.html (254.687629ms)
+✔ v5 冒烟：ideas.html (255.508607ms)
+✔ v5 冒烟：inbox.html (54.402851ms)
+✔ v5 冒烟：index.html (121.220927ms)
+✔ v5 冒烟：profile.html (301.704247ms)
+✔ v5 冒烟：reminders.html (47.556641ms)
+✔ v5 冒烟：todo.html (177.669484ms)
+✔ v5 冒烟：todos.html (642.601998ms)
+✔ v5 使用独立的演示数据键 (202.441341ms)
+✔ v5 未登录访问会跳转到登录页 (282.632194ms)
+✔ 菜单收起/展开按钮是图标，title 随状态切换并记住 (837.650495ms)
 ℹ tests 21
 ℹ suites 0
 ℹ pass 21
@@ -27,4 +27,4 @@ $ node --test tests/v5-smoke.test.mjs
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 10521.407248
+ℹ duration_ms 10568.041073

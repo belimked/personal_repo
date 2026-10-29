@@ -523,7 +523,8 @@
       "model_used": "main",
       "actual_min": 44.9,
       "last_error": null,
-      "finished_at": "2026-10-29T15:21:40.143Z"
+      "finished_at": "2026-10-29T15:21:40.143Z",
+      "commit": "2402d69"
     },
     {
       "id": "S08",
@@ -572,10 +573,15 @@
       "reads": [
         "docs/design/原型v4-设计.md"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "6a71c0cdfe",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-10-29T15:22:01.892Z",
+      "model_used": "cheap",
+      "actual_min": 10.7,
+      "last_error": null,
+      "finished_at": "2026-10-29T15:32:44.068Z"
     },
     {
       "id": "S09",
