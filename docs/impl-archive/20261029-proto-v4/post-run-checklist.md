@@ -1,6 +1,7 @@
 # 收尾清单（proto-v4 · P2）
 
 > 脚本生成，不要手工编辑。登记命令在项目根目录运行。
+> 计划已归档（完成，2026-10-29）：原型 v4 已完成、发布并评审；开始原型 v5
 
 共 1 项：数据 0 项（预计 0 分钟）、核对 0 项、人工验收 1 项；已登记 1 项。按下面的顺序做。
 
@@ -15,5 +16,5 @@
   - [x] 评审第 10 项 12 点在页面上都能找到对应表现
   - [x] 视觉朴素、无明显错位或遮挡
 - 不通过会影响：S03、S04、S05、S06
-- 登记：`post A01 ok --reason "…"` / `post A01 fail --reason "<原因>"` / `post A01 skip --reason "<原因>"`
+- 登记：`post A01 ok docs/impl-archive/20261029-proto-v4 --reason "…"` / `post A01 fail docs/impl-archive/20261029-proto-v4 --reason "<原因>"` / `post A01 skip docs/impl-archive/20261029-proto-v4 --reason "<原因>"`
 - 结果：✅ 通过 · 2026-10-29 20:35 · 用户已在浏览器中评审 v4，并据此提出第 11–13 项
