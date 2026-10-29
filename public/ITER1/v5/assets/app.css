@@ -582,3 +582,24 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .nav-toggle .ico { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .nav-toggle .nav-toggle-svg { width: 20px; height: 20px; display: block; }
 .sidebar.collapsed .nav-toggle { width: 44px; height: 40px; padding: 0; margin: 0 auto; }
+
+/* S03：想做的事（ideas.html / idea.html），朴素卡片风格，与待安排卡片相近 */
+.idea-new { padding: 12px; }
+.idea-filters { margin: 0 0 10px; }
+.idea-list { display: flex; flex-direction: column; gap: 8px; }
+.idea-card { background: #fff; border: 1px solid var(--border); border-left: 3px solid #f5a623; border-radius: var(--radius); padding: 10px 12px; }
+.idea-card.ended { border-left-color: var(--border); opacity: .8; }
+.idea-top { display: flex; align-items: center; gap: 8px; }
+.idea-top .spacer { flex: 1; }
+.idea-title { font-weight: 600; color: var(--text); }
+.idea-title:hover { color: var(--primary); }
+.idea-last { margin: 4px 0 0 24px; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idea-meta { margin: 6px 0 0 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
+.idea-prog { color: var(--primary); }
+.idea-sched { margin: 8px 0 0 24px; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border); }
+.idea-ended { margin-top: 12px; }
+.idea-ended-toggle { display: block; text-align: center; padding: 8px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.idea-ended-toggle:hover { color: var(--primary); }
+.idea-todo { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.idea-todo:last-child { border-bottom: none; }
+.idea-todo.done a { color: var(--muted); text-decoration: line-through; }

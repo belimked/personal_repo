@@ -961,6 +961,7 @@
   const NAV_USER = [
     ["home", "home.html", "💬", "助手"],
     ["todos", "todos.html", "✅", "待办事项"],
+    ["ideas", "ideas.html", "💡", "想做的事"],
     ["files", "files.html", "📁", "个人知识库"],
     ["profile", "profile.html", "⚙️", "个人设置"],
   ];
@@ -1038,7 +1039,7 @@
     addDays, diffDays, cnDate, makeDeadline, daysLeft, inDeadlineWindow, deadlineText, whenText, DEADLINE_KINDS,
     parseWhen, parseDur, parseLocation, parseTodo,
     PRESET_FULL, normTag, allTags, tagTree, hasTag, tagChips, autoTags, tagEditor,
-    TIME_PRESETS, dateTimePicker, undoToast, todosChanged, setStatus, completeTodos, deleteTodo, purgeTodo, tickHTML,
+    TIME_PRESETS, dateChips, dateTimePicker, undoToast, todosChanged, setStatus, completeTodos, deleteTodo, purgeTodo, tickHTML,
     ideaById, ideaProgress, todoFromIdea, todoToIdea, isSpark, autoIdeaTags, SPARK_TAG, SPARK_RE, mdText,
     linkify, relTime, addRecord, recordsBox, attachBox, kbPicker, upcoming, upcomingCount, previewMail,
     ADMIN_TYPES: SEED.logTypesAdmin,
