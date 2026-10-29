@@ -738,7 +738,8 @@
       "model_used": "cheap",
       "actual_min": 4.2,
       "last_error": null,
-      "finished_at": "2026-10-29T16:10:42.527Z"
+      "finished_at": "2026-10-29T16:10:42.527Z",
+      "commit": "c3e7c9a"
     }
   ],
   "post_run": [
