@@ -1,6 +1,7 @@
 # 实施计划：proto-v5
 
 > 由 stepwise 脚本根据 plan.json 生成，请勿手工编辑。
+> 计划已归档（完成，2026-10-30）：原型 v5 已通过并冻结；后续修改进 v6
 
 ## 概况
 
@@ -62,7 +63,6 @@
 
 ## 最近事件
 
-- 2026-10-29 23:50 P1 begin S10：cheap
 - 2026-10-30 00:03 P1 fail S10：改动超出本步范围：e2e/auth.spec.ts、e2e/helpers.ts、e2e/ideas.spec.ts（测试产物请加进 .gitignore；用户批准的改动用 allow 登记；其他文件请撤销改动，或在补全模式中调整 files_owned）
 - 2026-10-30 00:04 P1 allow S10：e2e/auth.spec.ts：site-test 第 5 节：测试写错（URL 规整、来源断言位置），修测试不改网站
 - 2026-10-30 00:04 P1 allow S10：e2e/helpers.ts：site-test 第 5 节：测试写错（URL 规整、来源断言位置），修测试不改网站
@@ -72,3 +72,4 @@
 - 2026-10-30 00:06 P1 begin S11：cheap
 - 2026-10-30 00:10 P1 done S11：cheap
 - 2026-10-30 09:38 P1 post_ok A01：用户确认原型 v5 通过（2026-10-30）
+- 2026-10-30 09:38 P1 archive：completed：原型 v5 已通过并冻结；后续修改进 v6
