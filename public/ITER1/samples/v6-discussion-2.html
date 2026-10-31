@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>讨论稿 · 画像驱动的主动管家（方法论第二轮）</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--border:#e3e6eb;--text:#1f2329;--muted:#6b7280;--primary:#2f6fed;--pw:#eaf1ff;--hl:#fff3c4}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);line-height:1.75;font-size:16px}
+.wrap{max-width:860px;margin:0 auto;padding:20px 18px 140px}
+h1{font-size:22px;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+section{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin:14px 0}
+h2{font-size:18px;margin:4px 0 10px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+h3{font-size:16px;margin:14px 0 6px}
+p{margin:6px 0}ul,ol{margin:6px 0;padding-left:22px}li{margin:3px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:14px}
+th,td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f3f4f6}
+pre{background:#f3f4f6;border-radius:8px;padding:10px 12px;font-size:13px;overflow:auto;line-height:1.6}
+blockquote{margin:8px 0;padding:6px 12px;border-left:4px solid var(--primary);background:var(--pw);border-radius:0 6px 6px 0}
+.note{color:var(--muted);font-size:14px}
+.r{border-radius:6px;transition:background .2s;cursor:pointer}
+.r.on{background:var(--hl);box-shadow:0 0 0 4px var(--hl)}
+.secplay{border:1px solid var(--border);background:#fff;border-radius:999px;padding:2px 12px;font-size:13px;cursor:pointer;white-space:nowrap;font-weight:400}
+.secplay:hover{border-color:var(--primary);color:var(--primary)}
+.toc{font-size:14px;columns:2;column-gap:24px}.toc a{color:var(--primary);text-decoration:none}
+.player{position:fixed;left:0;right:0;bottom:0;background:#111827;color:#e5e7eb;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;z-index:9;box-shadow:0 -4px 16px rgba(0,0,0,.15)}
+.player button{background:#2f6fed;color:#fff;border:0;border-radius:8px;padding:8px 14px;font-size:15px;cursor:pointer}
+.player button.g{background:#374151}
+.player select{background:#1f2937;color:#fff;border:1px solid #374151;border-radius:6px;padding:5px 6px;max-width:180px}
+.player .now{font-size:12px;color:#9ca3af;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.warn{background:#fff4dc;color:#7c5a00;border-radius:8px;padding:8px 12px;font-size:14px;display:none}
+@media(max-width:640px){.toc{columns:1}body{font-size:15px}section{padding:12px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="doc">
+  <h1 class="r">讨论稿：画像驱动的主动管家（方法论第二轮）</h1>
+  <div class="sub">临时页面，仅供讨论，不是正式文档 · 2026-10-30 · 点任意一段可以从这里开始朗读</div>
+  <div class="warn" id="warn">你的浏览器不支持朗读（Web Speech）。建议用手机或电脑上的 Chrome、Edge、Safari 打开。</div>
+
+  <section>
+    <p class="r">这次也只讨论，不动手。下面每一部分都会同时从产品经理和用户两个角度看。有不同意见的地方我会直接说。</p>
+    <div class="toc">
+      <div><a href="#s0">〇、联网核实结果</a></div><div><a href="#s1">一、总框架：一个循环</a></div>
+      <div><a href="#s2">二、画像分五层</a></div><div><a href="#s3">三、方法论 A：帮什么</a></div>
+      <div><a href="#s4">四、方法论 B：做多深、要不要打扰</a></div><div><a href="#s5">五、面向所有人</a></div>
+      <div><a href="#s6">六、界面适配：两个池子要不要一对一</a></div><div><a href="#s7">七、多模型整合</a></div>
+      <div><a href="#s8">八、信任与合规</a></div><div><a href="#s9">九、需要一起定的问题</a></div>
+    </div>
+  </section>
+
+  <section id="s0">
+    <h2 class="r">〇、联网核实结果（按你说的，只做了粗查）</h2>
+    <ul>
+      <li class="r"><b>竞品（主动服务和长期记忆）</b>：这次基本没查到。OpenAI 和豆包的官方页面都抓不下来，只确认了 Gemini 有“基于过往对话和关联应用的个性化”，而且目前只对部分用户开放。我上次说的 ChatGPT 长期记忆和 Pulse，来自我自己的记忆，这次没有核实，暂时不能写进宣传口径。等定位基本确定后，再专门做一次正式核实。</li>
+      <li class="r"><b>个人信息保护法</b>：已核实原文（2021 年版本）。有几条会直接影响产品设计，见第八部分。</li>
+    </ul>
+  </section>
+
+  <section id="s1">
+    <h2 class="r">一、总框架：一个循环</h2>
+    <pre class="r" data-say="循环是这样的：收集信息，形成画像，判断帮什么、做多深、要不要打扰，然后主动交付；用户的反应，也就是用了、改了、忽略、拒绝，再回到收集信息这一步。">收集信息 ──→ 画像 ──→ 判断：帮什么、做多深、要不要打扰 ──→ 主动交付
+   ↑                                                      │
+   └──────── 用户怎么反应（用了 / 改了 / 忽略 / 拒绝）←─────┘</pre>
+    <p class="r">后面的方法论都挂在这个循环上。整套机制里最值钱的是最后那条反馈线：用户每次反应都会让画像更准。产品要好用，就是让这个循环转得越来越快、越来越准。</p>
+  </section>
+
+  <section id="s2">
+    <h2 class="r">二、画像分五层（这是后面所有判断的基础）</h2>
+    <table>
+      <thead><tr><th>层</th><th>内容</th><th>变化速度</th><th>来源</th></tr></thead>
+      <tbody>
+        <tr class="r"><td>1. 基本事实</td><td>年龄、城市、家庭成员和年龄、职业</td><td>慢</td><td>用户说的、资料里看到的</td></tr>
+        <tr class="r"><td>2. 角色</td><td>产品经理、家长、股民、篮球爱好者、团购群主……</td><td>慢</td><td>从事实和行为推断</td></tr>
+        <tr class="r"><td>3. 职责</td><td>在每个角色里实际管哪些事：家里谁订行程、谁管钱、谁管孩子学习</td><td>中</td><td>主要从行为推断</td></tr>
+        <tr class="r"><td>4. 偏好和风格</td><td>喜欢详细还是简洁、预算敏感度、决策习惯、文字还是语音</td><td>中</td><td>从反馈学习</td></tr>
+        <tr class="r"><td>5. 当前状态</td><td>这周忙不忙、最近在关注什么、临近的大事</td><td>快</td><td>待办、日程、最近对话</td></tr>
+      </tbody>
+    </table>
+    <p class="r">每条画像都带四个属性：来源、可信度、更新时间、敏感级别。</p>
+    <p class="r">第 3 层“职责”是你问的“爸爸、妈妈”问题的答案：帮助不按身份分配，按职责分配。这一层也是我们和通用 AI 助手差别最大的地方。通用助手大多能记住“你有两个孩子”，但很难知道“你家出行是你在张罗”。这一点我没有核实，是推断。</p>
+  </section>
+
+  <section id="s3">
+    <h2 class="r">三、方法论 A：决定“帮什么”</h2>
+    <p class="r"><b>做法：事件乘以职责，得到候选帮助，再排序。</b></p>
+    <ol>
+      <li class="r"><b>识别事件类型</b>：用户记下或说出一件事，比如“秋假带孩子出去玩”，先归类为“家庭出行”。</li>
+      <li class="r"><b>列出这类事件的全部候选帮助</b>：交通、住宿、行程、预算、天气和衣物、孩子装备、证件、宠物托管、请假协调……这份“事件到帮助的清单”是一个可以不断扩充的知识库。冷启动阶段可以人工整理，加上大模型生成。</li>
+      <li class="r"><b>用画像给候选帮助打分排序</b>：和这个人的职责是否吻合（权重最高）；和当前状态是否吻合（比如离出发还有几天）；他过去对同类帮助的采纳情况；同类人群的平均采纳率（数据不足时的兜底）。</li>
+      <li class="r"><b>第一位直接做，第二、三位作为“还可以帮你”的选项。</b></li>
+    </ol>
+    <p class="r"><b>这个画像缺信息时怎么办</b>：用“人群平均”顶上，也就是同一事件下大多数人最先需要的是什么。用户选了第二项，就记成职责信号。所以第一次猜错也有价值，猜错的代价是一次点击，换来的是画像的一次修正。</p>
+    <p class="r"><b>从用户角度必须守住的一条：猜对了要说出依据，没把握的推断不说出口。</b></p>
+    <ul>
+      <li class="r">可以说：“你上次去长沙也是你订的票，这次我先把交通排好了。”这让用户觉得被了解。</li>
+      <li class="r">不能说：“看起来你最近在考虑换工作？”这会让用户觉得被监视。</li>
+    </ul>
+    <p class="r">规则是：推断出的敏感事情（工作变动、健康、感情、财务困难），在用户确认之前不说出来，也不据此行动。</p>
+  </section>
+
+  <section id="s4">
+    <h2 class="r">四、方法论 B：决定“做多深、什么时候做、要不要打扰”</h2>
+    <p class="r">你说画像成熟的用户应该一步到位，我同意。但我认为“成熟”要按领域来判断，不能按整个用户。</p>
+    <h3 class="r">依据一：领域成熟度</h3>
+    <ul>
+      <li class="r">同一个人，工作方面我们可能已经非常了解，比如有半年的周报和会议记录。</li>
+      <li class="r">但他第一次提到旅行，旅行方面的画像几乎是空的。这时候在旅行上一步到位，就是在赌。</li>
+      <li class="r">衡量办法很实在：这个用户在这个领域，最近接受我们第一推荐的比例。比例高就一步到位，比例低就先给骨架。</li>
+    </ul>
+    <h3 class="r">依据二：意图阶段（这是从用户角度补充的）</h3>
+    <p class="r">用户把一件事记进“想做的事”，往往恰恰说明他现在还不想做。这时甩给他一份完整行程，再精准也是打扰。</p>
+    <table>
+      <thead><tr><th>阶段</th><th>信号</th><th>交付</th></tr></thead>
+      <tbody>
+        <tr class="r"><td>想法</td><td>记进“想做的事”，没有日期</td><td>一张轻卡片：最关键的一两个信息，比如“秋假 10/1–10/7，深圳出发 3 个合适的方向”</td></tr>
+        <tr class="r"><td>决定</td><td>定了日期，或者说了“要去”</td><td>画像成熟就一步到位：完整方案</td></tr>
+        <tr class="r"><td>临近</td><td>离开始还有几天</td><td>执行层面：清单、提醒、天气变化、证件检查</td></tr>
+      </tbody>
+    </table>
+    <h3 class="r">依据三：打扰预算（最容易被忽视，但决定用户会不会卸载）</h3>
+    <p class="r">管家主动得太频繁，就会被关通知、被卸载。从用户角度看，“主动”和“烦人”只差一个频率。</p>
+    <ul>
+      <li class="r">主动行为分两种：安静地出现在首页（零打扰），推送通知（有打扰）。</li>
+      <li class="r">每个用户每天有推送上限。这个上限也从反馈里学：一直忽略推送的人，上限自动降低。</li>
+      <li class="r">只有“价值高，而且错过就晚了”的事才推送，比如明天要交的材料没准备。其他的都安静地放在首页。</li>
+    </ul>
+    <h3 class="r">成本控制</h3>
+    <p class="r">我不同意让成本问题左右体验，但可以用工程手段控制：</p>
+    <ul>
+      <li class="r">骨架结果用便宜的模型生成，用户点开或进入“决定”阶段时，再用强模型生成完整版。</li>
+      <li class="r">在用户空闲时段提前生成，用户打开时直接展示。</li>
+      <li class="r">所以“一步到位”的成本只花在确定会被用上的地方。</li>
+    </ul>
+  </section>
+
+  <section id="s5">
+    <h2 class="r">五、面向所有人：同意，但要分清“谁都能用”和“谁都做得一样好”</h2>
+    <p class="r">这一点我接受你的判断：上架就是面向大众。但要说清楚一个现实：上线时，不同领域的服务质量一定不一样。设计上要坦然面对这一点：</p>
+    <ul>
+      <li class="r"><b>兜底层</b>：任何用户、任何事情，都由通用能力加画像上下文来处理，保证不会答不上来。</li>
+      <li class="r"><b>深做层</b>：“事件到帮助的清单”和专门流程先覆盖高频领域，比如工作、孩子教育、家庭出行、家庭开销、健康提醒，再根据数据逐步扩展。</li>
+      <li class="r"><b>增长方式</b>：每周看哪些事件很常见，但在兜底层得到的评价很差，就优先给这些事件做深。这样服务范围由数据驱动扩展，不靠拍脑袋。</li>
+    </ul>
+    <p class="r"><b>从用户和推广的角度还要补一句：</b>应用商店的截图、第一屏介绍、一句话宣传语，只能讲一个故事。产品可以服务所有人，但第一印象要用一个最有共鸣的场景来讲。这和“只服务某类人”是两回事，后面讨论推广时再定。</p>
+  </section>
+
+  <section id="s6">
+    <h2 class="r">六、界面适配：两个池子要不要一对一</h2>
+    <p class="r"><b>我的结论：不建议一对一，建议在中间加一层，变成三个池子。</b></p>
+    <pre class="r" data-say="三个池子：画像中影响界面的因素，对应到界面需求，也就是中间层，再对应到界面和交互组件。举例：60 岁以上，对应要大字、少层级，对应大字号主题；平时用语音，对应优先语音输入，对应默认语音按钮；家长加开学季，对应孩子的事优先，对应首页“孩子这周”置顶。">画像中影响界面的因素 ──→ 界面需求（中间层） ──→ 界面和交互组件
+例：60 岁以上               例：要大字、少层级        例：大字号主题
+    平时用语音                  优先语音输入              默认语音按钮
+    家长 + 开学季                孩子的事优先              首页“孩子这周”置顶</pre>
+    <h3 class="r">为什么不能一对一</h3>
+    <ol>
+      <li class="r"><b>一个因素会影响多个界面方面。</b>“60 岁以上”同时影响字号、菜单层级、默认输入方式、通知文案。一对一会被迫把它拆成多个因素，或者把多个组件捆成一个。</li>
+      <li class="r"><b>一个界面元素会受多个因素影响。</b>首页模块的顺序，同时取决于角色（职场、家长）、当前状态（考试周、出行前）、使用习惯（早上常看日程）。</li>
+      <li class="r"><b>因素之间会冲突</b>，需要优先级规则。比如“偏好信息详细”和“使用环境以手机碎片时间为主”同时成立时，以哪个为准？</li>
+      <li class="r"><b>便于扩展。</b>新增一个因素，只要映射到已有的界面需求；新增一个组件，只要说明它满足哪些需求。两边独立增长，组合数量不会爆炸。这也正好符合你“分开管理”的思路。</li>
+    </ol>
+    <h3 class="r">补充三点（从用户角度）</h3>
+    <ul>
+      <li class="r"><b>行为比画像更适合决定界面。</b>画像只作为新用户的初始设置。用户实际怎么用（总是先点日程、从来不打开某个模块），应该直接调整界面，不必绕回画像。</li>
+      <li class="r"><b>界面稳定比界面“聪明”更重要。</b>用户最讨厌按钮位置变来变去。所以导航和核心操作的位置固定，只有首页的几个“可变槽位”、用词、信息密度、字号会调整。每个用户可见的布局变化每周最多一次，而且要说明一句原因，可以一键撤回。</li>
+      <li class="r"><b>因素要分“稳定”和“临时”。</b>年龄、视力、数字熟练度是稳定的；“这周在出差”“孩子期末考试”是临时的。临时因素只影响槽位内容，不影响整体结构。</li>
+    </ul>
+    <h3 class="r">关于每周分析</h3>
+    <p class="r">方向对，但要分阶段。用户少的时候，每周数据的统计意义很弱，容易被少数人带偏。建议：</p>
+    <ul>
+      <li class="r"><b>初期</b>：映射规则由人来设计，每个用户的界面靠他自己的行为微调。</li>
+      <li class="r"><b>用户量起来之后</b>：每周离线分析不同人群的使用数据，用小范围灰度测试验证新的映射规则，效果好再全面推开。</li>
+    </ul>
+    <p class="r"><b>首版界面因素建议控制在 6 到 8 个</b>：年龄段和视力需求、数字熟练度、主要角色组合、当前重点、使用时段和设备、信息偏好（详细或简洁）、输入偏好（打字或语音）。</p>
+  </section>
+
+  <section id="s7">
+    <h2 class="r">七、多模型整合：非常赞成，但有四点要注意</h2>
+    <p class="r">赞成的理由正好对应你担心的“被当成某个模型的客户端”：我们不是某一个模型的外壳，而是按任务调度多个能力的管家。这在产品层面和单模型客户端有本质区别。但有四点要说清楚：</p>
+    <ol>
+      <li class="r"><b>对用户不宣传“整合了哪些模型”。</b>用户不关心用的是哪个模型，只关心事情办成没有。宣传“接了 GPT、Seedance”，反而会把用户拉回“比模型”的思路，正是你想避免的。</li>
+      <li class="r"><b>画像主要决定“怎么说”，不是“用哪个模型”。</b>选模型主要看任务类型、质量和成本，比如生图用 A，视频用 B。画像主要决定提示词：给花店老板做的网站和给大学生做的网站，风格、用词、功能完全不同。你说的“DeepSeek 写提示词，Seedance 或 Stitch 来执行”，本质是从画像到提示词，这部分才是我们自己的核心能力，要重点建设。</li>
+      <li class="r"><b>合规是硬约束，这一点你需要特别留意。</b>面向国内用户时，GPT Image、Google Stitch 这类境外服务涉及个人信息出境和生成式 AI 服务备案问题。国内用户的画像和文件不能随便发给境外模型。所以模型调度规则里，“数据能去哪”要排在“哪个效果好”前面。境外能力只能拿去处理不含个人信息的任务，或者改用国内的替代方案。具体边界需要专门查清楚，现在先作为原则写下来。</li>
+      <li class="r"><b>只把必要的信息给第三方模型。</b>生成网站界面不需要知道用户孩子几岁、股票买了什么。调用外部模型时，只传完成这件任务必需的画像片段，并且去掉可识别身份的信息。这一条本身也是信任宣传的素材。</li>
+    </ol>
+    <p class="r">技术上，建议在模型之上加一层“能力层”，比如写作、生图、视频、界面设计、语音转文字、检索，按任务、数据去向、成本来调度，底层模型可以随时替换。</p>
+  </section>
+
+  <section id="s8">
+    <h2 class="r">八、信任：怎么说得不露骨，以及两个需要你决定的冲突</h2>
+    <h3 class="r">措辞，按含蓄程度分三档</h3>
+    <table>
+      <thead><tr><th>场合</th><th>说法</th></tr></thead>
+      <tbody>
+        <tr class="r"><td>首页、宣传语（最含蓄）</td><td>“只为你一个人工作。”或者“你告诉我的，只用来照顾你。”</td></tr>
+        <tr class="r"><td>用户第一次上传文件、说出敏感信息时（具体）</td><td>“这些只用来帮你，别人看不到，你随时可以删掉。”</td></tr>
+        <tr class="r"><td>隐私承诺页（明确，但用“我们承诺”的语气）</td><td>“我们承诺：不展示广告，不出售或提供你的信息，不用你的资料训练模型。我们靠会员服务运营。”</td></tr>
+      </tbody>
+    </table>
+    <p class="r">核心思路是：宣传语只讲“为你一个人服务”，具体承诺放在用户真正要交信息的那一刻，以及隐私承诺页里。这样不露骨，但用户需要的时候找得到。</p>
+    <h3 class="r">法律原文对产品设计的直接影响</h3>
+    <ul>
+      <li class="r"><b>第 28、29 条</b>：金融账户（比如 A 股持仓）、医疗健康、行踪轨迹、不满 14 岁未成年人的信息都属于敏感信息，需要单独同意。也就是说，“见缝插针”收集到这几类信息时，第一次必须弹出单独的同意卡片，不能悄悄记下。好在这本身就可以做成信任体验，比如：“孩子的信息比较敏感，我会单独加密保存，只用来安排孩子的事。可以吗？”</li>
+      <li class="r"><b>第 31 条</b>：14 岁以下孩子的信息需要监护人同意。用户本人就是家长，流程上很自然，但同意记录必须留存。</li>
+      <li class="r"><b>第 24 条，这一条和我们的核心模式有直接冲突</b>：用画像做个性化推送时，必须提供“不针对个人特征”的选项或便捷的拒绝方式。所以产品必须有一个“通用模式”：用户关掉画像后，管家仍然能用，只是不再定制。我们没法回避它，只能设计好它。</li>
+      <li class="r"><b>第 44 到 47 条</b>：查阅、复制、更正、删除、撤回同意，正好对应上次说的“我了解的你”页面，以及导出和删除功能。</li>
+    </ul>
+    <h3 class="r">需要你决定的两个冲突</h3>
+    <ol>
+      <li class="r"><b>每周分析用户数据，和“不拿用户数据做别的用途”怎么兼容？</b>我的建议：只做去标识的统计分析，比如“家长人群更常用哪个模块”，用来改进服务，并在隐私政策里明确写出来；不看个人内容，不用个人内容训练模型。“不用你的资料训练模型”这句承诺要写得精确，否则以后自己会被绑住。</li>
+      <li class="r"><b>承诺“不用用户数据训练模型”，会不会限制以后的产品能力？</b>法律没有明确禁止用用户数据训练（我读到的条文没有这么写），所以这是一个主动选择。我建议承诺，因为信任的价值大于训练收益，但这需要你确认。</li>
+    </ol>
+  </section>
+
+  <section id="s9">
+    <h2 class="r">九、需要一起定的问题</h2>
+    <ol>
+      <li class="r"><b>画像五层</b>，特别是把“职责”单独作为一层、作为分配帮助的主要依据，你认可吗？</li>
+      <li class="r"><b>做多深</b>按“领域成熟度、意图阶段、打扰预算”三者来判断，而不是只看用户整体画像是否成熟，你同意吗？特别是“记进想做的事，等于暂时不想做”这个判断，你觉得符合实际吗？</li>
+      <li class="r"><b>界面三个池子</b>（因素、需求、组件），加上“导航固定、只调整槽位”的约束，你觉得可以吗？</li>
+      <li class="r"><b>多模型</b>：能接受“数据去向排在效果前面”吗？这意味着部分境外模型可能只能用于不含个人信息的任务。</li>
+      <li class="r"><b>信任</b>：每周统计分析只用去标识数据，以及“不训练模型”的承诺，你同意吗？</li>
+      <li class="r"><b>通用模式</b>（关掉画像后仍然可用）：你能接受它作为法律要求的必备功能吗？</li>
+    </ol>
+    <p class="r">这几点定下来，大方向就基本完整了，接下来可以讨论第一版的支持范围。</p>
+  </section>
+  <p class="note">朗读用的是浏览器自带的语音，效果取决于你的设备。手机锁屏后朗读可能会停，建议保持屏幕常亮。</p>
+</div>
+
+<div class="player">
+  <button id="play">▶ 从头朗读</button>
+  <button class="g" id="pause" disabled>⏸ 暂停</button>
+  <button class="g" id="stop" disabled>■ 停止</button>
+  <button class="g" id="prev" title="上一段">⏮</button>
+  <button class="g" id="next" title="下一段">⏭</button>
+  <label>语速 <select id="rate"><option>0.8</option><option selected>1.0</option><option>1.2</option><option>1.4</option><option>1.6</option></select></label>
+  <label>声音 <select id="voice"></select></label>
+  <div class="now" id="now">点“从头朗读”，或点任意一段 / 每节标题旁的“▶ 听这一节”</div>
+</div>
+
+<script>
+const synth = window.speechSynthesis;
+const units = [...document.querySelectorAll(".r")];
+let idx = -1, playing = false, paused = false, voices = [], token = 0;
+const $ = (s) => document.querySelector(s);
+
+function textOf(el) {
+  if (el.dataset.say) return el.dataset.say;
+  if (el.tagName === "TR") {
+    const hs = [...el.closest("table").querySelectorAll("thead th")].map((h) => h.textContent.trim());
+    return [...el.children].map((c, i) => (i === 0 ? "" : hs[i] + "：") + c.textContent.trim()).join("。");
+  }
+  return el.textContent.replace(/▶ 听这一节/g, "").trim();
+}
+// 长段落切成句子，避免部分浏览器长句中断
+function chunks(t) {
+  const parts = t.match(/[^。！？；!?;]+[。！？；!?;”」]*/g) || [t];
+  const out = []; let buf = "";
+  for (const p of parts) { if ((buf + p).length > 120 && buf) { out.push(buf); buf = p; } else buf += p; }
+  if (buf.trim()) out.push(buf);
+  return out;
+}
+function loadVoices() {
+  if (!synth) return;
+  voices = synth.getVoices().filter((v) => /^zh/i.test(v.lang));
+  const sel = $("#voice"), keep = sel.value;
+  sel.innerHTML = voices.length ? voices.map((v, i) => `<option value="${i}">${v.name.replace(/Microsoft |Online \(Natural\) /g, "")}</option>`).join("") : `<option value="">默认</option>`;
+  const pref = voices.findIndex((v) => /zh-CN/i.test(v.lang) && /Xiaoxiao|Natural|Ting-Ting|Tingting|Google/i.test(v.name));
+  sel.value = keep && voices[keep] ? keep : String(pref >= 0 ? pref : 0);
+}
+function mark(i) {
+  units.forEach((u) => u.classList.remove("on"));
+  const u = units[i]; if (!u) return;
+  u.classList.add("on"); u.scrollIntoView({ behavior: "smooth", block: "center" });
+  $("#now").textContent = `第 ${i + 1} / ${units.length} 段 · ` + textOf(u).slice(0, 40);
+}
+function speakFrom(i) {
+  if (!synth) return;
+  synth.cancel(); const my = ++token;
+  idx = i; playing = true; paused = false; ui();
+  if (idx >= units.length) { stop(); $("#now").textContent = "读完了"; return; }
+  mark(idx);
+  const cs = chunks(textOf(units[idx])); let k = 0;
+  const next = () => {
+    if (my !== token) return;
+    if (k >= cs.length) { speakFrom(idx + 1); return; }
+    const u = new SpeechSynthesisUtterance(cs[k++]);
+    u.lang = "zh-CN"; u.rate = +$("#rate").value;
+    const v = voices[+$("#voice").value]; if (v) u.voice = v;
+    u.onend = next; u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") next(); };
+    synth.speak(u);
+  };
+  next();
+}
+function stop() { token++; if (synth) synth.cancel(); playing = false; paused = false; units.forEach((u) => u.classList.remove("on")); ui(); }
+function ui() {
+  $("#play").textContent = playing ? "↺ 从头朗读" : (idx > 0 ? "▶ 继续（从这段）" : "▶ 从头朗读");
+  $("#pause").disabled = !playing; $("#stop").disabled = !playing;
+  $("#pause").textContent = paused ? "▶ 继续" : "⏸ 暂停";
+}
+$("#play").onclick = () => speakFrom(playing || idx < 0 ? 0 : idx);
+$("#pause").onclick = () => {
+  if (!playing) return;
+  if (paused) { synth.resume(); paused = false; } else { synth.pause(); paused = true; }
+  ui();
+};
+$("#stop").onclick = stop;
+$("#prev").onclick = () => speakFrom(Math.max(0, idx - 1));
+$("#next").onclick = () => speakFrom(Math.min(units.length - 1, idx + 1));
+$("#rate").onchange = () => { if (playing && !paused) speakFrom(idx); };
+$("#voice").onchange = () => { if (playing && !paused) speakFrom(idx); };
+units.forEach((u, i) => u.addEventListener("click", (e) => { if (e.target.closest("a,button")) return; speakFrom(i); }));
+// 每节标题加“听这一节”
+document.querySelectorAll("section h2.r").forEach((h) => {
+  const b = document.createElement("button"); b.className = "secplay"; b.textContent = "▶ 听这一节";
+  b.onclick = (e) => { e.stopPropagation(); speakFrom(units.indexOf(h)); };
+  h.appendChild(b);
+});
+if (!synth) { $("#warn").style.display = "block"; document.querySelectorAll(".player button").forEach((b) => b.disabled = true); }
+else { loadVoices(); synth.onvoiceschanged = loadVoices; }
+// Chrome 长时间朗读会自动停：定时“唤醒”
+setInterval(() => { if (synth && playing && !paused && synth.speaking) { synth.pause(); synth.resume(); } }, 12000);
+window.addEventListener("beforeunload", () => synth && synth.cancel());
+</script>
+</body>
+</html>
