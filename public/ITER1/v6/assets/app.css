@@ -632,3 +632,41 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .rule-pop .rule-id { font-size: 12px; color: #6b35b8; }
 .rule-pop .rule-title { font-weight: 600; margin: 2px 0 4px; }
 .rule-pop .rule-sec { margin-top: 6px; font-size: 12px; color: var(--muted); }
+
+/* ---------- v6 S06：结果卡片（PA.renderCard）与管家首页三个阶段 ---------- */
+.butler { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+.pa-card { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 12px 14px; }
+.pa-card.skeleton { border-style: dashed; }
+.pa-card .pc-lead { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.pa-card .pc-title { font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pa-card .pc-depth { font-size: 11px; font-weight: 500; background: var(--warn-weak); color: var(--warn); }
+.pa-card .pc-depth.full { background: var(--success-weak); color: var(--success); }
+.pa-card .pc-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pa-card .pc-body { margin-top: 6px; }
+.pa-card .pc-expand { margin-top: 6px; }
+.pa-card .pc-because { margin-top: 8px; font-size: 12px; color: #7c5a00; background: #fff8e6; border-radius: 6px; padding: 4px 8px; }
+.pa-card .pc-more { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.pa-card .pc-more-lbl { font-size: 12px; color: var(--muted); }
+.pa-card .pc-more-item { margin-top: 6px; font-size: 13px; background: var(--primary-weak); border-radius: 6px; padding: 4px 8px; }
+.pa-card .pc-foot { margin-top: 6px; text-align: right; }
+.pa-card .pc-ask { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #f7f7fb; }
+.pa-card .pc-ask-opts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.pa-card .pc-noted { margin-top: 8px; font-size: 13px; color: var(--success); }
+.consent-card { margin-top: 10px; border: 1px solid #f2dfb0; background: #fffbea; border-radius: 8px; padding: 10px 12px; }
+.consent-card p { margin: 4px 0 0; font-size: 13px; }
+.consent-card .actions { display: flex; gap: 8px; margin-top: 8px; }
+.home-first { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px 20px; text-align: center; }
+.home-first h2 { font-size: 18px; margin-bottom: 4px; }
+.home-examples { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.home-ex { border: 1px solid var(--border); background: #fafbfc; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.home-ex:hover { border-color: var(--primary); color: var(--primary); }
+.home-top { display: flex; gap: 10px; flex-wrap: wrap; }
+.home-count { flex: 1; min-width: 220px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+.home-count summary { cursor: pointer; }
+.home-count summary b { color: var(--primary); font-size: 16px; }
+.home-list { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.home-sec { display: flex; flex-direction: column; gap: 8px; }
+.home-sec h3 { font-size: 14px; color: var(--muted); font-weight: 500; }
+.home-report-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.home-saved { color: var(--success); font-size: 13px; }
+.home-saved b { font-size: 20px; }

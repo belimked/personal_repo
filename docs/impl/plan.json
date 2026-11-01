@@ -437,7 +437,8 @@
       "model_used": "main",
       "actual_min": 24.6,
       "last_error": null,
-      "finished_at": "2026-11-01T08:08:51.503Z"
+      "finished_at": "2026-11-01T08:08:51.503Z",
+      "commit": "061f8ee"
     },
     {
       "id": "S06",
@@ -487,10 +488,15 @@
         "public/ITER1/samples/v6-assistant-demo.html"
       ],
       "size_reason": "首页三阶段 + 公共卡片组件",
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "a3a92e76d1",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-11-01T08:09:12.560Z",
+      "model_used": "main",
+      "actual_min": 22.7,
+      "last_error": null,
+      "finished_at": "2026-11-01T08:31:57.043Z"
     },
     {
       "id": "S07",
