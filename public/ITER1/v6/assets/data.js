@@ -1,0 +1,271 @@
+// 原型演示数据：所有日期相对"今天"生成，保证提醒页始终有内容
+(function () {
+  const pad = (n) => String(n).padStart(2, "0");
+  const now = () => (window.PA_TODAY ? new Date(window.PA_TODAY + "T00:00:00") : new Date());
+  const dayStr = (offset) => {
+    const d = now();
+    d.setDate(d.getDate() + offset);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  const MB = 1024 * 1024;
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const yearEnd = () => `${now().getFullYear()}-12-31`;
+  const weekEnd = () => { const d = now(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); return ymd(d); };
+  const nextMonth = () => { const n = now(); const a = new Date(n.getFullYear(), n.getMonth() + 1, 1), b = new Date(n.getFullYear(), n.getMonth() + 2, 0); return { from: ymd(a), to: ymd(b), label: `${a.getMonth() + 1}月内` }; };
+
+  const dlNext = nextMonth();
+
+  const svgImg = (label, c1, c2, sub) =>
+    "data:image/svg+xml;charset=utf-8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="800" height="560" fill="url(#g)"/><text x="400" y="270" font-size="40" text-anchor="middle" fill="#fff" font-family="sans-serif">${label}</text><text x="400" y="320" font-size="20" text-anchor="middle" fill="#ffffffcc" font-family="sans-serif">${sub || "原型占位图"}</text></svg>`
+    );
+
+  const files = [
+    {
+      id: "f1", name: "季度报告草稿.md", ext: "md", cat: "text", size: 0.03 * MB, tags: ["工作/报告"],
+      uploadedAt: dayStr(-6) + " 09:12", status: "indexed",
+      content: "# 2026 Q3 季度报告（草稿）\n\n## 一、整体情况\n本季度销售额同比增长 **18%**，其中华东区贡献最大。\n\n## 二、重点项目\n- 客户管理系统二期上线，延期两周\n- 新签约客户 12 家\n\n## 三、下季度计划\n- 完成预算编制，提交给王经理审批\n- 推进华南区渠道合作\n",
+    },
+    {
+      id: "f2", name: "读书笔记-原则.txt", ext: "txt", cat: "text", size: 0.01 * MB, tags: ["学习/读书笔记"],
+      uploadedAt: dayStr(-12) + " 21:40", status: "indexed",
+      content: "《原则》读书笔记\n\n第三章 拥抱现实，应对现实\n1. 把痛苦当成进步的信号。\n2. 极度求真、极度透明。\n3. 做决策时先看清现实，再想办法。\n\n个人感想：复盘时要记录错误原因，而不是只记录结果。",
+    },
+    {
+      id: "f3", name: "销售数据截图.png", ext: "png", cat: "image", size: 1.2 * MB, tags: ["工作/报告"],
+      uploadedAt: dayStr(-6) + " 09:15", status: "indexed",
+      img: svgImg("销售数据截图", "#3867d6", "#8854d0", "OCR：华东区 Q3 销售额 1,280 万"),
+      ocr: "2026 Q3 区域销售额：华东区 1,280 万，华南区 860 万，华北区 640 万。",
+    },
+    {
+      id: "f4", name: "体检报告-2026.pdf", ext: "pdf", cat: "pdf", size: 3.4 * MB, tags: ["生活/健康医疗", "生活/保险"], tagLocked: true,
+      uploadedAt: dayStr(-30) + " 14:02", status: "indexed",
+      img: svgImg("体检报告 PDF", "#eb3b5a", "#fa8231", "PDF 预览（原型中以占位图代替）"),
+      ocr: "体检日期：2026 年 9 月。血压 118/76，血脂偏高，建议三个月后复查，减少高脂饮食。",
+    },
+    {
+      id: "f5", name: "家庭旅行-三亚.jpg", ext: "jpg", cat: "image", size: 4.8 * MB, tags: ["生活/照片", "生活/出行旅游"],
+      uploadedAt: dayStr(-45) + " 20:30", status: "indexed",
+      img: svgImg("三亚 · 海边日落", "#fd9644", "#fc5c65", "图片描述由多模态 LLM 生成"),
+      ocr: "", desc: "海边日落，沙滩上一家三口的背影，远处有椰子树和帆船。",
+    },
+    {
+      id: "f6", name: "项目周报模板.html", ext: "html", cat: "text", size: 0.02 * MB, tags: ["工作/模板"],
+      uploadedAt: dayStr(-20) + " 10:05", status: "indexed",
+      content: "<html><body style='font-family:sans-serif'><h2>项目周报</h2><table border='1' cellpadding='6' style='border-collapse:collapse'><tr><th>本周完成</th><th>下周计划</th><th>风险</th></tr><tr><td>需求评审</td><td>开发联调</td><td>接口延期</td></tr></table><p>填写人：______ 日期：______</p></body></html>",
+    },
+    {
+      id: "f7", name: "产品评审会议-1020.m4a", ext: "m4a", cat: "audio", size: 38 * MB, tags: ["工作/会议"],
+      uploadedAt: dayStr(-2) + " 18:20", status: "indexed", meeting: true,
+      transcript: "主持人：今天评审客户管理系统二期需求……张三：报价方案我这周五前出。李四：技术评估我来安排……",
+    },
+    {
+      id: "f8", name: "发布会录像.mp4", ext: "mp4", cat: "video", size: 92 * MB, tags: ["资料/视频"],
+      uploadedAt: dayStr(-15) + " 16:44", status: "indexed", meeting: false,
+      transcript: "欢迎各位来到 2026 秋季新品发布会……",
+    },
+    {
+      id: "f9", name: "租房合同扫描件.jpg", ext: "jpg", cat: "image", size: 2.6 * MB, tags: ["生活/房屋租住", "合同"], tagLocked: true,
+      uploadedAt: dayStr(-60) + " 11:00", status: "indexed",
+      img: svgImg("租房合同扫描件", "#4b6584", "#778ca3", "OCR：租期至 2027 年 3 月 31 日"),
+      ocr: "房屋租赁合同。租期自 2026 年 4 月 1 日至 2027 年 3 月 31 日，月租金 6,500 元，每季度第一个月 5 日前支付。",
+    },
+    {
+      id: "f10", name: "家庭开支.csv", ext: "csv", cat: "text", size: 0.005 * MB, tags: ["财务/账单", "家庭/家庭账本"],
+      uploadedAt: dayStr(-3) + " 22:10", status: "indexed",
+      content: "日期,类别,金额,备注\n10-01,物业费,1200,第四季度\n10-05,房租,6500,十月\n10-12,餐饮,860,\n10-18,体检,1500,复查",
+    },
+    {
+      id: "f11", name: "年会彩排.mov", ext: "mov", cat: "video", size: 71 * MB, tags: ["资料/视频"],
+      uploadedAt: dayStr(-8) + " 19:02", status: "failed", failReason: "语音识别超时，可重试",
+    },
+    {
+      id: "f12", name: "客户需求沟通-1023.mp3", ext: "mp3", cat: "audio", size: 44 * MB, tags: ["工作/会议", "生意/客户"],
+      uploadedAt: dayStr(0) + " 08:40", status: "indexed", meeting: true,
+      transcript: "客户最关心的是移动端审批和数据导出，预算下周确认，下周二前确定上线时间。另外请我们写一份新的移动审批项目介绍。",
+    },
+    {
+      id: "f13", name: `工作周报-${dayStr(-7).slice(5)}.md`, ext: "md", cat: "text", size: 0.004 * MB, tags: ["工作/报告"],
+      uploadedAt: dayStr(-5) + " 18:10", status: "indexed",
+      content: "# 工作周报\n\n## 本周完成\n- 客户管理系统二期：完成需求评审\n- 整理客户反馈，更新需求清单\n\n## 下周计划\n- 跟进报价方案\n- 确认二期上线时间\n\n## 风险与需要协调的事\n- 数据导出接口依赖第三方，进度待确认\n",
+    },
+    {
+      id: "f14", name: "客户管理系统二期-项目介绍.md", ext: "md", cat: "text", size: 0.006 * MB, tags: ["工作/项目资料"],
+      uploadedAt: dayStr(-40) + " 11:30", status: "indexed",
+      content: "# 客户管理系统二期 项目介绍\n\n## 项目背景\n一期上线后，销售团队希望在系统里完成客户跟进和合同审批。\n\n## 项目目标\n- 客户跟进记录线上化\n- 合同审批流程线上化\n\n## 主要功能\n- 客户档案与跟进记录\n- 合同审批\n- 数据报表\n\n## 时间安排\n- 需求评审 → 开发 → 测试 → 上线\n\n## 项目团队\n- 产品、开发、测试各一名负责人\n",
+    },
+  ];
+
+  const todos = [
+    { id: "t1", duration: 30, title: "提交季度报告给王经理", date: dayStr(0), time: "17:00", location: "公司", status: "open", source: "text", attachments: ["f1", "f3"], notes: "", createdAt: dayStr(-6) + " 09:20", tags: ["工作/报告"] },
+    { id: "t2", duration: 60, title: "牙医复诊", date: dayStr(1), time: "10:30", location: "仁爱口腔诊所（南京西路店）", status: "open", source: "manual", attachments: [], notes: "带上次的病历本", createdAt: dayStr(-10) + " 12:00", tags: ["生活/健康医疗"] },
+    { id: "t3", duration: 90, title: "产品评审会议", date: dayStr(-2), time: "14:00", location: "3 楼会议室", status: "done", source: "meeting", sourceFile: "f7", attachments: ["f7"],
+      notes: "会议摘要：评审客户管理系统二期需求，确认范围，上线时间待定。",
+      actionItems: [
+        { owner: "我", text: "整理需求清单发给客户", due: dayStr(3), converted: "t9" },
+        { owner: "张三", text: "负责报价方案，周五前出" },
+        { owner: "李四", text: "安排技术评估" },
+        { owner: "未识别", text: "下周二前确认上线时间" },
+      ],
+      createdAt: dayStr(-2) + " 18:30", tags: ["工作/会议"] },
+    { id: "t4", title: "给妈妈买生日礼物", date: dayStr(2), time: "", location: "万象城", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-4) + " 08:00", tags: ["家庭"] },
+    { id: "t5", title: "续交物业费", date: dayStr(-1), time: "", location: "", status: "open", source: "manual", attachments: ["f10"], notes: "第四季度 1200 元", createdAt: dayStr(-9) + " 19:00", tags: ["财务/账单"] },
+    { id: "t6", duration: 120, title: "准备客户演示材料", date: dayStr(5), time: "09:00", location: "", status: "open", source: "text", attachments: ["f1"], notes: "", createdAt: dayStr(-3) + " 15:00", tags: ["工作/项目资料"] },
+    { id: "t7", title: "预约体检复查", date: dayStr(-20), time: "", location: "", status: "deleted", source: "manual", attachments: ["f4"], notes: "改为年底统一体检", createdAt: dayStr(-40) + " 10:00", tags: ["生活/健康医疗"] },
+    { id: "t8", title: "读完《原则》第三章", date: dayStr(-12), time: "", location: "", status: "done", source: "text", attachments: ["f2"], notes: "", createdAt: dayStr(-15) + " 22:00", tags: ["学习/读书笔记"] },
+    { id: "t9", title: "整理需求清单发给客户", date: dayStr(3), time: "", location: "", status: "open", source: "meeting", sourceFile: "f7", attachments: [], notes: "来自会议：产品评审会议", createdAt: dayStr(-2) + " 18:31", tags: ["工作/项目资料"] },
+    { id: "t10", duration: 60, title: "部门周会", date: dayStr(1), time: "10:00", location: "5 楼大会议室", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-5) + " 09:00", tags: ["工作/会议"] },
+    { id: "t11", duration: 60, title: "健身：力量训练", date: dayStr(1), time: "19:30", location: "公司楼下健身房", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-5) + " 09:05", tags: ["生活/健康医疗"] },
+    { id: "t12", duration: 45, title: "和李总在星巴克见面", date: dayStr(4), time: "15:00", location: "星巴克（静安寺店）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 20:00", tags: ["生意/客户"] },
+    { id: "t13", title: "交水电费", date: dayStr(-3), time: "", location: "", status: "done", source: "manual", attachments: [], notes: "", createdAt: dayStr(-8) + " 12:00", tags: ["财务/账单"] },
+    { id: "t14", duration: 30, title: "银行办理转账", date: dayStr(0), time: "15:00", location: "招商银行（南京西路支行）", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-1) + " 21:00", tags: ["财务/账单"] },
+    { id: "t20", duration: 30, title: "联系平安的客户经理", date: dayStr(0), time: "11:00", location: "", status: "open", source: "manual", attachments: [], notes: "", createdAt: dayStr(-3) + " 09:30", tags: ["生活/保险"], ideaId: "i3" },
+    // 有期限的待办：date 取期限最后一天，deadline 只作“截止”说明（S02）
+    { id: "t18", title: "买车险", date: dlNext.to, time: "", location: "", status: "open", source: "text", attachments: [], notes: "去年在平安买的，到期前一个月可以续保", createdAt: dayStr(-2) + " 20:10", tags: ["生活/保险"], deadline: dlNext, updatedAt: dayStr(-2) + " 20:10", records: [] },
+    { id: "t19", title: "更新简历", date: weekEnd(), time: "", location: "", status: "open", source: "text", attachments: [], notes: "", createdAt: dayStr(-5) + " 23:00", tags: ["求职/简历"], deadline: { from: dayStr(-5), to: weekEnd(), label: "本周内" }, updatedAt: dayStr(-3) + " 23:10", records: [{ id: "r4", at: dayStr(-3) + " 23:10", text: "把客户管理系统二期项目写进去，突出数据导出模块", files: [] }] },
+    { id: "t17", title: "预约年底体检", date: yearEnd(), time: "", location: "", status: "open", source: "manual", attachments: ["f4"], notes: "", createdAt: dayStr(-4) + " 10:00", tags: ["生活/健康医疗"], deadline: { from: dayStr(0), to: yearEnd(), label: "年底前" }, updatedAt: dayStr(-4) + " 10:00", records: [{ id: "r3", at: dayStr(-4) + " 10:00", text: "上次体检血脂偏高，医生建议三个月后复查，这次加做颈动脉彩超", files: ["f4"] }] },
+  ];
+
+  // 想做的事（S02）：没有日期，与待办平级；可生成关联待办（todo.ideaId）
+  const idea = (o) => Object.assign({ notes: "", records: [], attachments: [], tags: [], tagsRemoved: [], starred: false, status: "active", source: "text", sourceNote: "", askedDone: [] }, o);
+  const ideas = [
+    idea({ id: "i1", title: "整理家里的旧衣服", tags: ["家庭"], createdAt: dayStr(-7) + " 22:00", updatedAt: dayStr(-7) + " 22:00" }),
+    idea({ id: "i2", title: "研究新能源车的购车补贴", source: "manual", tags: ["生活/出行旅游"], starred: true, createdAt: dayStr(-6) + " 22:30", updatedAt: dayStr(-1) + " 21:15",
+      records: [{ id: "r1", at: dayStr(-1) + " 21:15", text: "4S 店说今年置换补贴最高 1.5 万，要在年底前提车。政策原文：https://example.gov.cn/nev-subsidy", files: [] }, { id: "r2", at: dayStr(-6) + " 22:30", text: "先比较一下比亚迪和特斯拉的落地价", files: [] }] }),
+    idea({ id: "i3", title: "研究一下保险", tags: ["生活/保险"], notes: "重疾险和医疗险都看看，家里人也一起考虑", createdAt: dayStr(-10) + " 21:00", updatedAt: dayStr(-3) + " 09:30",
+      records: [{ id: "r5", at: dayStr(-3) + " 09:30", text: "同事推荐了平安的客户经理，先约着聊一次", files: [] }] }),
+    // 超过 90 天没动静（供每月“还留着吗？”回顾演示）
+    idea({ id: "i4", title: "想学游泳", tags: ["生活/健康医疗"], createdAt: dayStr(-120) + " 20:00", updatedAt: dayStr(-120) + " 20:00" }),
+    idea({ id: "i5", title: "带孩子去趟云南", tags: ["生活/出行旅游", "家庭/孩子教育"], createdAt: dayStr(-15) + " 22:10", updatedAt: dayStr(-15) + " 22:10" }),
+    idea({ id: "i6", title: "周报可以加个图表", tags: ["灵光一现", "工作/报告"], createdAt: dayStr(-4) + " 18:20", updatedAt: dayStr(-4) + " 18:20" }),
+    idea({ id: "i7", title: "做个记家里开销的小程序", tags: ["灵光一现", "家庭/家庭账本"], createdAt: dayStr(-20) + " 23:05", updatedAt: dayStr(-20) + " 23:05" }),
+  ];
+
+  const inbox = [
+    {
+      id: "m1", fileId: "f12", fileName: "客户需求沟通-1023.mp3", duration: "48 分钟", size: 44 * MB, uploadedAt: dayStr(0) + " 08:40",
+      summary: "与客户讨论 CRM 二期需求：客户希望增加移动端审批和数据导出；预算需在下周确认；双方约定下周二前确定上线时间。",
+      dateFromAudio: dayStr(-2) + " 15:00", dateFromFile: dayStr(-2) + " 16:02",
+      items: [
+        { owner: "我", text: "整理移动端审批需求说明，周五前发给客户" },
+        { owner: "张三", text: "负责更新报价方案" },
+        { owner: "李四", text: "评估数据导出的技术方案" },
+        { owner: "未识别", text: "下周二前确认上线时间" },
+        { owner: "我", text: "编写一份新的移动审批项目介绍" },
+      ],
+    },
+  ];
+
+  const users = [
+    { id: "u1", email: "admin@demo.com", phone: "13800000001", name: "管理员", role: "admin", status: "active", quota: 500, used: 126, types: "global", tz: "UTC+8", createdAt: "2026-09-01" },
+    { id: "u2", email: "lily@demo.com", phone: "", name: "Lily", role: "user", status: "active", quota: 500, used: 284, types: "global", tz: "UTC+8", createdAt: "2026-09-03" },
+    { id: "u3", email: "zhang.wei@demo.com", phone: "13900000002", name: "张伟", role: "user", status: "active", quota: 1000, used: 612, types: "custom", tz: "UTC+8", createdAt: "2026-09-05" },
+    { id: "u4", email: "chen@demo.com", phone: "", name: "陈晨", role: "user", status: "disabled", quota: 500, used: 45, types: "global", tz: "UTC+9", createdAt: "2026-09-10" },
+    { id: "u5", email: "old.user@demo.com", phone: "", name: "老用户", role: "user", status: "pending_purge", purgeAt: dayStr(25), quota: 500, used: 210, types: "global", tz: "UTC+8", createdAt: "2026-09-12" },
+  ];
+
+  // 建议的常用文件类型；handler 表示处理方式
+  const fileTypes = [
+    ["txt", "text"], ["md", "text"], ["csv", "text"], ["json", "text"], ["html", "text"], ["htm", "text"], ["xml", "text"], ["log", "text"],
+    ["pdf", "ocr"], ["jpg", "ocr"], ["jpeg", "ocr"], ["png", "ocr"], ["gif", "ocr"], ["webp", "ocr"], ["bmp", "ocr"], ["heic", "ocr"], ["tif", "ocr"], ["tiff", "ocr"],
+    ["mp3", "asr"], ["wav", "asr"], ["m4a", "asr"], ["aac", "asr"], ["flac", "asr"], ["ogg", "asr"], ["amr", "asr"], ["wma", "asr"],
+    ["mp4", "asr"], ["mov", "asr"], ["mkv", "asr"], ["avi", "asr"], ["webm", "asr"], ["flv", "asr"],
+    ["doc", "pending"], ["docx", "pending"], ["xls", "pending"], ["xlsx", "pending"], ["ppt", "pending"], ["pptx", "pending"],
+    ["zip", "store"], ["rar", "store"], ["7z", "store"],
+  ].map(([ext, handler]) => ({ ext, handler }));
+
+  const models = [
+    { key: "llm", name: "LLM 主模型", desc: "意图识别（未单独配置时）、字段提取、会议总结、文件归类、图片描述", provider: "DeepSeek", model: "deepseek-flash", mode: "key", key1: "sk-3f8a••••••••9c21", key2: "sk-71bd••••••••0e5a", url1: "https://api.deepseek.com", url2: "", timeout: 30, required: true },
+    { key: "intent", name: "意图识别模型（可选）", desc: "不配置时使用 LLM 主模型", provider: "", model: "", mode: "key", key1: "", key2: "", url1: "", url2: "", timeout: 10, optional: true },
+    { key: "filemgr", name: "文件管理模型", desc: "为新文件和待办自动打标签（增量，只归入已有标签和预设标签库）；整体重新生成时的第 2 步“给文件打标签”", provider: "DeepSeek", model: "deepseek-flash", mode: "key", key1: "（同 LLM 主模型）", key2: "", url1: "", url2: "", timeout: 30 },
+    { key: "tagorg", name: "标签整理模型（可选）", desc: "用户主动“重新生成标签”时的第 1 步：参考用户手动标签的风格整理标签体系。调用很少；不配置时使用 LLM 主模型。建议值暂定，按实际使用调整", provider: "Moonshot（Kimi）", model: "kimi-k3.1-pro", mode: "key", key1: "", key2: "", url1: "https://api.moonshot.cn", url2: "", timeout: 120, optional: true },
+    { key: "ocr", name: "OCR 模型", desc: "图片、PDF 文字识别（选型待定）", provider: "待选型", model: "", mode: "key", key1: "", key2: "", url1: "", url2: "", timeout: 60 },
+    { key: "asr", name: "语音识别（ASR）", desc: "音频、视频转文字；支持说话人分离", provider: "阿里云百炼", model: "fun-asr", mode: "key", key1: "sk-ali••••••••3e7d", key2: "", url1: "https://dashscope.aliyuncs.com", url2: "", timeout: 600 },
+    { key: "search", name: "内容检索服务", desc: "语义 + 关键字检索；必须按用户隔离", provider: "自建", model: "", mode: "url", key1: "tok-••••••••", key2: "", url1: "https://search-a.example.internal", url2: "https://search-b.example.internal", timeout: 10 },
+    { key: "image", name: "生图模型", desc: "V1 不使用，预留", provider: "", model: "", mode: "key", key1: "", key2: "", url1: "", url2: "", timeout: 60, reserved: true },
+  ];
+
+  const logTypesUser = ["登录", "退出登录", "文字输入·新增待办", "文字输入·更新待办", "文字输入·完成待办", "文字输入·删除待办", "文字输入·批量完成待办", "文字输入·追加想法", "文字输入·知识库查询", "上传文件", "文件处理", "下载文件", "手动创建待办", "手动更新待办", "删除待办", "彻底删除待办", "修改标签", "重新生成标签", "确认会议待办", "修改个人设置", "重置密码", "发送提醒邮件"];
+  const logTypesAdmin = ["添加用户", "删除用户", "禁用用户", "设置用户密码", "修改用户配额", "修改用户文件类型", "修改系统变量", "添加文件类型", "删除文件类型", "切换存储", "修改上传限制", "修改邮件配置", "修改安全设置"];
+
+  function genLogs() {
+    const out = [];
+    const names = ["admin@demo.com", "lily@demo.com", "zhang.wei@demo.com", "chen@demo.com"];
+    const details = {
+      "文字输入·新增待办": "“明天下午三点去银行办理转账” → 新增待办", "文字输入·知识库查询": "“去年的租房合同什么时候到期” → 命中 2 个文件",
+      "上传文件": "上传 12 个文件，共 86.4MB", "文件处理": "会议录音.m4a 语音识别完成", "下载文件": "下载 季度报告草稿.md",
+      "文字输入·更新待办": "牙医复诊 时间 10:30 → 15:00", "发送提醒邮件": "最近 3 天待办 4 条",
+    };
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+    for (let i = 0; i < 60; i++) {
+      const t = logTypesUser[Math.floor(rnd() * logTypesUser.length)];
+      const ms = t.includes("查询") || t.includes("文字输入") ? 800 + Math.floor(rnd() * 4000) : t === "文件处理" ? 5000 + Math.floor(rnd() * 90000) : 20 + Math.floor(rnd() * 400);
+      out.push({ time: `${dayStr(-Math.floor(rnd() * 20))} ${pad(8 + Math.floor(rnd() * 14))}:${pad(Math.floor(rnd() * 60))}:${pad(Math.floor(rnd() * 60))}`, user: t === "发送提醒邮件" ? "系统" : names[Math.floor(rnd() * names.length)], type: t, detail: details[t] || "—", ok: rnd() > 0.08, ms, ip: `10.0.${Math.floor(rnd() * 5)}.${Math.floor(rnd() * 250)}` });
+    }
+    const admin = [];
+    for (let i = 0; i < 18; i++) {
+      const t = logTypesAdmin[Math.floor(rnd() * logTypesAdmin.length)];
+      const d = { "添加用户": "添加用户 lily@demo.com", "修改系统变量": "LLM 主模型 · 备用 API Key 已更新", "添加文件类型": "添加 .heic", "删除文件类型": "删除 .rar", "切换存储": "写入存储 R2-测试 → R2-UAT", "修改用户配额": "zhang.wei@demo.com 500MB → 1000MB", "设置用户密码": "为 chen@demo.com 设置新密码", "删除用户": "old.user@demo.com 标记为待清除" }[t] || "—";
+      admin.push({ time: `${dayStr(-Math.floor(rnd() * 30))} ${pad(9 + Math.floor(rnd() * 9))}:${pad(Math.floor(rnd() * 60))}:${pad(Math.floor(rnd() * 60))}`, user: "admin@demo.com", type: t, detail: d, ok: true, ms: 30 + Math.floor(rnd() * 300), ip: "10.0.0.8" });
+    }
+    const byTime = (a, b) => (a.time < b.time ? 1 : -1);
+    return { user: out.sort(byTime), admin: admin.sort(byTime) };
+  }
+
+  const config = {
+    upload: { maxCount: 300, maxBatchMB: 300, maxFileMB: 100, defaultQuotaMB: 500 },
+    security: { lockEnabled: false, lockAttempts: 5, lockMinutes: 15, purgeDays: 30 },
+    mail: { provider: "邮件服务 API", from: "assistant@example.com", fromName: "个人日常助手", apiKey: "re_••••••••" },
+    storages: [
+      { id: "s1", name: "R2-测试", type: "Cloudflare R2", bucket: "pa-dev", files: 1240, sizeGB: 3.2 },
+      { id: "s2", name: "R2-UAT", type: "Cloudflare R2", bucket: "pa-uat", files: 310, sizeGB: 0.9 },
+      { id: "s3", name: "阿里云 OSS（备用）", type: "S3 兼容", bucket: "pa-backup", files: 0, sizeGB: 0 },
+    ],
+    activeStorage: "s2",
+  };
+
+  // 预设标签库：候选，不直接显示；某个标签第一次被用到才出现在侧栏
+  const presetTags = [
+    { top: "工作", subs: ["会议", "报告", "方案", "合同协议", "模板", "项目资料"], who: "白领、小老板" },
+    { top: "生意", subs: ["客户", "供应商", "订单", "进货库存", "员工", "资质证照"], who: "小老板" },
+    { top: "学习", subs: ["课程", "考试", "论文", "读书笔记", "证书"], who: "大学生、白领" },
+    { top: "求职", subs: ["简历", "面试", "录用通知"], who: "大学生、白领" },
+    { top: "财务", subs: ["账单", "发票报销", "税务", "理财", "工资社保"], who: "全部" },
+    { top: "家庭", subs: ["孩子教育", "老人照护", "宠物", "菜谱", "家庭账本"], who: "家庭主妇、白领" },
+    { top: "生活", subs: ["健康医疗", "证件", "保险", "房屋租住", "出行旅游", "照片"], who: "全部" },
+    { top: "资料", subs: ["视频", "收藏", "参考"], who: "全部" },
+    { top: "灵光一现", subs: [], who: "全部（只用于想做的事）" },
+  ];
+
+  window.PA_SEED = { presetTags, files, todos, ideas, inbox, users, fileTypes, models, logs: genLogs(), config, logTypesUser, logTypesAdmin, dayStr, MB, svgImg };
+})();
+
+// 节日表（程序查表告诉“模型”，不让模型自己判断）：公历按月日；农历节日按演示年份写死公历日期
+(function () {
+  const S = window.PA_SEED;
+  S.holidays = {
+    fixed: {
+      "01-01": ["元旦", "新年好"], "02-14": ["情人节", "情人节快乐"], "03-08": ["妇女节", "妇女节快乐"], "05-01": ["劳动节", "劳动节快乐"],
+      "06-01": ["儿童节", "儿童节快乐"], "09-10": ["教师节", "教师节快乐"], "10-01": ["国庆节", "国庆快乐"], "12-25": ["圣诞节", "圣诞快乐"],
+    },
+    lunar: {
+      "2026-02-16": ["除夕", "除夕快乐"], "2026-02-17": ["春节", "新春快乐"], "2026-03-03": ["元宵节", "元宵节快乐"], "2026-06-19": ["端午节", "端午安康"],
+      "2026-08-19": ["七夕", "七夕快乐"], "2026-09-25": ["中秋节", "中秋快乐"], "2026-10-18": ["重阳节", "重阳节好"], "2026-11-09": ["寒衣节", "寒衣节到了，天冷添衣"],
+      "2026-12-22": ["冬至", "冬至快乐"], "2027-01-15": ["腊八节", "腊八节快乐"], "2027-02-05": ["除夕", "除夕快乐"], "2027-02-06": ["春节", "新春快乐"],
+      "2027-02-20": ["元宵节", "元宵节快乐"], "2027-06-09": ["端午节", "端午安康"], "2027-09-15": ["中秋节", "中秋快乐"],
+    },
+  };
+  // 会议行动项的原话片段和时间点（“听原话”）
+  const quotes = {
+    m1: [
+      ["00:12:40", "移动端审批的需求说明，你这边整理一下，周五之前发给客户。"],
+      ["00:21:05", "报价方案张三来更新一下，客户要看新的数字。"],
+      ["00:31:05", "数据导出我这边评估一下技术方案。"],
+      ["00:44:18", "上线时间最晚下周二要定下来。"],
+      ["00:46:02", "移动审批这块，麻烦你们再写一份新的项目介绍，我们内部要过一下。"],
+    ],
+  };
+  S.inbox.forEach((m) => (quotes[m.id] || []).forEach(([at, quote], i) => m.items[i] && Object.assign(m.items[i], { at, quote })));
+})();

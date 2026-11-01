@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>想做的事 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="row" style="margin-bottom:12px"><a href="ideas.html">← 返回想做的事</a></div>
+  <div id="view"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "ideas", title: "想做的事" })) {
+  const { state, esc, save, toast, log } = PA;
+  const view = document.getElementById("view");
+  const i = PA.ideaById(PA.qs("id"));
+  const STATUS = { active: ["进行中", "blue"], done: ["已做成", "green"], dropped: ["已放下", ""] };
+  const touch = () => { i.updatedAt = PA.nowStr(); save(); };
+  if (!i) view.innerHTML = '<div class="card empty">这件事不存在或已删除。<a href="ideas.html">返回想做的事</a></div>';
+  else {
+    const render = () => {
+      if (!(state.ideas || []).includes(i)) { view.innerHTML = '<div class="card empty">已删除。<a href="ideas.html">返回想做的事</a></div>'; return; }
+      const [sl, sc] = STATUS[i.status] || STATUS.active;
+      view.innerHTML = `
+      <div class="card">
+        <div class="card-head"><span class="star ${i.starred ? "on" : ""}" data-star title="${i.starred ? "取消星标" : "标为重要（排在前面）"}">★</span><h2>${esc(i.title)}</h2><span class="badge ${sc}" data-status>${sl}</span><span class="spacer"></span>
+          ${i.status === "active" ? '<button class="btn" data-op="done">做成了</button><button class="btn" data-op="dropped">放下了</button>' : '<button class="btn primary" data-op="active">恢复</button>'}
+          <button class="btn danger" data-op="delete">删除</button></div>
+        <div class="field"><label>标题</label><input class="input" data-k="title" value="${esc(i.title)}"></div>
+        <div class="field"><label>备注</label><textarea class="input" rows="3" data-k="notes" placeholder="长期不变的说明">${esc(i.notes)}</textarea></div>
+        <div class="field"><label>标签</label><div id="i-tags"></div></div>
+        <div class="row"><button class="btn primary" data-op="save">保存修改</button><span class="hint">记下于 ${esc(i.createdAt || "")}${i.updatedAt ? ` · 更新于 ${esc(i.updatedAt)}` : ""}${i.sourceNote ? ` · ${esc(i.sourceNote)}` : ""}</span></div>
+      </div>
+      <div class="card"><div class="card-head"><h3>关联待办</h3><span class="hint" data-prog>${esc(PA.ideaProgress(i).text)}</span><span class="spacer"></span>${i.status === "active" ? '<button class="btn sm" data-sched>排个时间</button>' : ""}</div><div id="i-todos"></div></div>
+      <div class="card"><div class="card-head"><h3>想法记录</h3><span class="hint">追加式，新的在上；网址自动变成链接，带的文件同时归入附件</span></div><div id="i-rec"></div></div>
+      <div class="card" id="i-att"></div>`;
+      const q = (s) => view.querySelector(s);
+      PA.tagEditor(q("#i-tags"), { value: i.tags || [], onChange: (tags, ch) => {
+        i.tags = tags;
+        if (ch.removed) i.tagsRemoved = [...new Set([...(i.tagsRemoved || []), ch.removed])];
+        if (ch.added) i.tagsRemoved = (i.tagsRemoved || []).filter((t) => t !== ch.added);
+        touch(); log("修改标签", `${i.title}：${ch.added ? "加上 " + ch.added : "去掉 " + ch.removed}`);
+      } });
+      PA.recordsBox(q("#i-rec"), i, { onChange: renderAtt });
+      q("[data-star]").onclick = (e) => { i.starred = !i.starred; touch(); e.currentTarget.classList.toggle("on", i.starred); };
+      q('[data-op="save"]').onclick = () => {
+        const v = {}; view.querySelectorAll("[data-k]").forEach((x) => (v[x.dataset.k] = x.value.trim()));
+        if (!v.title) { toast("标题不能为空"); return; }
+        Object.assign(i, v); touch(); log("手动更新待办", `想做的事：${i.title}`); toast("已保存"); render();
+      };
+      const setStatus = (st, msg) => {
+        const old = i.status; i.status = st; touch();
+        log("手动更新待办", `想做的事“${i.title}” → ${STATUS[st][0]}`);
+        render(); PA.undoToast(msg, () => { i.status = old; save(); render(); });
+      };
+      const op = (k, fn) => { const b = q(`[data-op="${k}"]`); if (b) b.onclick = fn; };
+      op("done", () => setStatus("done", "已标记为做成了"));
+      op("dropped", () => setStatus("dropped", "已放下，可在列表底部查看"));
+      op("active", () => setStatus("active", "已恢复为进行中"));
+      op("delete", () => PA.confirmBox("删除想做的事", `删除“${esc(i.title)}”？已生成的关联待办会保留。`, () => {
+        state.ideas = state.ideas.filter((x) => x !== i); save(); log("删除待办", `删除想做的事：${i.title}`); toast("已删除"); location.href = "ideas.html";
+      }, "删除", true));
+      const sb = q("[data-sched]");
+      if (sb) sb.onclick = () => openSched();
+      renderTodos(); renderAtt();
+    };
+    function openSched() {
+      PA.modal({ title: `排个时间 · ${i.title}`, body: `<div class="chip-list">${PA.dateChips().map(([l, d]) => `<span class="chip" data-d="${d}">${l}<span class="sub">${+d.slice(5, 7)}/${+d.slice(8)}</span></span>`).join("")}</div><div class="row" style="margin-top:10px"><span class="small muted">选日期：</span><input class="input inline" type="date" data-dateinput></div>`,
+        onMount: (m, close) => {
+          const go = (date) => {
+            const t = PA.todoFromIdea(i, { date });
+            if (!t) return;
+            close(); log("手动创建待办", `由想做的事“${i.title}”排到 ${date}`); PA.todosChanged(); render();
+            PA.undoToast(`已排到 ${PA.cnDate(date)}，可撤销`, () => { state.todos = state.todos.filter((x) => x !== t); save(); PA.todosChanged(); render(); });
+          };
+          m.querySelectorAll("[data-d]").forEach((c) => (c.onclick = () => go(c.dataset.d)));
+          m.querySelector("[data-dateinput]").onchange = (e) => e.target.value && go(e.target.value);
+        } });
+    }
+    function renderTodos() {
+      const box = document.getElementById("i-todos");
+      if (!box) return;
+      const list = PA.linkedTodos(i).sort((a, b) => (a.date + (a.time || "99")).localeCompare(b.date + (b.time || "99")));
+      box.innerHTML = list.length ? list.map((t) => `<div class="idea-todo ${t.status === "done" ? "done" : ""}" data-todo-row>${PA.tickHTML(t)}<a href="todo.html?id=${t.id}">${esc(t.title)}</a><span class="muted small">${esc(PA.whenText(t))}</span></div>`).join("")
+        : '<div class="muted small">还没有关联待办。点“排个时间”生成一条。</div>';
+      const p = view.querySelector("[data-prog]"); if (p) p.textContent = PA.ideaProgress(i).text;
+    }
+    function renderAtt() {
+      const card = document.getElementById("i-att");
+      if (!card) return;
+      const files = (i.attachments || []).map(PA.fileById).filter(Boolean);
+      card.innerHTML = `<div class="card-head"><h3>附件（${files.length}）</h3><span class="hint">附件保存在个人知识库</span><span class="spacer"></span><button class="btn" data-kb>从知识库选择</button></div>
+        ${files.length ? `<div class="chip-list">${files.map((f) => `<span class="tag file" data-fprev="${f.id}">${PA.fileIcon(f)} ${esc(f.name)}<span class="x" data-unlink="${f.id}" title="只解除关联，不删除知识库中的文件">×</span></span>`).join("")}</div>` : '<div class="muted small">暂无附件</div>'}`;
+      card.querySelector("[data-kb]").onclick = () => PA.kbPicker(i.attachments || [], (ids) => { i.attachments = ids; touch(); toast(`已更新附件（${ids.length} 个）`); renderAtt(); });
+      card.querySelectorAll("[data-fprev]").forEach((x) => (x.onclick = () => PA.canPreview(PA.fileById(x.dataset.fprev)) && PA.openPreview(x.dataset.fprev)));
+      card.querySelectorAll("[data-unlink]").forEach((x) => (x.onclick = (e) => { e.stopPropagation(); i.attachments = i.attachments.filter((id) => id !== x.dataset.unlink); touch(); toast("已解除关联，文件仍在知识库中"); renderAtt(); }));
+    }
+    document.addEventListener("pa:todos-changed", renderTodos);
+    document.addEventListener("pa:files-changed", renderAtt);
+    render();
+  }
+}
+</script>
+</body>
+</html>

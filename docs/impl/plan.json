@@ -202,10 +202,15 @@
         "tests/v5-smoke.test.mjs",
         "public/ITER1/v5/assets/app.js"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "6ba529c628",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-11-01T07:18:32.366Z",
+      "model_used": "main",
+      "actual_min": 11.6,
+      "last_error": null,
+      "finished_at": "2026-11-01T07:30:05.530Z"
     },
     {
       "id": "S02",

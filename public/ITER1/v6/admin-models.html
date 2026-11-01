@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>模型与服务 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">每个模型/服务可配置<b>主、备两套</b> API Key 和服务地址。主配置调用失败（超时、5xx、429 限流、Key 失效）时自动切换到备用，并记入操作日志。Key 加密保存，页面只显示脱敏值，修改时需重新输入完整 Key。</div>
+  <div id="list"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "admin-models", title: "模型与服务（系统变量）", admin: true })) {
+  const { state, esc, save, toast, log } = PA;
+  function render() {
+    list.innerHTML = state.models.map((m) => `
+      <div class="card" data-k="${m.key}">
+        <div class="card-head"><h3>${esc(m.name)}</h3>${m.reserved ? '<span class="badge">V1 不使用</span>' : m.optional ? '<span class="badge">可选</span>' : m.required ? '<span class="badge red">必填</span>' : ""}
+          <span class="hint">${esc(m.desc)}</span><span class="spacer"></span>
+          ${m.reserved ? "" : '<button class="btn sm" data-test>测试连接</button>'}</div>
+        <div class="grid3">
+          <div class="field"><label>服务商</label><input class="input" data-f="provider" value="${esc(m.provider)}" ${m.reserved ? "disabled" : ""}></div>
+          <div class="field"><label>模型名称</label><input class="input" data-f="model" value="${esc(m.model)}" ${m.reserved ? "disabled" : ""} placeholder="${m.mode === "url" ? "（服务无需填写）" : ""}"></div>
+          <div class="field"><label>超时（秒）</label><input class="input" type="number" data-f="timeout" value="${m.timeout}" ${m.reserved ? "disabled" : ""}></div>
+        </div>
+        <div class="grid2">
+          ${keyField(m, "key1", "主 API Key")}${keyField(m, "key2", "备用 API Key")}
+          <div class="field"><label>主服务地址</label><input class="input" data-f="url1" value="${esc(m.url1)}" placeholder="https://" ${m.reserved ? "disabled" : ""}></div>
+          <div class="field"><label>备用服务地址</label><input class="input" data-f="url2" value="${esc(m.url2)}" placeholder="留空则与主地址相同" ${m.reserved ? "disabled" : ""}></div>
+        </div>
+        ${m.reserved ? "" : '<div class="row"><button class="btn primary" data-save>保存</button><span class="small" data-result></span></div>'}
+      </div>`).join("");
+    list.querySelectorAll(".card").forEach((card) => {
+      const m = state.models.find((x) => x.key === card.dataset.k);
+      card.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => { const f = b.dataset.edit; b.parentElement.innerHTML = `<input class="input" type="password" data-newkey="${f}" placeholder="输入新的完整 Key；留空表示清除">`; }));
+      const s = card.querySelector("[data-save]");
+      if (s) s.onclick = () => {
+        card.querySelectorAll("[data-f]").forEach((i) => (m[i.dataset.f] = i.type === "number" ? +i.value : i.value.trim()));
+        const changed = [];
+        card.querySelectorAll("[data-newkey]").forEach((i) => { const v = i.value.trim(); m[i.dataset.newkey] = v ? v.slice(0, 5) + "••••••••" + v.slice(-4) : ""; changed.push(i.dataset.newkey === "key1" ? "主 Key" : "备用 Key"); });
+        save(); log("修改系统变量", `${m.name}${changed.length ? "：" + changed.join("、") + " 已更新" : "：配置已更新"}`); toast("已保存"); render();
+      };
+      const t = card.querySelector("[data-test]");
+      if (t) t.onclick = () => {
+        const r = card.querySelector("[data-result]"); r.textContent = "测试中…"; r.style.color = "";
+        setTimeout(() => {
+          const ok1 = !!(m.key1 || m.mode === "url") && !!(m.url1 || m.provider), ok2 = !!(m.key2 || m.url2);
+          r.innerHTML = `主配置：${ok1 ? '<span style="color:var(--success)">✓ 可用（312ms）</span>' : '<span style="color:var(--danger)">✗ 未配置或不可用</span>'}　备用：${ok2 ? '<span style="color:var(--success)">✓ 可用（405ms）</span>' : '<span class="muted">未配置</span>'}`;
+        }, 900);
+      };
+    });
+  }
+  function keyField(m, f, label) {
+    if (m.reserved) return `<div class="field"><label>${label}</label><input class="input" disabled></div>`;
+    return `<div class="field"><label>${label}</label><div class="row" style="flex-wrap:nowrap">${m[f] ? `<code style="flex:1">${esc(m[f])}</code><button class="btn sm" data-edit="${f}">修改</button>` : `<input class="input" type="password" data-newkey="${f}" placeholder="未配置">`}</div></div>`;
+  }
+  render();
+}
+</script>
+</body>
+</html>

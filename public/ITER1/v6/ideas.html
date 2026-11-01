@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>想做的事 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card idea-new">
+    <input class="input" id="idea-input" placeholder="记一件想做的事…（回车保存，会自动打标签）">
+    <div class="hint" style="margin-top:6px">想做但还没定时间的事放这里；想好什么时候做，就点“排个时间”生成一条待办。</div>
+  </div>
+  <div class="idea-filters chip-list" id="filters"></div>
+  <div class="idea-list" id="list"></div>
+  <div class="idea-ended" id="ended"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+if (PA.mount({ page: "ideas", title: "想做的事" })) {
+  const { state, esc, save, toast, log } = PA;
+  const ALL = "", SPARK = PA.SPARK_TAG;
+  let sel = ALL, showEnded = false, schedFor = null, pickDate = false;
+  state.ideas = state.ideas || [];
+  const $ = (id) => document.getElementById(id);
+  const sortIdeas = (a, b) => !!b.starred - !!a.starred || (b.updatedAt || "").localeCompare(a.updatedAt || "");
+  const active = () => state.ideas.filter((i) => i.status === "active");
+  const match = (i) => !sel || PA.hasTag(i, sel);
+  const ago = (at) => { if (!at) return ""; const d = PA.diffDays(PA.today(), at.slice(0, 10)); return d <= 0 ? "今天更新" : `${d} 天前更新`; };
+
+  function renderFilters() {
+    const tags = [...new Set(active().flatMap((i) => i.tags || []).map((t) => t.split("/")[0]))].filter((t) => t !== SPARK).sort((a, b) => a.localeCompare(b, "zh"));
+    const chips = [[ALL, "全部"], [SPARK, SPARK], ...tags.map((t) => [t, t])];
+    if (sel && !chips.some(([v]) => v === sel)) sel = ALL;
+    $("filters").innerHTML = chips.map(([v, l]) => `<span class="chip ${sel === v ? "on" : ""}" data-f="${esc(v)}">${esc(l)}</span>`).join("");
+    $("filters").querySelectorAll("[data-f]").forEach((c) => (c.onclick = () => { sel = c.dataset.f; render(); }));
+  }
+  function card(i) {
+    const last = (i.records || [])[0], p = PA.ideaProgress(i), ended = i.status !== "active";
+    const att = (i.attachments || []).length;
+    return `<div class="idea-card ${ended ? "ended" : ""}" data-idea="${i.id}">
+      <div class="idea-top"><span class="star ${i.starred ? "on" : ""}" data-star="${i.id}" title="${i.starred ? "取消星标" : "标为重要（排在前面）"}">★</span>
+        <a class="idea-title" href="idea.html?id=${i.id}">${esc(i.title)}</a>
+        ${ended ? `<span class="badge ${i.status === "done" ? "green" : ""}">${i.status === "done" ? "已做成" : "已放下"}</span>` : ""}
+        <span class="spacer"></span>${ended ? "" : `<button class="btn sm primary" data-sched="${i.id}">排个时间</button>`}</div>
+      ${last ? `<div class="idea-last">${esc(last.text.slice(0, 40))}${last.text.length > 40 ? "…" : ""}</div>` : i.notes ? `<div class="idea-last">${esc(i.notes.slice(0, 40))}${i.notes.length > 40 ? "…" : ""}</div>` : ""}
+      <div class="idea-meta">${PA.tagChips(i.tags)}${att ? `<span>📎 ${att}</span>` : ""}${p.scheduled ? `<span class="idea-prog">已排 ${p.scheduled} 条 · 完成 ${p.done}</span>` : ""}<span class="muted">${esc(ago(i.updatedAt))}</span></div>
+      ${schedFor === i.id ? `<div class="idea-sched chip-list"><span class="small muted">排到：</span>${PA.dateChips().map(([l, d]) => `<span class="chip" data-d="${d}">${l}<span class="sub">${+d.slice(5, 7)}/${+d.slice(8)}</span></span>`).join("")}<span class="chip" data-pick>选日期…</span>${pickDate ? '<input class="input inline" type="date" data-dateinput>' : ""}<a href="#" class="small" data-cancel>取消</a></div>` : ""}
+    </div>`;
+  }
+  function schedule(i, date) {
+    const t = PA.todoFromIdea(i, { date });
+    if (!t) return;
+    log("手动创建待办", `由想做的事“${i.title}”排到 ${date}`);
+    schedFor = null; pickDate = false;
+    PA.todosChanged(); render();
+    PA.undoToast(`已排到 ${PA.cnDate(date)}，可撤销`, () => {
+      state.todos = state.todos.filter((x) => x !== t); save();
+      log("彻底删除待办", `撤销排时间：${t.title}`); PA.todosChanged(); render();
+    });
+  }
+  function render() {
+    renderFilters();
+    const list = active().filter(match).sort(sortIdeas);
+    $("list").innerHTML = list.map(card).join("") || `<div class="card empty">${sel ? "这个标签下没有进行中的事" : "还没有想做的事，在上面记一件吧"}</div>`;
+    const done = state.ideas.filter((i) => i.status === "done").sort(sortIdeas), dropped = state.ideas.filter((i) => i.status === "dropped").sort(sortIdeas);
+    $("ended").innerHTML = done.length + dropped.length ? `<a href="#" class="idea-ended-toggle" data-toggle-ended>已做成 ${done.length} · 已放下 ${dropped.length} ${showEnded ? "⌄" : "›"}</a>
+      ${showEnded ? `<div class="idea-list">${[...done, ...dropped].map(card).join("")}</div>` : ""}` : "";
+    const root = $("page");
+    root.querySelectorAll("[data-star]").forEach((s) => (s.onclick = () => { const i = PA.ideaById(s.dataset.star); i.starred = !i.starred; i.updatedAt = PA.nowStr(); save(); render(); }));
+    root.querySelectorAll("[data-sched]").forEach((b) => (b.onclick = () => { schedFor = schedFor === b.dataset.sched ? null : b.dataset.sched; pickDate = false; render(); }));
+    const box = root.querySelector(".idea-sched");
+    if (box) {
+      const i = PA.ideaById(schedFor);
+      box.querySelectorAll("[data-d]").forEach((c) => (c.onclick = () => schedule(i, c.dataset.d)));
+      box.querySelector("[data-pick]").onclick = () => { pickDate = true; render(); const di = $("page").querySelector("[data-dateinput]"); di.focus(); di.showPicker && di.showPicker(); };
+      const di = box.querySelector("[data-dateinput]");
+      if (di) di.onchange = () => di.value && schedule(i, di.value);
+      box.querySelector("[data-cancel]").onclick = (e) => { e.preventDefault(); schedFor = null; render(); };
+    }
+    const tg = root.querySelector("[data-toggle-ended]");
+    if (tg) tg.onclick = (e) => { e.preventDefault(); showEnded = !showEnded; render(); };
+  }
+  function addIdea(title) {
+    const now = PA.nowStr();
+    const i = { id: PA.uid("i"), title, notes: "", records: [], attachments: [], tags: PA.autoIdeaTags(title), tagsRemoved: [], starred: false, status: "active", source: "manual", sourceNote: "", createdAt: now, updatedAt: now, askedDone: [] };
+    state.ideas.unshift(i); save();
+    log("手动创建待办", `新增想做的事：${title}`);
+    toast(`已记下：${title}`);
+    if (sel && !PA.hasTag(i, sel)) sel = ALL;
+    render();
+  }
+  $("idea-input").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.isComposing) return;
+    e.preventDefault();
+    const v = e.target.value.trim();
+    if (!v) return;
+    e.target.value = ""; addIdea(v);
+  });
+  document.addEventListener("pa:todos-changed", render);
+  render();
+}
+</script>
+<script>
+// S03：想做的事页顶部的“跟助手说”入口，样式同待办页
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const bar = document.createElement("div");
+  bar.className = "askbar";
+  bar.innerHTML = '<span class="ask-label">跟助手说：</span>'
+    + '<div class="ask-main"><input class="input ask-input" id="ask" placeholder="保险那件事，排到周六上午"><button class="btn primary" id="ask-go">问助手</button></div>'
+    + '<span class="ask-note">在助手页里说人话就行，排时间、追加想法都能用</span>';
+  page.insertBefore(bar, page.firstChild);
+  const input = PA.bindAsk(bar.querySelector("#ask"));
+  bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
+</body>
+</html>

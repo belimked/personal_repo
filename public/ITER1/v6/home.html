@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>助手 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page" class="chat">
+  <header class="chat-head">
+    <div class="bot-avatar" data-bot-avatar>禾<span class="dot"></span></div>
+    <div><b data-bot-name>小禾</b><div class="sub">你的私人助手 · 帮你记事、找文件</div></div>
+  </header>
+  <div class="chat-msgs" id="msgs"></div>
+  <div class="composer">
+    <div class="composer-box" id="cbox">
+      <div class="att-chips hidden" id="att-chips"></div>
+      <div class="composer-row">
+        <button class="ibtn" id="upload-btn" title="带上文件（同时存进知识库）">📎</button>
+        <input type="file" id="file-in" multiple hidden>
+        <textarea id="input" rows="1" placeholder="吩咐一声…"></textarea>
+        <button class="ibtn mic" disabled title="按住说话（App 版）">🎤</button>
+        <button class="ibtn send" id="send" title="发送">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/chat.js"></script>
+<script>
+if (PA.mount({ page: "home", title: "助手", narrow: false })) PA_CHAT.start();
+</script>
+<script>
+// S07：其他页的“问助手”入口跳过来时带 ?ask=，自动把这句话当用户消息发送；
+// 发送前用 replaceState 去掉参数，刷新页面不会重复发送。
+(function () {
+  const PA = window.PA;
+  if (!PA || !PA.state.session) return;
+  const ask = PA.qs("ask");
+  if (!ask || !ask.trim()) return;
+  history.replaceState(null, "", location.pathname);
+  window.PA_CHAT.send(ask.trim());
+})();
+</script>
+</body>
+</html>

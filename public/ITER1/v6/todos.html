@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>待办事项 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .ev.deleted, .tev.deleted { opacity: .5; text-decoration: line-through; }
+  .agenda .ai.deleted { opacity: .5; } .agenda .ai.deleted .tt { text-decoration: line-through; }
+  .todo-row.todo-deleted .todo-title { color: var(--muted); }
+  .todo-row .tick { margin: 0 2px; }
+  .tick.sm { width: 14px; height: 14px; border-width: 1.5px; }
+  .tick.sm.on::after { left: 3.5px; top: .5px; width: 3px; height: 7px; }
+  /* 日历里的勾选框：悬停才显示 */
+  .ev .tick { display: none; margin: -2px 4px 0 0; }
+  .ev:hover .tick { display: inline-block; }
+  .tev .tick { display: none; position: absolute; left: 3px; top: 2px; z-index: 4; }
+  .tev:hover .tick { display: block; }
+  .tev:hover > .t, .tev:hover > .t1 { padding-left: 16px; }
+  .row-dl { font-size: 12px; }
+  .row-dl.urgent { color: var(--danger); }
+  .dl-tag { font-weight: 600; margin-right: 2px; }
+  .todo-row .tag { font-size: 11px; padding: 0 6px; }
+  .from-line { font-size: 13px; margin: 2px 0 8px; }
+  .n-noday { margin-top: 6px; font-size: 13px; }
+  .n-parsed { min-height: 18px; margin-top: 4px; }
+  .peek-tags { margin-top: 2px; }
+  /* S05：左侧标签树（勾选 = 看，取消 = 排除） */
+  .todo-layout { grid-template-columns: 210px minmax(0, 1fr); }
+  .tag-side { position: sticky; top: 12px; }
+  .tree-item .caret { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+  .tree-item.untagged, .tree-item.bare { color: var(--muted); }
+  .tree-item.off { color: var(--muted); }
+  .tcb { width: 14px; height: 14px; flex: none; border: 1.5px solid #c3c9d4; border-radius: 3px; background: #fff; position: relative; }
+  .tcb:hover { border-color: var(--primary); }
+  .tcb.on { background: var(--primary); border-color: var(--primary); }
+  .tcb.on::after { content: ""; position: absolute; left: 3.5px; top: .5px; width: 3px; height: 7px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .tcb.part { border-color: var(--primary); }
+  .tcb.part::after { content: ""; position: absolute; left: 2px; right: 2px; top: 4.5px; height: 2px; background: var(--primary); }
+  #tagsum .tag { margin-right: 2px; }
+  .tag-none { background: var(--warn-weak, #fff7e6); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; font-size: 13px; }
+  .tag-side-h { display: flex; align-items: center; gap: 6px; padding: 0 4px 6px; font-size: 13px; color: var(--muted); }
+  .todo-layout.tag-collapsed { grid-template-columns: 36px minmax(0, 1fr); }
+  .tag-collapsed .tag-side .tree, .tag-collapsed .tag-side .hint, .tag-collapsed .tag-side-h .lbl { display: none; }
+  .tag-collapsed .tag-side-h { padding: 0; justify-content: center; }
+  .tag-collapsed #tag-toggle { position: relative; width: 34px; height: 34px; border: 1px solid var(--border); background: #fff; border-radius: 8px; }
+  #tag-toggle .n { position: absolute; top: -7px; right: -7px; min-width: 16px; height: 16px; line-height: 16px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 10px; padding: 0 4px; }
+  #tag-mbtn { display: none; margin-bottom: 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 640px) {
+    .todo-layout, .todo-layout.tag-collapsed { grid-template-columns: minmax(0, 1fr); }
+    #tag-mbtn { display: inline-block; }
+    .tag-side { position: static; display: none; }
+    .todo-layout.tag-open .tag-side { display: block; }
+    .tag-side-h #tag-toggle { display: none; }
+    .tag-collapsed .tag-side .tree, .tag-collapsed .tag-side .hint, .tag-collapsed .tag-side-h .lbl { display: revert; }
+  }
+</style>
+</head>
+<body>
+<div id="page">
+  <div class="row" style="margin-bottom:12px">
+    <div class="seg" id="viewseg"><button data-v="list">☰ 列表</button><button data-v="cal">📅 日历</button></div>
+    <span class="spacer"></span>
+    <span class="legend"><span><i style="background:#2f6fed"></i>文字输入</span><span><i style="background:#0f9f8f"></i>手动创建</span><span><i style="background:#d97706"></i>会议录音</span><span><i style="background:var(--danger)"></i>已逾期</span></span>
+    <button class="btn primary" id="new">＋ 新建待办</button>
+  </div>
+  <button class="btn" id="tag-mbtn"></button>
+  <div class="files-layout todo-layout" id="todo-layout">
+  <div class="tag-side" id="tag-side">
+    <div class="tag-side-h"><span class="lbl">🏷️ 按标签看</span><span class="spacer lbl"></span><button class="icon-btn" id="tag-toggle"></button></div>
+    <div class="tree" id="tagtree"></div>
+    <div class="hint" style="padding:8px 4px">点标签名只看这一类；<b>勾选方框</b>决定看哪些，取消勾选即排除这一类。标签由模型按内容自动打，可以随时修改。</div>
+  </div>
+  <div style="min-width:0">
+  <div class="tabs" id="tabs"></div>
+  <div class="row" style="margin-bottom:14px">
+    <input class="input inline" id="kw" placeholder="按标题、地点、备注、想法、标签筛选" style="width:240px">
+    <div id="src"></div>
+    <span class="small" id="tagsum"></span>
+    <span class="list-only row" style="gap:8px"><span class="date-only row" style="gap:8px"><span class="muted small">日期</span><input class="input inline" type="date" id="d1"><span class="muted">~</span><input class="input inline" type="date" id="d2"></span>
+      <label class="row small" style="gap:4px" id="grp-wrap"><input type="checkbox" id="grp">按日期分组</label></span>
+    <span class="cal-only row small" style="gap:12px"><label class="row" style="gap:4px"><input type="checkbox" id="show-done">显示已完成</label><label class="row" style="gap:4px"><input type="checkbox" id="show-del">显示已删除</label></span>
+    <span class="hint list-only" style="margin-left:auto">筛选条件在列表和日历之间共用</span>
+  </div>
+  <div class="tag-none hidden" id="tag-none">没有勾选任何标签 · <a href="#" data-tag-all>全选</a></div>
+  <div id="list-view"><div class="table-wrap" id="tbl-wrap"><table class="table nowrap" id="tbl"></table></div></div>
+  <div id="cal-view" class="cal-wrap">
+    <div class="cal-main">
+      <div class="cal-bar">
+        <button class="btn sm" id="c-today">今天</button>
+        <button class="icon-btn" id="c-prev" title="上一页">‹</button><button class="icon-btn" id="c-next" title="下一页">›</button>
+        <span class="cal-title" id="c-title"></span>
+        <a class="badge red hidden" id="c-overdue" href="#"></a>
+        <span class="spacer"></span>
+        <div class="seg" id="modeseg"><button data-m="month">月</button><button data-m="week">周</button><button data-m="day">日</button><button data-m="agenda">议程</button></div>
+      </div>
+      <div id="c-body"></div>
+    </div>
+  </div>
+  </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// S04：没有“待安排”了，旧链接 ?tab=unscheduled 改去“想做的事”
+const PA_GO_IDEAS = /^(unscheduled|unsched)$/.test(new URLSearchParams(location.search).get("tab") || "");
+if (PA_GO_IDEAS) location.replace("ideas.html");
+else if (PA.mount({ page: "todos", title: "待办事项", narrow: false })) {
+  const { state, esc, save, fmtDate, toast, log } = PA;
+  const pad = (n) => String(n).padStart(2, "0");
+  const D = (s) => new Date(s + "T00:00:00");
+  const S = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const addD = (s, n) => { const d = D(s); d.setDate(d.getDate() + n); return S(d); };
+  const monday = (s) => { const d = D(s); return addD(s, -((d.getDay() + 6) % 7)); };
+  const today = PA.today();
+  const WD = "日一二三四五六";
+  const $ = (id) => document.getElementById(id);
+  const tabs = $("tabs"), tbl = $("tbl"), kw = $("kw"), d1 = $("d1"), d2 = $("d2"), grp = $("grp"), tagtree = $("tagtree");
+
+  const vs = Object.assign({ view: "list", mode: "week", cursor: today, showDone: false, showDel: false, group: true }, JSON.parse(sessionStorage.getItem("pa6_todo_view") || "{}"));
+  delete vs.showArch; delete vs.uCollapsed; delete vs.tag;
+  if (PA.qs("view")) vs.view = PA.qs("view");
+  const saveVs = () => sessionStorage.setItem("pa6_todo_view", JSON.stringify(vs));
+  let tab = { archived: "deleted" }[PA.qs("tab")] || PA.qs("tab") || "open";
+  if (!["open", "done", "deleted", "all"].includes(tab)) tab = "open";
+  if (PA.qs("tab")) vs.view = "list";
+  const srcSel = PA.multiSelect($("src"), [{ value: "text", label: "文字输入" }, { value: "manual", label: "手动创建" }, { value: "meeting", label: "会议录音" }], "全部来源");
+  const searchText = (t) => [t.title, t.location, t.notes, ...(t.records || []).map((r) => r.text), ...(t.tags || [])].join(" ").toLowerCase();
+  const baseNoTag = (t) => {
+    const k = kw.value.trim().toLowerCase(), s = srcSel.values();
+    return (!k || searchText(t).includes(k)) && (!s.length || s.includes(t.source));
+  };
+  const base = (t) => baseNoTag(t) && tagOk(t);
+
+  // ---------------- 标签筛选（S05） ----------------
+  // 勾选集合按“叶子”记：二级标签 full、只打了一级的 top、未打标签 NONE_TAG。
+  // mode：exclude = 从全选里取消了几类（新标签默认勾上）；only = 只看勾上的几类（新标签默认不勾）
+  const NONE_TAG = "__none__", TF_KEY = "pa6_todo_tags";
+  const tf = Object.assign({ mode: "exclude", checked: null, known: [] }, JSON.parse(sessionStorage.getItem(TF_KEY) || "{}"));
+  const saveTf = () => sessionStorage.setItem(TF_KEY, JSON.stringify({ mode: tf.mode, checked: [...checked], known: [...known] }));
+  let checked = new Set(tf.checked || []), known = new Set(tf.known || []);
+  let tagModel = null;
+  function buildTagModel() {
+    const nodes = PA.tagTree(state.todos);
+    const bare = new Set();
+    state.todos.forEach((t) => (t.tags || []).forEach((x) => { if (!x.includes("/")) bare.add(x); }));
+    nodes.forEach((n) => { n.leaves = n.subs.map((x) => x.full); if (bare.has(n.top) || !n.subs.length) n.leaves.push(n.top); n.hasBare = bare.has(n.top) && n.subs.length > 0; });
+    const all = [...nodes.flatMap((n) => n.leaves), NONE_TAG];
+    // 新出现的标签：排除模式下默认勾上，只看模式下默认不勾
+    const fresh = tf.checked === null;
+    all.forEach((k) => { if (!known.has(k)) { known.add(k); if (fresh || tf.mode === "exclude") checked.add(k); } });
+    tf.checked = [];
+    tagModel = { nodes, all };
+    saveTf();
+    return tagModel;
+  }
+  const leafKeys = (t) => ((t.tags || []).length ? t.tags : [NONE_TAG]);
+  const tagOk = (t) => {
+    const ks = leafKeys(t);
+    return tf.mode === "exclude" ? ks.every((k) => checked.has(k)) : ks.some((k) => checked.has(k));
+  };
+  const allOn = () => tagModel.all.every((k) => checked.has(k));
+  function setChecked(next, mode) {
+    checked = new Set(next);
+    if (mode) tf.mode = mode;
+    if (allOn()) tf.mode = "exclude";
+    else if (!tagModel.all.some((k) => checked.has(k))) tf.mode = "only";
+    saveTf(); render();
+  }
+  // 筛选行：二级全选中时合并为一级
+  // byOrder：只看模式下按勾选先后排列
+  function tagLabels(inSet, byOrder) {
+    const out = [], ord = [...checked], pos = (ks) => Math.min(...ks.map((k) => (ord.includes(k) ? ord.indexOf(k) : 1e9)));
+    tagModel.nodes.forEach((n) => {
+      const hit = n.leaves.filter(inSet);
+      if (!hit.length) return;
+      if (hit.length === n.leaves.length) out.push([n.top, pos(hit)]);
+      else hit.forEach((k) => out.push([k === n.top ? `${n.top}（未细分）` : k, pos([k])]));
+    });
+    if (inSet(NONE_TAG)) out.push(["未打标签", pos([NONE_TAG])]);
+    if (byOrder) out.sort((a, b) => a[1] - b[1]);
+    return out.map((x) => x[0]);
+  }
+  function tagSummary() {
+    if (allOn()) return { text: "", html: "" };
+    if (tf.mode === "exclude") {
+      const l = tagLabels((k) => !checked.has(k));
+      return { text: `标签：除了 ${l.join("、")}`, html: `<span class="muted">标签：除了 </span>${l.map((x) => `<span class="tag">${esc(x)}</span>`).join("、")}` };
+    }
+    const l = tagLabels((k) => checked.has(k), true);
+    if (!l.length) return { text: "标签：一个都没勾", html: '<span class="muted">标签：一个都没勾</span>' };
+    return { text: `标签：${l.join(" + ")}`, html: `<span class="muted">标签：</span>${l.map((x) => `<span class="tag">${esc(x)}</span>`).join(" + ")}` };
+  }
+  // 件数跟随当前页签（列表）或当前显示范围（日历）
+  function calRange() {
+    if (vs.mode === "month") {
+      const first = vs.cursor.slice(0, 8) + "01", start = monday(first), m = D(first).getMonth();
+      const end = addD(first, new Date(D(first).getFullYear(), m + 1, 0).getDate() - 1);
+      const weeks = Math.ceil(((D(end) - D(start)) / 86400000 + 1) / 7);
+      return [start, addD(start, weeks * 7 - 1)];
+    }
+    return [vs.cursor, addD(vs.cursor, vs.mode === "week" ? 6 : vs.mode === "day" ? 0 : 13)];
+  }
+  const calShow = (t) => t.status === "open" || (t.status === "done" && vs.showDone) || (t.status === "deleted" && vs.showDel);
+  function countPool() {
+    if (vs.view === "cal") { const [a, b] = calRange(); return state.todos.filter((t) => t.date && t.date >= a && t.date <= b && calShow(t) && baseNoTag(t)); }
+    return state.todos.filter((t) => inTab(t, tab) && baseNoTag(t) && (!d1.value || (t.date && t.date >= d1.value)) && (!d2.value || (t.date && t.date <= d2.value)));
+  }
+  const expanded = new Set();
+  function renderTagTree() {
+    const { nodes, all } = tagModel;
+    const pool = countPool();
+    const st = (keys) => { const n = keys.filter((k) => checked.has(k)).length; return n === keys.length ? "on" : n ? "part" : ""; };
+    const cb = (s) => `<span class="tcb ${s}" data-cb="1" title="勾上 = 看这一类，取消 = 排除"></span>`;
+    const item = (kind, key, label, n, s, { extra = "", caret = "", pad = "" } = {}) =>
+      `<div class="tree-item ${s ? "" : "off"} ${extra}" data-kind="${kind}" data-k="${esc(key)}" ${pad}>${caret}${cb(s)}${label}<span class="n">${n}</span></div>`;
+    let html = item("all", "", "📋 全部待办", pool.length, st(all), { extra: allOn() ? "active" : "" });
+    for (const n of nodes) {
+      const s = st(n.leaves);
+      if (s === "part") expanded.add(n.top);
+      const open = expanded.has(n.top), cnt = pool.filter((t) => PA.hasTag(t, n.top)).length;
+      html += item("top", n.top, `🏷️ ${esc(n.top)}`, cnt, s, { caret: `<span class="caret" data-toggle="${esc(n.top)}">${n.subs.length ? (open ? "▼" : "▶") : ""}</span>` });
+      if (!open) continue;
+      html += n.subs.map((x) => item("leaf", x.full, esc(x.name), pool.filter((t) => PA.hasTag(t, x.full)).length, st([x.full]), { pad: 'style="padding-left:34px"' })).join("");
+      if (n.hasBare) html += item("leaf", n.top, "（未细分）", pool.filter((t) => (t.tags || []).includes(n.top)).length, st([n.top]), { extra: "bare", pad: 'style="padding-left:34px"' });
+    }
+    html += item("leaf", NONE_TAG, "未打标签", pool.filter((t) => !(t.tags || []).length).length, st([NONE_TAG]), { extra: "untagged", caret: '<span class="caret"></span>' });
+    tagtree.innerHTML = html;
+    const sum = tagSummary();
+    $("tagsum").innerHTML = sum.html ? `${sum.html} <a href="#" id="tag-clear">清除</a>` : "";
+    if (sum.html) $("tag-clear").onclick = (e) => { e.preventDefault(); setChecked(all, "exclude"); };
+    $("tag-none").classList.toggle("hidden", all.some((k) => checked.has(k)));
+    $("tag-mbtn").textContent = `🏷️ ${sum.text || "标签：全部"} ▼`;
+    renderTagSide();
+  }
+  function onTreeClick(e) {
+    const { nodes, all } = tagModel;
+    const tg = e.target.closest("[data-toggle]");
+    if (tg && tg.dataset.toggle) { const t = tg.dataset.toggle; expanded.has(t) ? expanded.delete(t) : expanded.add(t); return renderTagTree(); }
+    const el = e.target.closest(".tree-item");
+    if (!el) return;
+    const kind = el.dataset.kind, k = el.dataset.k;
+    const keys = kind === "all" ? all : kind === "top" ? nodes.find((n) => n.top === k).leaves : [k];
+    if (kind === "top") expanded.add(k);
+    if (!e.target.closest("[data-cb]")) return setChecked(keys, kind === "all" ? "exclude" : "only"); // 点名字：只看这一类
+    if (kind === "all") return setChecked(allOn() ? [] : all); // 全选 ⇄ 全不选
+    const s2 = new Set(checked), on = keys.every((x) => s2.has(x));
+    keys.forEach((x) => (on ? s2.delete(x) : s2.add(x)));
+    setChecked([...s2]);
+  }
+  tagtree.addEventListener("click", onTreeClick);
+  document.addEventListener("click", (e) => { const a = e.target.closest("[data-tag-all]"); if (a) { e.preventDefault(); setChecked(tagModel.all, "exclude"); } });
+  function renderTagSide() {
+    $("todo-layout").classList.toggle("tag-collapsed", !!vs.tagCollapsed);
+    const b = $("tag-toggle"), n = allOn() ? 0 : tagModel.all.filter((k) => checked.has(k)).length;
+    b.innerHTML = vs.tagCollapsed ? `🏷️${allOn() ? "" : `<span class="n">${n}</span>`}` : "⇤";
+    b.title = vs.tagCollapsed ? "展开标签栏" : "收起标签栏（筛选仍然有效）";
+  }
+  const overdue = (t) => t.status === "open" && t.date && t.date < today;
+  const cls = (t) => `src-${t.source} ${overdue(t) ? "overdue" : ""} ${t.status !== "open" ? t.status : ""}`;
+  // 期限待办（date = 截止日）：列表显示“截止：11/30 前”，日历上标“截止”
+  const dlHTML = (t) => `<span class="row-dl ${PA.inDeadlineWindow(t) || overdue(t) ? "urgent" : ""}">${esc(PA.deadlineText(t))}</span>`;
+  const dlTag = (t) => (t.deadline ? '<span class="dl-tag">截止 · </span>' : "");
+  const fromHTML = (t) => { const i = t.ideaId && PA.ideaById(t.ideaId); return i ? `<div class="from-line" data-from>来自：<a href="idea.html?id=${esc(i.id)}">${esc(i.title)} ›</a></div>` : ""; };
+
+  function setWhen(t, date, time, how, duration) {
+    const old = { date: t.date, time: t.time, duration: t.duration, deadline: t.deadline || null, updatedAt: t.updatedAt };
+    t.date = date; t.time = time; if (duration) t.duration = duration;
+    if (date) t.deadline = null;
+    t.updatedAt = PA.nowStr();
+    save();
+    log("手动更新待办", `${t.title}：${old.date} ${old.time ? old.time + "（" + PA.fmtDur(old.duration || PA.DEFAULT_DUR) + "）" : ""} → ${date} ${time ? PA.timeRange(t) : ""}（${how}）`);
+    PA.todosChanged();
+    PA.undoToast(`“${t.title}”已改到 ${fmtDate(date, PA.timeRange(t))}${time ? "（" + PA.fmtDur(durOf(t)) + "）" : ""}`, () => { Object.assign(t, old); save(); PA.todosChanged(); });
+  }
+  // “先不做了”：有来源（ideaId）只删除这条待办；没有来源就转成想做的事。都可撤销
+  function dropTodo(t) {
+    closePeek();
+    if (t.ideaId && PA.ideaById(t.ideaId)) {
+      const undo = PA.setStatus([t], "deleted", "先不做了");
+      PA.undoToast(`先不做了：${t.title}（“${PA.ideaById(t.ideaId).title}”仍在想做的事里）`, undo);
+      PA.todosChanged();
+      return;
+    }
+    const idx = state.todos.indexOf(t), idea = PA.todoToIdea(t);
+    log("先不做了", `${t.title} → 想做的事`);
+    PA.todosChanged();
+    PA.undoToast(`已放进想做的事：${t.title}`, () => {
+      state.ideas = state.ideas.filter((i) => i !== idea);
+      if (!state.todos.includes(t)) state.todos.splice(Math.min(idx, state.todos.length), 0, t);
+      save(); PA.todosChanged();
+    });
+  }
+
+  // ---------------- 列表 ----------------
+  const BUCKETS = [["overdue", "已逾期"], ["today", "今天"], ["tomorrow", "明天"], ["week", "未来 7 天"], ["later", "以后"]];
+  function bucket(t) {
+    if (!t.date) return t.status === "open" ? "later" : "past";
+    if (t.date < today) return t.status === "open" ? "overdue" : "past";
+    if (t.date === today) return "today";
+    if (t.date === addD(today, 1)) return "tomorrow";
+    if (t.date <= addD(today, 7)) return "week";
+    return "later";
+  }
+  function row(t) {
+    const del = t.status === "deleted";
+    const when = t.deadline ? dlHTML(t) : t.date ? `<span style="${overdue(t) ? "color:var(--danger)" : ""}">${fmtDate(t.date, PA.timeRange(t))}</span>` : '<span class="muted">未定日期</span>';
+    return `<tr class="todo-row ${t.status === "done" ? "todo-done" : ""} ${del ? "todo-deleted" : ""}" data-todo-row>
+      <td>${PA.tickHTML(t)}</td>
+      <td style="white-space:normal;min-width:180px"><a class="todo-title" href="#" data-peek="${t.id}">${esc(t.title)}</a>${t.tags && t.tags.length ? `<div>${PA.tagChips(t.tags)}</div>` : ""}</td>
+      <td>${when}</td>
+      <td>${esc(t.location) || '<span class="muted">—</span>'}</td>
+      <td><span class="badge ${t.source === "meeting" ? "orange" : t.source === "text" ? "blue" : ""}">${PA.SOURCE_LABEL[t.source]}</span></td>
+      <td>${t.attachments.length ? "📎 " + t.attachments.length : '<span class="muted">—</span>'}</td>
+      <td><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span></td>
+      <td style="white-space:nowrap">${del ? `<button class="btn sm" data-restore="${t.id}">恢复</button> <button class="btn sm danger" data-purge="${t.id}">彻底删除</button>` : `<a href="todo.html?id=${t.id}">详情</a>`}</td></tr>`;
+  }
+  const inTab = (t, k) => (k === "all" ? t.status !== "deleted" : t.status === k);
+  function renderList() {
+    const cnt = (k) => state.todos.filter((t) => inTab(t, k) && base(t)).length;
+    tabs.innerHTML = [["open", "未完成"], ["done", "已完成"], ["deleted", "已删除"], ["all", "全部"]].map(([k, l]) => `<div class="tab ${tab === k ? "active" : ""}" data-k="${k}">${l}（${cnt(k)}）</div>`).join("");
+    tabs.querySelectorAll(".tab").forEach((el) => (el.onclick = () => { tab = el.dataset.k; render(); }));
+    const canGroup = tab === "open" || tab === "all";
+    $("grp-wrap").classList.toggle("hidden", !canGroup);
+    const list = state.todos.filter((t) => inTab(t, tab) && base(t) && (!d1.value || (t.date && t.date >= d1.value)) && (!d2.value || (t.date && t.date <= d2.value)))
+      .sort((a, b) => (tab === "open" || tab === "all" ? 1 : -1) * ((a.date || "9999") + (a.time || "")).localeCompare((b.date || "9999") + (b.time || "")));
+    let body = "";
+    if (canGroup && vs.group) {
+      const groups = [...BUCKETS, ["past", "过去（已完成）"]];
+      groups.forEach(([k, l]) => {
+        const items = list.filter((t) => bucket(t) === k);
+        if (!items.length) return;
+        body += `<tr class="group-row ${k === "overdue" ? "overdue" : ""}"><td colspan="8">${l}<span class="gc">${items.length}</span>${k === "overdue" ? ' <button class="btn sm" data-resched style="margin-left:10px">全部改到今天</button>' : ""}</td></tr>` + items.map(row).join("");
+      });
+    } else body = list.map(row).join("");
+    tbl.innerHTML = `<tr><th></th><th>待办</th><th>日期时间</th><th>地点</th><th>来源</th><th>附件</th><th>状态</th><th></th></tr>` + (body || `<tr><td colspan="8" class="empty">${tagModel.all.some((k) => checked.has(k)) ? "没有符合条件的待办" : '没有勾选任何标签 · <a href="#" data-tag-all>全选</a>'}</td></tr>`);
+    const rs = tbl.querySelector("[data-resched]");
+    if (rs) rs.onclick = () => {
+      const items = list.filter((t) => bucket(t) === "overdue"), old = items.map((t) => t.date);
+      items.forEach((t) => (t.date = today)); save(); log("手动更新待办", `${items.length} 个逾期待办改到今天`); PA.todosChanged();
+      PA.undoToast(`${items.length} 个逾期待办已改到今天`, () => { items.forEach((t, i) => (t.date = old[i])); save(); PA.todosChanged(); });
+    };
+  }
+
+  // ---------------- 日历 ----------------
+  const calItems = () => state.todos.filter((t) => t.date && base(t) && calShow(t));
+  const byDay = (items, day) => items.filter((t) => t.date === day).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const smTick = (t) => PA.tickHTML(t).replace('class="tick', 'class="tick sm');
+  const chip = (t) => `<span class="ev ${cls(t)}" draggable="true" data-id="${t.id}" data-todo-row title="${esc(t.title)}${t.location ? " · " + esc(t.location) : ""}">${smTick(t)}${t.time ? `<span class="t">${t.time}</span>` : ""}${dlTag(t)}${t.location ? "📍" : ""}${esc(t.title)}</span>`;
+
+  function renderMonth(items) {
+    const first = vs.cursor.slice(0, 8) + "01", start = monday(first);
+    const m = D(first).getMonth();
+    const end = addD(first, new Date(D(first).getFullYear(), m + 1, 0).getDate() - 1);
+    const weeks = Math.ceil(((D(end) - D(start)) / 86400000 + 1) / 7);
+    $("c-title").textContent = `${first.slice(0, 4)} 年 ${m + 1} 月`;
+    let html = '<div class="month">' + "一二三四五六日".split("").map((d) => `<div class="dow">周${d}</div>`).join("");
+    for (let i = 0; i < weeks * 7; i++) {
+      const day = addD(start, i), list = byDay(items, day), dw = D(day).getDay();
+      html += `<div class="mcell ${day === today ? "today" : ""} ${D(day).getMonth() !== m ? "other" : ""} ${dw === 0 || dw === 6 ? "weekend" : ""}" data-new-date="${day}" data-drop-date="${day}" data-keep-time="1">
+        <div class="dn"><b>${D(day).getDate()}</b></div>${list.slice(0, 3).map(chip).join("")}${list.length > 3 ? `<div class="more" data-more="${day}">+${list.length - 3} 更多</div>` : ""}</div>`;
+    }
+    return html + "</div>";
+  }
+
+  // 时间轴：1 像素 = 1 分钟，吸附 15 分钟
+  const SNAP = 15;
+  const snap = (m) => Math.round(m / SNAP) * SNAP;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const durOf = (t) => +t.duration || PA.DEFAULT_DUR;
+  function block(t, top, li, nl) {
+    const dur = durOf(t), short = dur <= 30;
+    return `<div class="tev ${cls(t)} ${short ? "short" : ""}" draggable="true" data-id="${t.id}" data-todo-row style="top:${top}px;height:${Math.max(18, dur) - 1}px;left:calc(${(li / nl) * 100}% + 2px);width:calc(${100 / nl}% - 4px)" title="${esc(t.title)}　${PA.timeRange(t)}（${PA.fmtDur(dur)}）">
+      <div class="rz rz-top" data-rz="top" title="拖动调整开始时间"></div>${smTick(t)}
+      ${short ? `<span class="t1"><b class="rg">${PA.timeRange(t)}</b> ${esc(t.title)}</span>` : `<span class="t rg">${PA.timeRange(t)}</span><span class="loc" style="color:inherit">${esc(t.title)}</span>${t.location && dur >= 60 ? `<span class="loc">📍 ${esc(t.location)}</span>` : ""}`}
+      <div class="rz rz-bot" data-rz="bot" title="拖动调整时长"></div></div>`;
+  }
+  function renderWeek(items, n) {
+    const start = vs.cursor;
+    const days = Array.from({ length: n }, (_, i) => addD(start, i));
+    const e = days[n - 1];
+    $("c-title").textContent = n === 7 ? `${start.slice(0, 4)} 年 ${+start.slice(5, 7)} 月 ${+start.slice(8)} 日 – ${+e.slice(5, 7)} 月 ${+e.slice(8)} 日` : `${start.slice(0, 4)} 年 ${+start.slice(5, 7)} 月 ${+start.slice(8)} 日 周${WD[D(start).getDay()]}`;
+    const cols = `56px repeat(${n}, minmax(0, 1fr))`;
+    let html = `<div class="week" style="grid-template-columns:${cols}"><div class="hd" style="border-left:none"></div>` +
+      days.map((d) => `<div class="hd ${d === today ? "today" : ""}" data-goto-day="${d}">周${WD[D(d).getDay()]}${PA.relDay(d) && n === 7 ? `·${PA.relDay(d)}` : ""}<b>${D(d).getDate()}</b></div>`).join("") +
+      `<div class="allday-l">全天</div>` + days.map((d) => `<div class="allday" data-new-date="${d}" data-drop-date="${d}">${byDay(items, d).filter((t) => !t.time).map(chip).join("")}</div>`).join("") + `</div>`;
+    html += `<div class="tgrid-scroll" id="tgs"><div class="tgrid" style="grid-template-columns:${cols}"><div>${Array.from({ length: 24 }, (_, h) => `<div class="hour-l">${h ? pad(h) + ":00" : ""}</div>`).join("")}</div>`;
+    days.forEach((d) => {
+      const timed = byDay(items, d).filter((t) => t.time);
+      // 时间重叠的待办并排显示：按簇分配列，每簇单独计算列数
+      const placed = []; let cluster = [], lanes = [], clusterEnd = -1;
+      const flush = () => { cluster.forEach((x) => (x.nl = lanes.length)); cluster = []; lanes = []; };
+      timed.forEach((t) => {
+        const s = PA.toMin(t.time), end = s + Math.max(18, durOf(t));
+        if (s >= clusterEnd) flush();
+        let li = lanes.findIndex((x) => x <= s); if (li < 0) { li = lanes.length; lanes.push(0); }
+        lanes[li] = end; clusterEnd = Math.max(clusterEnd, end);
+        const x = { t, s, li }; cluster.push(x); placed.push(x);
+      });
+      flush();
+      const nowM = new Date().getHours() * 60 + new Date().getMinutes();
+      html += `<div class="tcol" data-date="${d}">${placed.map(({ t, s, li, nl }) => block(t, s, li, nl)).join("")}${d === today ? `<div class="now-line" style="top:${nowM}px"></div>` : ""}</div>`;
+    });
+    return html + "</div></div>";
+  }
+
+  function renderAgenda(items) {
+    const start = vs.cursor, end = addD(start, 13);
+    $("c-title").textContent = `${+start.slice(5, 7)} 月 ${+start.slice(8)} 日 – ${+end.slice(5, 7)} 月 ${+end.slice(8)} 日`;
+    let html = '<div class="agenda">', any = false;
+    for (let i = 0; i < 14; i++) {
+      const d = addD(start, i), list = byDay(items, d);
+      if (!list.length && d !== today) continue;
+      any = true;
+      html += `<div class="ad ${d === today ? "today" : ""}"><div class="ad-date"><b>${+d.slice(5, 7)}/${+d.slice(8)} 周${WD[D(d).getDay()]}</b>${PA.relDay(d)}</div><div class="ad-items">${list.map((t) => `<div class="ai ${cls(t)}" data-id="${t.id}" data-todo-row>${PA.tickHTML(t)}<span class="tm">${t.time ? PA.timeRange(t) : "全天"}</span><span class="tt" style="flex:1">${dlTag(t)}${esc(t.title)}</span>${t.location ? `<span class="small muted">📍 ${esc(t.location)}</span>` : ""}${t.attachments.length ? `<span class="small muted">📎 ${t.attachments.length}</span>` : ""}<span class="badge">${PA.SOURCE_LABEL[t.source]}</span></div>`).join("") || '<div class="muted small" style="padding:8px">今天没有安排</div>'}</div></div>`;
+    }
+    return html + (any ? "" : '<div class="empty">这两周没有安排</div>') + "</div>";
+  }
+
+  function renderCal() {
+    const items = calItems();
+    document.querySelectorAll("#modeseg button").forEach((b) => b.classList.toggle("on", b.dataset.m === vs.mode));
+    const body = $("c-body");
+    const tgsOld = $("tgs"), keepScroll = tgsOld ? tgsOld.scrollTop : null;
+    body.innerHTML = vs.mode === "month" ? renderMonth(items) : vs.mode === "week" ? renderWeek(items, 7) : vs.mode === "day" ? renderWeek(items, 1) : renderAgenda(items);
+    const od = state.todos.filter((t) => overdue(t) && base(t)).length;
+    const odEl = $("c-overdue");
+    odEl.classList.toggle("hidden", !od); odEl.textContent = `⚠ ${od} 个已逾期`;
+    const tgs = $("tgs");
+    if (tgs) tgs.scrollTop = keepScroll ?? 7.5 * 60;
+    bindCal();
+  }
+
+  let dragInfo = null, suppressClick = false;
+  function ghost(col, a, b, prefix = "") {
+    let g = col.querySelector(".drag-ghost");
+    if (!g) { g = document.createElement("div"); g.className = "drag-ghost"; col.appendChild(g); }
+    g.style.top = a + "px"; g.style.height = Math.max(15, b - a) - 1 + "px";
+    g.textContent = `${prefix}${PA.toHM(a)}–${PA.toHM(b)} · ${PA.fmtDur(b - a)}`;
+  }
+  const clearGhosts = () => document.querySelectorAll(".drag-ghost").forEach((g) => g.remove());
+
+  // 按在勾选框上时暂时关闭所在块的拖拽，避免点勾选框时误触发拖动
+  document.addEventListener("pointerdown", (e) => {
+    const tk = e.target.closest(".tick"); if (!tk) return;
+    e.stopPropagation();
+    const d = tk.closest('[draggable="true"]'); if (!d) return;
+    d.draggable = false;
+    const restore = () => { d.draggable = true; document.removeEventListener("pointerup", restore, true); };
+    document.addEventListener("pointerup", restore, true);
+  }, true);
+
+  function bindCal() {
+    const root = $("cal-view");
+    root.querySelectorAll("[data-id]").forEach((el) => {
+      el.onclick = (e) => { e.stopPropagation(); if (suppressClick) { suppressClick = false; return; } openPeek(PA.todoById(el.dataset.id)); };
+      el.ondragstart = (e) => {
+        e.stopPropagation();
+        const t = PA.todoById(el.dataset.id);
+        dragInfo = { id: t.id, grab: el.classList.contains("tev") ? e.clientY - el.getBoundingClientRect().top : 0, dur: durOf(t) };
+        e.dataTransfer.setData("text/plain", t.id); e.dataTransfer.effectAllowed = "move";
+        setTimeout(() => el.classList.add("dragging"));
+      };
+      el.ondragend = () => { el.classList.remove("dragging"); clearGhosts(); dragInfo = null; };
+    });
+    root.querySelectorAll("[data-new-date]").forEach((el) => (el.onclick = (e) => { if (e.target.closest("[data-id],[data-more]")) return; newTodo({ date: el.dataset.newDate }); }));
+    root.querySelectorAll("[data-goto-day]").forEach((el) => (el.onclick = () => { vs.mode = "day"; vs.cursor = el.dataset.gotoDay; saveVs(); render(); }));
+    root.querySelectorAll("[data-more]").forEach((el) => (el.onclick = (e) => { e.stopPropagation(); morePopover(el.dataset.more, el); }));
+    // 拖到某一天（月视图格子、全天栏）
+    root.querySelectorAll("[data-drop-date]").forEach((el) => {
+      el.ondragover = (e) => { e.preventDefault(); el.classList.add("drop-ok"); };
+      el.ondragleave = () => el.classList.remove("drop-ok");
+      el.ondrop = (e) => {
+        e.preventDefault(); el.classList.remove("drop-ok");
+        const t = PA.todoById(e.dataTransfer.getData("text/plain")); if (!t) return;
+        const date = el.dataset.dropDate, time = el.dataset.keepTime ? t.time : "";
+        if (date === t.date && time === t.time) return;
+        setWhen(t, date, time, "日历拖拽");
+      };
+    });
+    // 时间轴列：拖入改时间、拖选新建
+    root.querySelectorAll(".tcol").forEach((col) => {
+      const yOf = (e) => e.clientY - col.getBoundingClientRect().top;
+      col.ondragover = (e) => {
+        if (!dragInfo) return;
+        e.preventDefault();
+        const a = clamp(snap(yOf(e) - dragInfo.grab), 0, 1440 - dragInfo.dur);
+        root.querySelectorAll(".drag-ghost").forEach((g) => g.parentElement !== col && g.remove());
+        ghost(col, a, a + dragInfo.dur);
+      };
+      col.ondragleave = (e) => { if (!col.contains(e.relatedTarget)) clearGhosts(); };
+      col.ondrop = (e) => {
+        e.preventDefault(); clearGhosts();
+        const t = PA.todoById(e.dataTransfer.getData("text/plain")); if (!t || !dragInfo) return;
+        const a = clamp(snap(yOf(e) - dragInfo.grab), 0, 1440 - dragInfo.dur);
+        if (col.dataset.date === t.date && PA.toHM(a) === t.time) return;
+        setWhen(t, col.dataset.date, PA.toHM(a), "日历拖拽", dragInfo.dur);
+      };
+      col.onmousedown = (e) => {
+        if (e.button !== 0 || e.target.closest(".tev")) return;
+        e.preventDefault();
+        const y0 = yOf(e), s0 = clamp(Math.floor(y0 / SNAP) * SNAP, 0, 1440 - SNAP);
+        let range = null;
+        const move = (ev) => {
+          const y = yOf(ev);
+          if (Math.abs(y - y0) < 4 && !range) return;
+          range = y >= y0 ? [s0, clamp(Math.ceil(y / SNAP) * SNAP, s0 + SNAP, 1440)] : [clamp(Math.floor(y / SNAP) * SNAP, 0, s0), s0 + SNAP];
+          ghost(col, range[0], range[1], "新建 ");
+        };
+        const up = () => {
+          document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up);
+          const [a, b] = range || [s0, Math.min(1440, s0 + PA.DEFAULT_DUR)];
+          clearGhosts();
+          newTodo({ date: col.dataset.date, time: PA.toHM(a), duration: b - a });
+        };
+        document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
+      };
+    });
+    // 拖动上下边缘：调整开始时间 / 时长
+    root.querySelectorAll(".tev .rz").forEach((h) => (h.onmousedown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      const blk = h.parentElement, col = blk.parentElement, t = PA.todoById(blk.dataset.id);
+      const s = PA.toMin(t.time), end = s + durOf(t), top = h.dataset.rz === "top";
+      let a = s, b = end;
+      blk.draggable = false; blk.classList.add("resizing");
+      const label = blk.querySelector(".rg");
+      const move = (ev) => {
+        const m = snap(ev.clientY - col.getBoundingClientRect().top);
+        if (top) a = clamp(m, 0, b - SNAP); else b = clamp(m, a + SNAP, 1440);
+        blk.style.top = a + "px"; blk.style.height = Math.max(18, b - a) - 1 + "px";
+        label.textContent = `${PA.toHM(a)}–${PA.toHM(b)} · ${PA.fmtDur(b - a)}`;
+      };
+      const up = () => {
+        document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up);
+        blk.draggable = true; blk.classList.remove("resizing"); suppressClick = true; setTimeout(() => (suppressClick = false), 50);
+        if (a === s && b === end) { render(); return; }
+        setWhen(t, t.date, PA.toHM(a), top ? "拖动上边缘" : "拖动下边缘", b - a);
+      };
+      document.addEventListener("mousemove", move); document.addEventListener("mouseup", up);
+    }));
+  }
+
+  function morePopover(day, anchor) {
+    document.querySelectorAll(".popover").forEach((p) => p.remove());
+    const p = document.createElement("div"); p.className = "popover";
+    const r = anchor.getBoundingClientRect();
+    p.style.left = Math.min(r.left, innerWidth - 280) + "px"; p.style.top = Math.min(r.top, innerHeight - 300) + "px";
+    p.innerHTML = `<div class="row" style="margin-bottom:6px"><b>${fmtDate(day)}</b><span class="spacer"></span><a href="#" data-day>日视图</a></div>` + byDay(calItems(), day).map(chip).join("");
+    document.body.appendChild(p);
+    p.querySelectorAll("[data-id]").forEach((el) => (el.onclick = () => { p.remove(); openPeek(PA.todoById(el.dataset.id)); }));
+    p.querySelector("[data-day]").onclick = (e) => { e.preventDefault(); p.remove(); vs.mode = "day"; vs.cursor = day; saveVs(); render(); };
+    setTimeout(() => document.addEventListener("click", function h(ev) { if (!p.contains(ev.target)) { p.remove(); document.removeEventListener("click", h); } }));
+  }
+
+  // ---------------- 右侧详情（侧边速览） ----------------
+  let peek = null;
+  function closePeek() { document.querySelectorAll(".peek").forEach((p) => p.remove()); peek = null; }
+  function openPeek(t) {
+    closePeek();
+    if (!t) return;
+    const p = document.createElement("div"); p.className = "peek";
+    peek = { t, status: t.status };
+    const del = t.status === "deleted";
+    const prev = t.attachments.map(PA.fileById).filter((f) => f && PA.canPreview(f));
+    p.innerHTML = `<div class="peek-h"><span class="badge ${t.status === "open" ? "blue" : t.status === "done" ? "green" : ""}">${PA.STATUS_LABEL[t.status]}</span><span class="badge">${PA.SOURCE_LABEL[t.source]}</span>${overdue(t) ? '<span class="badge red">已逾期</span>' : ""}<span class="spacer"></span><a href="todo.html?id=${t.id}" class="small">完整详情 →</a><button class="icon-btn" data-x title="关闭（Esc）">×</button></div>
+      <div class="peek-b">
+        ${fromHTML(t)}
+        <div class="field"><label>待办内容</label><input class="input" data-k="title" value="${esc(t.title)}"></div>
+        <div class="field"><label>时间</label><div id="pk-dtp"></div></div>
+        <div class="field"><label>地点</label><input class="input" data-k="location" value="${esc(t.location)}"></div>
+        <div class="field"><label>备注</label><textarea class="input" rows="2" data-k="notes" placeholder="长期不变的说明">${esc(t.notes)}</textarea></div>
+        <div class="field"><label>想法记录</label><div id="pk-rec"></div></div>
+        <div class="field"><label>标签</label><div id="pk-tags" class="peek-tags"></div></div>
+        <div class="field"><label>附件（${t.attachments.length}）</label><div id="pk-att"></div>${prev.length ? `<div class="small" style="margin-top:4px">预览：${prev.map((f) => `<a href="#" data-pv="${f.id}">${esc(f.name)}</a>`).join("、")}</div>` : ""}</div>
+        ${t.actionItems ? `<div class="field"><label>会议行动项</label>${t.actionItems.map((a) => `<div class="small" style="padding:2px 0"><span class="owner ${a.owner === "我" ? "me" : ""}">${esc(a.owner)}</span> ${esc(a.text)}</div>`).join("")}</div>` : ""}
+      </div>
+      <div class="peek-f">${del ? '<button class="btn primary" data-restore-pk>恢复</button><button class="btn danger" data-purge-pk>彻底删除</button>' : `<button class="btn primary" data-save-pk>保存</button>${t.status === "open" ? '<button class="btn" data-done>✓ 完成</button>' : '<button class="btn" data-reopen>改回未完成</button>'}<span class="spacer"></span>${t.status === "open" ? `<button class="btn" data-drop-pk title="${t.ideaId ? "只删除这条待办，想做的事还在" : "转成想做的事，以后再排"}">先不做了</button>` : ""}<button class="btn danger" data-del-pk>删除</button>`}</div>`;
+    document.body.appendChild(p);
+    const q = (s) => p.querySelector(s);
+    const dtp = PA.dateTimePicker(q("#pk-dtp"), { date: t.date, time: t.time, duration: t.duration, deadline: t.deadline });
+    PA.recordsBox(q("#pk-rec"), t, { compact: !!t.date, onChange: () => PA.todosChanged() });
+    PA.tagEditor(q("#pk-tags"), { value: t.tags || [], onChange: (tags, ch) => {
+      t.tags = tags; t.updatedAt = PA.nowStr(); save();
+      log("修改标签", `${t.title}：${ch.added ? "加上 " + ch.added : "去掉 " + ch.removed}`);
+      PA.todosChanged();
+    } });
+    const initAtt = [...t.attachments];
+    const box = PA.attachBox(q("#pk-att"), { fileIds: t.attachments, todoId: t.id });
+    q("[data-x]").onclick = closePeek;
+    p.querySelectorAll("[data-pv]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); closePeek(); PA.openPreview(b.dataset.pv); }));
+    if (del) {
+      q("[data-restore-pk]").onclick = () => { PA.setStatus([t], "open", "手动更新待办"); toast("已恢复为未完成"); PA.todosChanged(); };
+      q("[data-purge-pk]").onclick = () => PA.purgeTodo(t, closePeek);
+      return;
+    }
+    q("[data-save-pk]").onclick = () => {
+      const v = {}; p.querySelectorAll("[data-k]").forEach((i) => (v[i.dataset.k] = i.value.trim()));
+      if (!v.title) { toast("待办内容不能为空"); return; }
+      const w = dtp.value();
+      if (!w.date) { toast("待办必须有日期；没日子的可以点“先不做了”放进想做的事"); return; }
+      Object.assign(t, v, { date: w.date, time: w.time, duration: w.duration, deadline: w.deadline || null, updatedAt: PA.nowStr() });
+      // 附件以表单为准，但保留打开面板后从别处加上的（如想法记录里的文件、刚上传完成的）
+      const ids = box.fileIds(), removed = initAtt.filter((id) => !ids.includes(id));
+      t.attachments = [...new Set([...t.attachments.filter((id) => !removed.includes(id)), ...ids])];
+      save(); log("手动更新待办", t.title); toast("已保存"); PA.todosChanged(); openPeek(t);
+    };
+    if (q("[data-done]")) q("[data-done]").onclick = () => { PA.completeTodos([t]); PA.todosChanged(); };
+    if (q("[data-reopen]")) q("[data-reopen]").onclick = () => { PA.setStatus([t], "open"); toast("已改回未完成"); PA.todosChanged(); };
+    q("[data-del-pk]").onclick = () => { closePeek(); PA.deleteTodo(t); };
+    if (q("[data-drop-pk]")) q("[data-drop-pk]").onclick = () => dropTodo(t);
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !document.querySelector(".modal-mask")) closePeek(); });
+
+  // ---------------- 新建 ----------------
+  function newTodo(pre = {}) {
+    const id = PA.uid("t");
+    const preKeys = ["date", "time", "duration"].filter((k) => pre[k]);
+    let dtp, box, created = false;
+    const onCancel = () => {
+      if (created || !box) return;
+      const n = box.newUploadCount();
+      if (n) toast(`已上传的 ${n} 个文件保留在知识库中`, 4000);
+    };
+    PA.modal({
+      title: "新建待办", wide: true,
+      body: `<div class="field"><label>待办内容 <span class="req">*</span></label><input class="input" id="n-title" placeholder="例如：明天下午3点在公司开会 1小时">
+          <div class="hint n-parsed" id="n-parsed"></div></div>
+        <div class="field"><label>时间 <span class="req">*</span></label><div id="n-dtp"></div>
+          <div class="n-noday hidden" id="n-noday">还没定日子？<a href="#" data-to-idea>放进想做的事 ›</a></div></div>
+        <div class="field"><label>地点</label><input class="input" id="n-loc"></div>
+        <div class="field"><label>备注</label><textarea class="input" id="n-notes" rows="2"></textarea></div>
+        <div class="field"><label>附件（可选）</label><div id="n-att"></div></div>`,
+      onMount: (m, close) => {
+        // 没有日期（也没选期限）时“创建”不可用，提示可以放进想做的事
+        const okBtn = [...m.querySelectorAll(".modal-foot .btn")].find((b) => b.textContent === "创建");
+        const updOk = () => { const has = !!(dtp && dtp.value().date); okBtn.disabled = !has; okBtn.title = has ? "" : "待办必须有日期"; m.querySelector("#n-noday").classList.toggle("hidden", has); };
+        dtp = PA.dateTimePicker(m.querySelector("#n-dtp"), { date: pre.date, time: pre.time, duration: pre.duration }, { onChange: updOk });
+        updOk();
+        m.querySelector("#n-dtp").addEventListener("click", () => setTimeout(updOk));
+        m.querySelector("[data-to-idea]").onclick = (e) => {
+          e.preventDefault();
+          const raw = m.querySelector("#n-title").value.trim();
+          if (!raw) { toast("请先写下要做的事"); m.querySelector("#n-title").focus(); return; }
+          const now = PA.nowStr(), notes = m.querySelector("#n-notes").value.trim();
+          const idea = { id: PA.uid("i"), title: raw, notes, records: [], attachments: box.fileIds(), tags: PA.autoIdeaTags(raw + " " + notes), tagsRemoved: [], starred: false, status: "active", source: "manual", sourceNote: "", createdAt: now, updatedAt: now, askedDone: [] };
+          state.ideas = state.ideas || [];
+          state.ideas.unshift(idea); created = true; save(); log("手动创建待办", `新增想做的事：${raw}`);
+          close();
+          PA.undoToast(`已放进想做的事：${raw}`, () => { state.ideas = state.ideas.filter((i) => i !== idea); save(); PA.todosChanged(); });
+          PA.todosChanged();
+        };
+        box = PA.attachBox(m.querySelector("#n-att"), { todoId: id });
+        m._dtp = dtp; m._box = box;
+        const ti = m.querySelector("#n-title"), loc = m.querySelector("#n-loc"), hint = m.querySelector("#n-parsed");
+        let locManual = false, autoKeys = new Set();
+        const setDur = (min, opt) => dtp.set({ duration: min }, opt);
+        loc.addEventListener("input", () => (locManual = true));
+        ti.oninput = () => {
+          const p = PA.parseTodo(ti.value), touched = dtp.touched();
+          const rec = {};
+          if (p.date) rec.date = p.date;
+          if (p.time) rec.time = p.time;
+          if (p.duration) rec.duration = p.duration;
+          if (p.deadline) rec.deadline = p.deadline;
+          const skip = Object.keys(rec).filter((k) => touched.has(k) || preKeys.includes(k));
+          // 之前由识别填上、现在识别不到的项清掉（用户手动改过的不动）
+          const clear = {};
+          autoKeys.forEach((k) => { if (!(k in rec) && !touched.has(k)) { clear[k] = k === "deadline" ? null : ""; autoKeys.delete(k); } });
+          if ("duration" in clear) { delete clear.duration; setDur(0); }
+          if (Object.keys(clear).length) dtp.set(clear);
+          const apply = {};
+          Object.keys(rec).filter((k) => !skip.includes(k)).forEach((k) => { apply[k] = rec[k]; autoKeys.add(k); });
+          const dur = apply.duration; delete apply.duration;
+          if (Object.keys(apply).length) dtp.set(apply, { auto: true });
+          if (dur && dtp.value().duration !== dur) setDur(dur, { auto: true });
+          if (!locManual) loc.value = p.location;
+          updOk();
+          const parts = [];
+          if (p.date) parts.push(PA.relDay(p.date) || PA.cnDate(p.date));
+          if (p.deadline) parts.push(p.deadline.label);
+          if (p.time) parts.push(p.time);
+          if (p.duration) parts.push(PA.fmtDur(p.duration).replace(" ", ""));
+          if (p.location) parts.push("📍" + p.location);
+          hint.innerHTML = parts.length ? `已识别：${esc(parts.join(" · "))}${skip.length || (p.location && locManual) ? '<span class="muted">（你手动设过的项没有覆盖）</span>' : ""}` : "";
+        };
+        m.querySelector(".close").addEventListener("click", onCancel);
+        m.addEventListener("mousedown", (e) => { if (e.target === m) onCancel(); });
+        setTimeout(() => ti.focus());
+      },
+      actions: [{ label: "取消", onClick: onCancel }, { label: "创建", primary: true, onClick: (m) => {
+        const raw = m.querySelector("#n-title").value.trim();
+        if (!raw) { toast("请填写待办内容"); return false; }
+        const p = PA.parseTodo(raw);
+        const title = p.used.length ? p.title : raw;
+        const w = dtp.value();
+        if (!w.date) { toast("待办必须有日期；没日子的可以放进想做的事"); return false; }
+        const notes = m.querySelector("#n-notes").value.trim();
+        const attachments = box.fileIds(), pending = box.pending();
+        // 表单里移除了的上传，完成后不再关联到这条待办
+        state.uploads.forEach((u) => { if (u.todoIds && u.todoIds.includes(id) && !u.fileId && !pending.includes(u.id)) u.todoIds = u.todoIds.filter((x) => x !== id); });
+        const now = PA.nowStr();
+        const t = { id, title, date: w.date, time: w.time, duration: w.duration, deadline: w.deadline || null, location: m.querySelector("#n-loc").value.trim(), notes, status: "open", source: "manual", attachments, tags: PA.autoTags(title + " " + notes, attachments), starred: false, records: [], createdAt: now, updatedAt: now };
+        state.todos.push(t); created = true; save(); log("手动创建待办", title);
+        toast(`已创建：${title}（${PA.whenText(t)}）${pending.length ? `，${pending.length} 个文件上传完成后自动关联` : ""}`, 3500);
+        PA.todosChanged();
+      } }],
+    });
+  }
+
+  // ---------------- 总控 ----------------
+  function render() {
+    const cal = vs.view === "cal";
+    document.querySelectorAll("#viewseg button").forEach((b) => b.classList.toggle("on", b.dataset.v === vs.view));
+    $("list-view").classList.toggle("hidden", cal);
+    $("cal-view").classList.toggle("hidden", !cal);
+    tabs.classList.toggle("hidden", cal);
+    document.querySelectorAll(".list-only").forEach((el) => el.classList.toggle("hidden", cal));
+    document.querySelectorAll(".cal-only").forEach((el) => el.classList.toggle("hidden", !cal));
+    buildTagModel();
+    renderTagTree();
+    cal ? renderCal() : renderList();
+  }
+  document.addEventListener("pa:todos-changed", () => {
+    render();
+    if (peek) { if (!state.todos.includes(peek.t)) closePeek(); else if (peek.t.status !== peek.status) openPeek(peek.t); }
+  });
+  document.addEventListener("pa:files-changed", render);
+  // 彻底删除、恢复：委托处理
+  document.addEventListener("click", (e) => {
+    const dl = e.target.closest("[data-del]");
+    if (dl) { e.preventDefault(); e.stopPropagation(); PA.deleteTodo(PA.todoById(dl.dataset.del)); return; }
+    const rs = e.target.closest("[data-restore]");
+    if (rs) { const t = PA.todoById(rs.dataset.restore); PA.setStatus([t], "open", "手动更新待办"); toast(`已恢复：${t.title}`); PA.todosChanged(); return; }
+    const pg = e.target.closest("[data-purge]");
+    if (pg) { PA.purgeTodo(PA.todoById(pg.dataset.purge)); return; }
+    const pk = e.target.closest("[data-peek]");
+    if (pk) { e.preventDefault(); openPeek(PA.todoById(pk.dataset.peek)); return; }
+  });
+  document.querySelectorAll("#viewseg button").forEach((b) => (b.onclick = () => { vs.view = b.dataset.v; saveVs(); closePeek(); render(); }));
+  document.querySelectorAll("#modeseg button").forEach((b) => (b.onclick = () => { vs.mode = b.dataset.m; saveVs(); render(); }));
+  const step = { month: null, week: 7, day: 1, agenda: 14 };
+  const move = (dir) => {
+    if (vs.mode === "month") { const d = D(vs.cursor.slice(0, 8) + "01"); d.setMonth(d.getMonth() + dir); vs.cursor = S(d); }
+    else vs.cursor = addD(vs.cursor, dir * step[vs.mode]);
+    saveVs(); render();
+  };
+  $("c-prev").onclick = () => move(-1);
+  $("c-next").onclick = () => move(1);
+  $("c-today").onclick = () => { vs.cursor = today; saveVs(); render(); };
+  $("c-overdue").onclick = (e) => { e.preventDefault(); vs.view = "list"; vs.group = true; grp.checked = true; tab = "open"; saveVs(); render(); };
+  $("new").onclick = () => newTodo();
+  const sd = $("show-done"), sdel = $("show-del");
+  sd.checked = vs.showDone; sdel.checked = vs.showDel; grp.checked = vs.group;
+  sd.onchange = () => { vs.showDone = sd.checked; saveVs(); render(); };
+  sdel.onchange = () => { vs.showDel = sdel.checked; saveVs(); render(); };
+  grp.onchange = () => { vs.group = grp.checked; saveVs(); render(); };
+  $("tag-toggle").onclick = () => { vs.tagCollapsed = !vs.tagCollapsed; saveVs(); render(); };
+  $("tag-mbtn").onclick = () => $("todo-layout").classList.toggle("tag-open");
+  [kw, d1, d2].forEach((el) => (el.oninput = render));
+  $("src").addEventListener("change", render);
+  render();
+}
+</script>
+<script>
+// S07：待办页顶部的“跟助手说”入口，输入后跳到助手页处理。
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const bar = document.createElement("div");
+  bar.className = "askbar";
+  bar.innerHTML = '<span class="ask-label">跟助手说：</span>'
+    + '<div class="ask-main"><input class="input ask-input" id="ask" placeholder="把这周所有会议推迟一天"><button class="btn primary" id="ask-go">问助手</button></div>'
+    + '<span class="ask-note">在助手页里说人话就行，按意思查、批量改都能用</span>';
+  page.insertBefore(bar, page.firstChild);
+  const input = PA.bindAsk(bar.querySelector("#ask"));
+  bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
+</body>
+</html>

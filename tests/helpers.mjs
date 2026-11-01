@@ -112,3 +112,4 @@ export async function waitFor(fn, { timeout = 3000, interval = 10, label = "Êù°‰
     await sleep(interval);
   }
 }
+export const V6_DIR = path.join(PUBLIC_DIR, "ITER1/v6");
