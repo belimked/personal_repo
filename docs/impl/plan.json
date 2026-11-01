@@ -550,7 +550,8 @@
       "model_used": "main",
       "actual_min": 34,
       "last_error": null,
-      "finished_at": "2026-11-01T09:06:15.946Z"
+      "finished_at": "2026-11-01T09:06:15.946Z",
+      "commit": "3f21187"
     },
     {
       "id": "S08",
@@ -597,10 +598,15 @@
       },
       "gaps": [],
       "size_reason": "两个新页面 + 资料页改造",
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "993b3247b3",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-11-01T09:07:01.064Z",
+      "model_used": "main",
+      "actual_min": 25.6,
+      "last_error": null,
+      "finished_at": "2026-11-01T09:32:39.638Z"
     },
     {
       "id": "S09",

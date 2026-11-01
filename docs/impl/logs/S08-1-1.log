@@ -1,0 +1,21 @@
+$ node --test tests/v6-pages.test.mjs
+✔ watch.html：p1 第 30 天至少 5 个领域分组，有待办 / 想做的事入口 (1335.271458ms)
+✔ watch.html：第 1 天为空状态 (666.839163ms)
+✔ watch.html：其他人物只显示自己用到的领域 (418.491078ms)
+✔ files.html：标题为“交给我的资料”，有拍照 / 截图 / 分享链接入口 (927.305495ms)
+✔ files.html：第 1 天空状态说明交资料能换来什么；分享链接后空状态消失 (639.467523ms)
+✔ me.html：按五层显示；展开看证据 (893.108724ms)
+✔ me.html：删除一条后条目数减 1；确认猜测后变为已确认；修改写回 (1599.701377ms)
+✔ me.html：关掉“孩子”敏感开关后孩子相关条目隐藏，写入 consents (804.118344ms)
+✔ 打开通用模式后首页不再有“因为”黄条 (1384.600132ms)
+✔ me.html：导出生成 JSON Blob (539.980984ms)
+✔ me.html：忘掉我二次确认后清空 profile、evidence、feedback (521.961004ms)
+✔ me.html：第 30 天显示上次界面调整，撤回后 uiFactors 恢复默认；第 1 天不显示 (1103.630456ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12961.250924

@@ -83,3 +83,8 @@ test("v6 未登录访问会跳转到登录页", async () => {
     p.close();
   }
 });
+
+// S08：新增的两个页面也在冒烟列表里
+test("v6 包含 S08 新页面：我盯着的事、我了解的你", () => {
+  for (const p of ["watch.html", "me.html"]) assert.ok(pages.includes(p), p);
+});

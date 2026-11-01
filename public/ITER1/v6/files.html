@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>个人知识库 · 个人日常助手</title>
+<title>交给我的资料 · 个人日常助手</title>
 <link rel="stylesheet" href="assets/app.css">
 <style>
 .tree-item .caret { width: 14px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
@@ -61,7 +61,7 @@
 <script src="assets/app.js"></script>
 <script src="assets/demo.js"></script>
 <script>
-if (PA.mount({ page: "files", title: "个人知识库", narrow: false })) {
+if (PA.mount({ page: "files", title: "交给我的资料", narrow: false })) {
   const { state, esc, save, fmtSize, toast, log } = PA;
   const NONE = "__untagged__";
   const LOCK_TIP = "你手动设置过标签，重新生成时不会改动";
@@ -336,6 +336,47 @@ if (PA.mount({ page: "files", title: "个人知识库", narrow: false })) {
   col.insertBefore(bar, col.firstChild);
   const input = PA.bindAsk(bar.querySelector("#ask"));
   bar.querySelector("#ask-go").onclick = () => { if (!PA.goAsk(input.value)) input.focus(); };
+})();
+</script>
+<script>
+// S08：交给我的资料——“拍照 / 截图 / 分享链接”入口；没有资料时（第 1 天）显示空状态，说明交资料能换来什么。
+(function () {
+  const PA = window.PA, page = document.getElementById("page");
+  if (!PA || !page || !PA.state.session) return;
+  const { state, esc, save, toast } = PA;
+  const intake = '<div class="files-intake" data-rule="R-资料-01 R-资料-06">'
+    + '<button class="btn primary" data-intake="photo">📷 拍照</button><button class="btn" data-intake="shot">🖼 截图</button><button class="btn" data-intake="link">🔗 分享链接</button></div>';
+  const top = document.createElement("div");
+  top.className = "card files-head";
+  top.innerHTML = '<div class="row"><div style="flex:1;min-width:220px"><b>把资料交给我</b><div class="hint">课表、通知、票据、录音都行；我读完后替你记事、提醒，以后按意思就能找到。</div></div>' + intake + '</div>';
+  page.insertBefore(top, page.firstChild);
+  const empty = document.createElement("div");
+  empty.className = "card files-empty";
+  empty.dataset.rule = "R-冷启动-04 R-资料-01";
+  empty.innerHTML = '<div style="font-size:32px">📥</div><p><b>还没有交给我的资料</b></p>'
+    + '<p>拍一张课表，以后每周日晚提醒你第二天带什么；拍下家长会通知，我替你记下时间和要带的东西；分享一个视频链接，我记住发布时间和要点。</p>'
+    + '<p class="hint">不交资料也能用；这些只用来帮你，不给别人看。</p>' + intake;
+  page.insertBefore(empty, top.nextSibling);
+  const layout = page.querySelector(".files-layout");
+  function sync() {
+    const none = !(state.files || []).length;
+    empty.classList.toggle("hidden", !none);
+    top.classList.toggle("hidden", none);
+    if (layout) layout.classList.toggle("hidden", none);
+  }
+  function addLink() {
+    PA.modal({ title: "分享链接", body: '<input class="input" id="link-in" placeholder="粘贴视频或文章链接" style="width:100%"><div class="hint" style="margin-top:6px">分享链接比下载后上传更好：保留发布时间、作者和字幕。</div>', actions: [{ label: "取消" }, { label: "交给我", primary: true, onClick: (m) => {
+      const url = m.querySelector("#link-in").value.trim();
+      if (!/^https?:\/\//.test(url)) { toast("请粘贴以 http 开头的链接"); return false; }
+      const name = url.replace(/^https?:\/\//, "").slice(0, 40);
+      state.files.unshift({ id: PA.uid("f"), name: name + ".link", ext: "link", cat: "other", size: 0, tags: ["资料/收藏"], uploadedAt: PA.nowStr(), status: "indexed", content: "分享链接：" + url, link: url });
+      save(); toast("收到链接，我读完会告诉你要点");
+      document.dispatchEvent(new CustomEvent("pa:files-changed")); sync();
+    } }] });
+  }
+  document.querySelectorAll("[data-intake]").forEach((b) => (b.onclick = () => (b.dataset.intake === "link" ? addLink() : PA.pickFiles())));
+  document.addEventListener("pa:files-changed", sync);
+  sync();
 })();
 </script>
 </body>

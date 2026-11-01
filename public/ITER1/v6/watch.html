@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我盯着的事 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="watch-sub" id="watch-sub">
+    <a class="watch-sub-link" href="todos.html" data-sub="todos">全部待办 ›</a>
+    <a class="watch-sub-link" href="ideas.html" data-sub="ideas">想做的事 ›</a>
+  </div>
+  <div id="watch"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/personas-p1.js"></script>
+<script src="assets/personas-others.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/demo.js"></script>
+<script>
+// S08：我盯着的事。按领域分组，只显示当前人物用到的领域；第 1 天为空状态。
+if (PA.mount({ page: "watch", title: "我盯着的事" })) {
+  const { state, esc } = PA;
+  // 领域顺序与显示名（领域 id 见 personas-p1.js；“家务”显示为“家里”）
+  const ORDER = ["工作", "孩子", "家务", "健康", "钱", "学习", "人情", "小店", "出行", "想做的事"];
+  const LABEL = { 家务: "家里" };
+  const ICON = { 工作: "💼", 孩子: "🧒", 家务: "🏠", 健康: "🩺", 钱: "💰", 学习: "📚", 人情: "🎁", 小店: "🏪", 出行: "🧳", 想做的事: "💡" };
+  const stage = () => (state.demo && +state.demo.stage) || 1;
+  const host = document.getElementById("watch");
+
+  function linkOf(w) {
+    if (w.todoId && PA.todoById(w.todoId)) return `<a class="small" href="todo.html?id=${encodeURIComponent(w.todoId)}">看待办 ›</a>`;
+    if (w.ideaId && PA.ideaById(w.ideaId)) return `<a class="small" href="idea.html?id=${encodeURIComponent(w.ideaId)}">看想做的事 ›</a>`;
+    return "";
+  }
+  const itemHTML = (w) => `<div class="watch-item" data-watch="${esc(w.id)}">
+      <div class="watch-title">${esc(w.title)}</div>
+      <div class="watch-doing">🤖 ${esc(w.doing || "我先替你记着")}</div>
+      <div class="watch-meta"><span class="watch-next">⏰ 下一个时间点：${esc(w.nextAt || "待定")}</span>${linkOf(w)}</div>
+    </div>`;
+
+  function render() {
+    const list = state.watch || [];
+    const empty = `<div class="watch-empty empty" data-rule="R-冷启动-04"><div style="font-size:32px">👀</div>
+      <p><b>你告诉我的事会在这里，我替你盯着</b></p>
+      <p class="small">在<a href="home.html">管家</a>里说一件这周想搞定的事，我会记下要做什么、下一次什么时候提醒你。</p></div>`;
+    if (stage() <= 1 || !list.length) {
+      // 第 1 天：空状态为主；刚说的事放在下面小字列出
+      host.innerHTML = empty + (list.length ? `<div class="watch-fresh"><div class="hint">刚开始替你盯的：</div>${list.map(itemHTML).join("")}</div>` : "");
+      return;
+    }
+    const doms = [...new Set(list.map((w) => w.domain || "其他"))].sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+    host.innerHTML = `<p class="hint watch-intro" data-rule="R-帮什么-01">按领域分好了，共 ${list.length} 件；每件写着我正在做什么、下次什么时候找你。</p>` + doms.map((d) => {
+      const items = list.filter((w) => (w.domain || "其他") === d);
+      return `<section class="card watch-group" data-domain="${esc(d)}"><div class="card-head"><b>${ICON[d] || "📌"} ${esc(LABEL[d] || d)}</b><span class="badge">${items.length}</span></div>${items.map(itemHTML).join("")}</section>`;
+    }).join("");
+  }
+  render();
+}
+</script>
+</body>
+</html>

@@ -1174,3 +1174,11 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchButler);
   else setTimeout(watchButler, 0);
 })();
+
+// ---------------- 界面因素默认值（S08）：“我了解的你”里撤回上次界面调整时，uiFactors 恢复为这一组；S10 的映射据此给默认排版 ----------------
+(function () {
+  const PA = window.PA;
+  if (!PA) return;
+  PA.UI_FACTORS_DEFAULT = { age: "未知", digital: "未知", roles: [], focus: "未知", timeDevice: "未知", infoPref: "未知", inputPref: "打字" };
+  PA.uiFactorsDefault = () => JSON.parse(JSON.stringify(PA.UI_FACTORS_DEFAULT));
+})();

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我了解的你 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="card me-intro" data-rule="R-信任-01 R-信任-02">
+    <b>这些是我对你的了解，只用来帮你。</b>
+    <div class="hint">每条都能看来源、改、删；“猜测”点一下确认就行。你不想让我记的类别，下面可以单独关掉。</div>
+  </div>
+  <div id="me-ui"></div>
+  <div id="me-layers"></div>
+  <div class="card" id="me-sens" data-rule="R-信任-03"></div>
+  <div class="card" id="me-general" data-rule="R-信任-05"></div>
+  <div class="card me-data" data-rule="R-信任-04">
+    <div class="card-head"><b>我的数据</b></div>
+    <div class="row">
+      <button class="btn" id="me-export">导出全部数据</button>
+      <button class="btn danger" id="me-forget">忘掉我</button>
+      <span class="hint">导出为 JSON 文件；“忘掉我”会清空画像、证据和反馈记录。</span>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/personas-p1.js"></script>
+<script src="assets/personas-others.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/demo.js"></script>
+<script>
+// S08：我了解的你。五层画像（看来源 / 改 / 删 / 确认猜测）、敏感类别开关、通用模式、导出、忘掉我、上次界面调整与撤回。
+if (PA.mount({ page: "me", title: "我了解的你" })) {
+  const { state, esc, save, toast } = PA;
+  const LAYERS = [[1, "基本事实"], [2, "角色"], [3, "职责"], [4, "偏好和风格"], [5, "当前状态"]];
+  const SENS = [["health", "健康"], ["finance", "财务"], ["child", "孩子"], ["location", "位置"], ["face", "人脸"]];
+  const SENS_LABEL = Object.fromEntries(SENS);
+  const SOURCE = { told: "你说过", file: "你的资料", todo: "你的待办", idea: "想做的事", feedback: "你的反应", meeting: "会议录音" };
+  const STATUS = { confirmed: ["已确认", "green"], guess: ["猜测", "orange"], pending: ["待确认", "red"] };
+  const arr = (k) => (state[k] = Array.isArray(state[k]) ? state[k] : []);
+  const consents = () => (state.consents = state.consents && typeof state.consents === "object" ? state.consents : {});
+  const stage = () => (state.demo && +state.demo.stage) || 1;
+  const open = new Set(), editing = new Set();
+  const shown = (p) => !p.sensitive || consents()[p.sensitive] !== false;
+
+  function evidenceHTML(p) {
+    const evs = (p.evidenceIds || []).map((id) => arr("evidence").find((e) => e.id === id)).filter(Boolean);
+    if (!evs.length) return '<div class="me-ev muted small">没有找到原始证据（可能已被删除）。</div>';
+    return `<ul class="me-ev">${evs.map((e) => `<li><span class="badge">${esc(SOURCE[e.kind] || e.kind)}</span> ${esc(e.text)} <span class="muted small">· ${esc(e.at || "")}${e.aboutSelf === false ? " · 不是在说你，已降权" : ""}</span></li>`).join("")}</ul>`;
+  }
+  function itemHTML(p) {
+    const [st, cls] = STATUS[p.status] || [p.status || "—", ""];
+    const ed = editing.has(p.id);
+    return `<div class="me-item" data-pid="${esc(p.id)}" data-status="${esc(p.status || "")}">
+      <div class="me-row">
+        <div class="me-main"><b>${esc(p.key)}</b>：${ed ? `<input class="input inline me-edit" value="${esc(p.value)}">` : `<span class="me-val">${esc(p.value)}</span>`}</div>
+        <span class="badge ${cls} me-status">${esc(st)}</span>
+      </div>
+      <div class="me-meta small muted">来源：<a href="#" data-act="ev">${esc(SOURCE[p.source] || p.source || "—")} ${open.has(p.id) ? "▲" : "▼"}</a> · 可信度 ${Math.round((+p.confidence || 0) * 100)}%${p.sensitive ? ` · 🔒 ${esc(SENS_LABEL[p.sensitive] || p.sensitive)}` : ""}${p.updatedAt ? ` · 更新于 ${esc(p.updatedAt)}` : ""}</div>
+      ${open.has(p.id) ? evidenceHTML(p) : ""}
+      <div class="me-acts">${p.status !== "confirmed" ? '<button class="btn sm primary" data-act="confirm">对，确认</button>' : ""}
+        ${ed ? '<button class="btn sm primary" data-act="save">保存</button><button class="btn sm" data-act="cancel">取消</button>' : '<button class="btn sm" data-act="edit">改</button>'}
+        <button class="btn sm danger" data-act="del">删</button></div>
+    </div>`;
+  }
+
+  function renderLayers() {
+    const host = document.getElementById("me-layers");
+    const prof = arr("profile");
+    const hidden = prof.filter((p) => !shown(p)).length;
+    host.innerHTML = LAYERS.map(([n, name]) => {
+      const items = prof.filter((p) => +p.layer === n && shown(p));
+      return `<section class="card me-layer" data-layer="${n}" data-rule="R-画像-01 R-画像-02 R-画像-04 R-画像-05"><div class="card-head"><b>${n}. ${name}</b><span class="badge">${items.length}</span></div>
+        ${items.map(itemHTML).join("") || '<div class="muted small me-none">还没有。</div>'}</section>`;
+    }).join("") + (hidden ? `<div class="hint me-hidden">有 ${hidden} 条敏感类别的条目已按你的设置隐藏。</div>` : "");
+    host.querySelectorAll(".me-item").forEach((el) => {
+      const p = prof.find((x) => x.id === el.dataset.pid);
+      el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); act(p, b.dataset.act, el); }));
+      const inp = el.querySelector(".me-edit");
+      if (inp) inp.onkeydown = (e) => { if (e.key === "Enter" && !e.isComposing) act(p, "save", el); };
+    });
+  }
+  function act(p, a, el) {
+    if (!p) return;
+    if (a === "ev") { open.has(p.id) ? open.delete(p.id) : open.add(p.id); }
+    else if (a === "confirm") { p.status = "confirmed"; p.confidence = Math.max(+p.confidence || 0, 0.9); p.updatedAt = PA.nowStr(); save(); toast("已确认：" + p.key); }
+    else if (a === "edit") editing.add(p.id);
+    else if (a === "cancel") editing.delete(p.id);
+    else if (a === "save") {
+      const v = el.querySelector(".me-edit").value.trim();
+      if (!v) { toast("内容不能为空；不想要这条请点“删”"); return; }
+      p.value = v; p.status = "confirmed"; p.source = "told"; p.confidence = 0.95; p.updatedAt = PA.nowStr();
+      editing.delete(p.id); save(); toast("已改好：" + p.key);
+    } else if (a === "del") {
+      state.profile = arr("profile").filter((x) => x !== p);
+      save(); toast("已删除：" + p.key + "，以后不再用它");
+    }
+    renderLayers();
+  }
+
+  function renderSens() {
+    const box = document.getElementById("me-sens"), c = consents();
+    box.innerHTML = `<div class="card-head"><b>敏感类别</b><span class="hint">关掉后，这一类我不再记，也不再用来帮你</span></div>
+      <div class="me-switches">${SENS.map(([k, label]) => `<label class="me-sw"><span class="switch"><input type="checkbox" data-sens="${k}" ${c[k] !== false ? "checked" : ""}><span></span></span>${label}</label>`).join("")}</div>`;
+    box.querySelectorAll("[data-sens]").forEach((i) => (i.onchange = () => {
+      consents()[i.dataset.sens] = i.checked;
+      save(); toast(`${SENS_LABEL[i.dataset.sens]}：${i.checked ? "已打开" : "已关掉，相关条目已隐藏"}`); renderLayers();
+    }));
+  }
+  function renderGeneral() {
+    const box = document.getElementById("me-general");
+    box.innerHTML = `<div class="row"><label class="me-sw"><span class="switch"><input type="checkbox" id="me-general-sw" ${state.generalMode ? "checked" : ""}><span></span></span><b>通用模式</b></label>
+      <span class="hint">打开后我不再按你的画像定制：首页卡片不再显示“因为…”，按通用顺序给帮助。管家照样能用。</span></div>`;
+    box.querySelector("#me-general-sw").onchange = (e) => { state.generalMode = e.target.checked; save(); toast(state.generalMode ? "已切到通用模式" : "已恢复为你定制"); };
+  }
+
+  // 第 30 天：上次界面调整的说明与撤回（撤回后 uiFactors 恢复默认）
+  function renderUi() {
+    const box = document.getElementById("me-ui");
+    const f = state.uiFactors || {};
+    if (stage() < 30 || !Object.keys(f).length) { box.innerHTML = ""; return; }
+    if (state.uiReverted && state.uiReverted === state.demoSnap) { // 只对撤回时的快照生效，切换快照后重新显示
+      box.innerHTML = '<div class="card me-uiadj reverted" data-rule="R-界面-04"><b>上次界面调整</b>：已撤回，首页恢复为默认排版。下周之前不会再调整。</div>';
+      return;
+    }
+    const why = [f.infoPref && f.infoPref !== "未知" ? `你偏好${f.infoPref}的信息，卡片改成先看要点` : "", /语音/.test(f.inputPref || "") ? "你通勤时常用语音，语音输入放到了前面" : "", f.focus && f.focus !== "未知" ? `“${f.focus}”排在首页最前` : ""].filter(Boolean);
+    box.innerHTML = `<div class="card me-uiadj" data-rule="R-界面-03 R-界面-04"><div class="card-head"><b>上次界面调整</b><span class="spacer"></span><button class="btn sm" id="me-ui-undo">撤回</button></div>
+      <div>${esc(why.join("；") || "按你的使用习惯调整了首页顺序")}。只调了顺序、信息密度和默认输入方式，菜单位置没动。</div></div>`;
+    box.querySelector("#me-ui-undo").onclick = () => {
+      state.uiFactorsBeforeRevert = JSON.parse(JSON.stringify(f));
+      state.uiFactors = PA.uiFactorsDefault();
+      state.uiReverted = state.demoSnap || true;
+      save(); toast("已撤回，首页恢复默认排版"); renderUi();
+    };
+  }
+
+  document.getElementById("me-export").onclick = () => {
+    const keys = ["personaInfo", "profile", "evidence", "watch", "deliveries", "feedback", "todos", "ideas", "files", "uiFactors", "points", "consents", "generalMode"];
+    const data = { exportedAt: PA.nowStr(), user: state.session && state.session.email, ...Object.fromEntries(keys.map((k) => [k, state[k]])) };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `我的全部数据-${PA.today()}.json`;
+    a.id = "me-export-link";
+    a.click();
+    window.PA_LAST_EXPORT = { blob, href: a.href, name: a.download };
+    setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (e) {} }, 1000);
+    toast("已导出全部数据（JSON）");
+  };
+  document.getElementById("me-forget").onclick = () => PA.confirmBox("忘掉我", "确定要我忘掉你吗？画像、证据和反馈记录会全部清空，不能恢复（演示中可用演示控制条重新加载数据）。", () => {
+    state.profile = []; state.evidence = []; state.feedback = [];
+    open.clear(); editing.clear();
+    save(); toast("已经忘掉了。之后从零开始了解你"); renderLayers();
+  }, "确认忘掉", true);
+
+  renderUi(); renderLayers(); renderSens(); renderGeneral();
+}
+</script>
+</body>
+</html>
