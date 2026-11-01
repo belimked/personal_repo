@@ -1,0 +1,2 @@
+$ node tools/gen-rules.mjs --check
+检查通过：90 条规则

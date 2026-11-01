@@ -1,0 +1,14 @@
+$ node --test tests/v6-rules-tool.test.mjs
+✔ 功能说明含 7 个一级章节 (13.439429ms)
+✔ 19 个模块各至少 3 条规则，无格式错误和重复编号 (10.406644ms)
+✔ --check 通过，rules.js 内容与文档一致 (185.384487ms)
+✔ 临时文档：重复编号、格式错误、不一致都报错 (741.51259ms)
+✔ v6 页面加载规则表 (3144.082128ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4441.19631

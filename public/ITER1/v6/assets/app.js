@@ -1066,3 +1066,14 @@
     return input;
   };
 })();
+
+// ---------------- 规则表（S02）：动态加载 rules.js，提供 window.PA_RULES ----------------
+(function () {
+  if (window.PA_RULES || document.querySelector('script[data-pa-rules]')) return;
+  const cur = document.currentScript;
+  const src = cur && cur.src ? new URL("rules.js", cur.src).href : "assets/rules.js";
+  const s = document.createElement("script");
+  s.src = src;
+  s.dataset.paRules = "1";
+  (document.head || document.documentElement).appendChild(s);
+})();
