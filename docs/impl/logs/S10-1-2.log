@@ -1,0 +1,34 @@
+$ node --test tests/v6-smoke.test.mjs
+✔ v6 包含全部页面 (7.867452ms)
+✔ v6 冒烟：admin-filetypes.html (1569.252216ms)
+✔ v6 冒烟：admin-logs.html (746.43357ms)
+✔ v6 冒烟：admin-models.html (680.854506ms)
+✔ v6 冒烟：admin-system.html (363.956777ms)
+✔ v6 冒烟：admin-usage.html (528.574136ms)
+✔ v6 冒烟：admin-users.html (312.89074ms)
+✔ v6 冒烟：files.html (695.963247ms)
+✔ v6 冒烟：forgot.html (387.894185ms)
+✔ v6 冒烟：home.html (388.900711ms)
+✔ v6 冒烟：idea.html (306.375748ms)
+✔ v6 冒烟：ideas.html (295.636583ms)
+✔ v6 冒烟：inbox.html (44.539464ms)
+✔ v6 冒烟：index.html (171.051626ms)
+✔ v6 冒烟：me.html (351.57298ms)
+✔ v6 冒烟：profile.html (327.004201ms)
+✔ v6 冒烟：reminders.html (44.873581ms)
+✔ v6 冒烟：todo.html (247.755461ms)
+✔ v6 冒烟：todos.html (642.287057ms)
+✔ v6 冒烟：watch.html (374.994641ms)
+✔ v6 使用独立的演示数据键 (618.589224ms)
+✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (302.73404ms)
+✔ v6 待办、想做的事页面仍可访问 (776.735425ms)
+✔ v6 未登录访问会跳转到登录页 (381.112645ms)
+✔ v6 包含 S08 新页面：我盯着的事、我了解的你 (3.331205ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12769.243793

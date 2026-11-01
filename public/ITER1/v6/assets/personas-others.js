@@ -200,3 +200,12 @@
     if (s && !s.searchIndex) s.searchIndex = { places: {}, people: {}, trips: [], items: [] };
   });
 })();
+
+// ---------- S10：p4 七夕卡片带海报草稿（不扣点），首页点“生成正式海报”确认后按档位扣点 ----------
+(function () {
+  const s = ((window.PA_PERSONAS || {}).p4 || {})[30];
+  const d = s && s.deliveries.find((x) => x.id === "p4-d-qixi");
+  if (!d) return;
+  d.poster = { ability: "生图", draft: "海报草稿：红玫瑰花束 + “七夕预订 199 元”大字标题", note: "七夕促销海报", done: null, failed: "", tweaksLeft: 0 };
+  ["R-生成-03", "R-生成-04"].forEach((r) => { if (!d.rules.includes(r)) d.rules.push(r); });
+})();

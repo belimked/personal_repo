@@ -729,3 +729,17 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .wk-src { border: none; background: var(--primary-weak); color: var(--primary); font-size: 11px; border-radius: 3px; padding: 0 5px; margin: 0 4px; cursor: pointer; }
 .wk-pop { display: block; margin-top: 6px; font-size: 12px; background: var(--bg); border-radius: 6px; padding: 4px 8px; }
 .wk-pop.hidden { display: none; }
+
+/* ---------- v6 S10：界面适配参数与生图点数 ---------- */
+body.ui-large { font-size: calc(14px * var(--ui-font-scale, 1.25)); }
+body.ui-large .pa-card .pc-title, body.ui-large .home-sec h3 { font-size: 18px; }
+body.ui-large .btn { font-size: 15px; }
+body.ui-compact .pa-card .pc-because, body.ui-compact .pa-card .pc-hint { display: none; }
+body.ui-compact .pa-card { padding: 8px 12px; }
+body.ui-detailed .pa-card .pc-body { line-height: 1.7; }
+.composer .ibtn.mic.default { background: var(--primary); color: #fff; }
+.pc-poster { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--bg); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.pt-failed { color: var(--danger, #c0392b); }
+.pt-tiers { display: flex; gap: 16px; margin-bottom: 8px; }
+.pt-tier { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
+.pt-line { margin: 6px 0; }
