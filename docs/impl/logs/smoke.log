@@ -1,31 +1,34 @@
 $ node --test tests/v6-smoke.test.mjs
-✔ v6 包含全部页面 (33.377829ms)
-✔ v6 冒烟：admin-filetypes.html (3091.585501ms)
-✔ v6 冒烟：admin-logs.html (1331.084735ms)
-✔ v6 冒烟：admin-models.html (1241.478018ms)
-✔ v6 冒烟：admin-system.html (763.405149ms)
-✔ v6 冒烟：admin-usage.html (991.375011ms)
-✔ v6 冒烟：admin-users.html (1272.951519ms)
-✔ v6 冒烟：files.html (1801.549099ms)
-✔ v6 冒烟：forgot.html (1064.760643ms)
-✔ v6 冒烟：home.html (1285.176878ms)
-✔ v6 冒烟：idea.html (1025.979383ms)
-✔ v6 冒烟：ideas.html (1199.264961ms)
-✔ v6 冒烟：inbox.html (178.414809ms)
-✔ v6 冒烟：index.html (572.332512ms)
-✔ v6 冒烟：profile.html (1279.177033ms)
-✔ v6 冒烟：reminders.html (180.473325ms)
-✔ v6 冒烟：todo.html (1059.287887ms)
-✔ v6 冒烟：todos.html (2380.894768ms)
-✔ v6 使用独立的演示数据键 (1065.520963ms)
-✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (1100.537475ms)
-✔ v6 待办、想做的事页面仍可访问 (3622.24354ms)
-✔ v6 未登录访问会跳转到登录页 (1000.949759ms)
-ℹ tests 22
+✔ v6 包含全部页面 (8.27616ms)
+✔ v6 冒烟：admin-filetypes.html (1585.027173ms)
+✔ v6 冒烟：admin-logs.html (754.946682ms)
+✔ v6 冒烟：admin-models.html (692.205908ms)
+✔ v6 冒烟：admin-system.html (364.575814ms)
+✔ v6 冒烟：admin-usage.html (535.001451ms)
+✔ v6 冒烟：admin-users.html (312.988979ms)
+✔ v6 冒烟：files.html (690.403341ms)
+✔ v6 冒烟：forgot.html (403.253683ms)
+✔ v6 冒烟：home.html (359.085394ms)
+✔ v6 冒烟：idea.html (318.277979ms)
+✔ v6 冒烟：ideas.html (300.276324ms)
+✔ v6 冒烟：inbox.html (43.277747ms)
+✔ v6 冒烟：index.html (155.914721ms)
+✔ v6 冒烟：me.html (299.32092ms)
+✔ v6 冒烟：profile.html (410.181224ms)
+✔ v6 冒烟：reminders.html (44.91109ms)
+✔ v6 冒烟：todo.html (235.035327ms)
+✔ v6 冒烟：todos.html (640.134262ms)
+✔ v6 冒烟：watch.html (209.966788ms)
+✔ v6 使用独立的演示数据键 (390.118628ms)
+✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (614.474231ms)
+✔ v6 待办、想做的事页面仍可访问 (757.960206ms)
+✔ v6 未登录访问会跳转到登录页 (253.398721ms)
+✔ v6 包含 S08 新页面：我盯着的事、我了解的你 (3.095808ms)
+ℹ tests 25
 ℹ suites 0
-ℹ pass 22
+ℹ pass 25
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 35733.469502
+ℹ duration_ms 12639.570804

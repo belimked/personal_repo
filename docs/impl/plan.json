@@ -606,7 +606,8 @@
       "model_used": "main",
       "actual_min": 25.6,
       "last_error": null,
-      "finished_at": "2026-11-01T09:32:39.638Z"
+      "finished_at": "2026-11-01T09:32:39.638Z",
+      "commit": "607c994"
     },
     {
       "id": "S09",
@@ -652,10 +653,15 @@
       },
       "gaps": [],
       "size_reason": "搜索模拟 + 两个复杂样例 + 周报出处",
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "52e007ddd2",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-11-01T09:32:59.095Z",
+      "model_used": "main",
+      "actual_min": 33.5,
+      "last_error": null,
+      "finished_at": "2026-11-01T10:06:29.634Z"
     },
     {
       "id": "S10",

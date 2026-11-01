@@ -191,3 +191,12 @@
     },
   };
 })();
+
+// ---------- S09：按意思搜索的演示索引只给 p1 第 30 天；其他人物补空索引，保持快照字段一致 ----------
+(function () {
+  const P = window.PA_PERSONAS || {};
+  ["p2", "p3", "p4"].forEach((id) => {
+    const s = (P[id] || {})[30];
+    if (s && !s.searchIndex) s.searchIndex = { places: {}, people: {}, trips: [], items: [] };
+  });
+})();

@@ -291,3 +291,47 @@
     mom.notice = { text: "祝福卡只出草稿，不扣点；正式生成要你确认。送礼只给思路，不做导购。", rules: ["R-人情-02", "R-人情-03"] };
   }
 })();
+
+// ---------- S09：第 30 天按意思搜索的演示索引（文件 / 片段 / 时刻 + 结构化字段）与周报出处 ----------
+// searchIndex：places 地名 → 所属地区；trips 行程；items 每条是一个可定位的片段（视频帧 / 录音那句话 / 照片里的字 / 文档段落）。
+// items 字段：kind video|audio|photo|doc，year 今年|去年|前年，tripId，regions，spots，people（人脸聚类 id），topics，
+//   topicShare（主讲话题占比，0～1），speaker（估计属性 { gender, age }，只用于排序），at（时刻），text（命中的那句话 / 画面 / 文字）。
+(function () {
+  const d30 = ((window.PA_PERSONAS || {}).p1 || {})[30];
+  if (!d30) return;
+  const it = (id, kind, title, o) => Object.assign({ id, kind, title, year: "", tripId: "", regions: [], spots: [], people: [], topics: [], topicShare: 0, speaker: null, at: "", text: "" }, o);
+  d30.searchIndex = {
+    places: { 纳木错: "西藏", 布达拉宫: "西藏", 羊卓雍错: "西藏", 赛里木湖: "新疆", 喀纳斯: "新疆", 天山天池: "新疆", 喀什古城: "新疆", 长沙: "湖南" },
+    people: { "face-a": "林舟（附的照片）" },
+    trips: [
+      { id: "trip-xj-old", title: "前年 8 月 · 新疆南疆", year: "前年", regions: ["新疆"] },
+      { id: "trip-xj", title: "去年 7 月 · 新疆北疆", year: "去年", regions: ["新疆"] },
+      { id: "trip-xjxz", title: "去年 10 月 · 新疆西藏连着走", year: "去年", regions: ["新疆", "西藏"] },
+      { id: "trip-cs", title: "去年秋假 · 长沙", year: "去年", regions: ["湖南"] },
+    ],
+    items: [
+      it("s-v-namco", "video", "纳木错湖边.mp4", { year: "去年", tripId: "trip-xjxz", regions: ["新疆", "西藏"], spots: ["纳木错"], people: ["face-a"], at: "12:34", text: "画面：湖边经幡和雪山，老二在喊“好蓝啊”" }),
+      it("s-v-sayram", "video", "赛里木湖骑行.mp4", { year: "去年", tripId: "trip-xj", regions: ["新疆"], spots: ["赛里木湖"], at: "03:12", text: "画面：环湖公路，远处是雪山和湖面" }),
+      it("s-v-kashi", "video", "喀什古城夜市.mp4", { year: "去年", tripId: "trip-xjxz", regions: ["新疆"], spots: ["喀什古城"], at: "01:05", text: "画面：烤包子摊和古城城门" }),
+      it("s-p-kanas", "photo", "喀纳斯合影.jpg", { year: "去年", tripId: "trip-xj", regions: ["新疆"], spots: ["喀纳斯"], people: ["face-a"], text: "照片里的字：喀纳斯国家级自然保护区" }),
+      it("s-p-kashi", "photo", "喀什古城门口.jpg", { year: "去年", tripId: "trip-xjxz", regions: ["新疆"], spots: ["喀什古城"], people: ["face-a"], text: "照片里的字：喀什古城 · 开城仪式 10:30" }),
+      it("s-p-old", "photo", "天山天池栈道.jpg", { year: "前年", tripId: "trip-xj-old", regions: ["新疆"], spots: ["天山天池"], people: ["face-a"], text: "照片里的字：天山天池 海拔 1910 米" }),
+      it("s-p-sayram", "photo", "赛里木湖日落.jpg", { year: "去年", tripId: "trip-xj", regions: ["新疆"], spots: ["赛里木湖"], text: "照片里的字：赛里木湖 · 大西洋最后一滴眼泪" }),
+      it("s-p-cs", "photo", "湖南博物院门口.jpg", { year: "去年", tripId: "trip-cs", regions: ["湖南"], spots: ["长沙"], people: ["face-a"], text: "照片里的字：湖南博物院" }),
+      it("s-a-guide", "audio", "赛里木湖导游讲解.m4a", { year: "去年", tripId: "trip-xj", regions: ["新疆"], spots: ["赛里木湖"], at: "05:48", text: "导游说：“赛里木湖是新疆海拔最高、面积最大的高山湖泊。”" }),
+      it("s-d-plan", "doc", "新疆行程单.pdf", { year: "去年", tripId: "trip-xj", regions: ["新疆"], spots: ["赛里木湖", "喀纳斯"], text: "第 3 段：第 4 天 赛里木湖环湖，第 6 天 喀纳斯" }),
+      it("s-v-ai-f30", "video", "AI 泡沫来了吗？30 分钟讲透.mp4", { year: "今年", topics: ["AI 泡沫"], topicShare: 0.8, speaker: { gender: "女", age: 30 }, at: "04:20", text: "“现在的 AI 估值，很像 2000 年的互联网泡沫。”" }),
+      it("s-v-ai-m45", "video", "老王聊科技：本周科技新闻.mp4", { year: "今年", topics: ["AI 泡沫", "科技新闻"], topicShare: 0.3, speaker: { gender: "男", age: 45 }, at: "08:02", text: "“AI 是不是泡沫，要看现金流。”" }),
+      it("s-v-ai-f28", "video", "职场穿搭 vlog.mp4", { year: "今年", topics: ["AI 泡沫", "穿搭"], topicShare: 0.1, speaker: { gender: "女", age: 28 }, at: "11:40", text: "“顺便说一句，最近大家都在聊 AI 泡沫。”" }),
+      it("s-v-ai-m35", "video", "基金季度复盘.mp4", { year: "今年", topics: ["AI 泡沫", "基金"], topicShare: 0.15, speaker: { gender: "男", age: 35 }, at: "06:15", text: "“科技板块有人担心 AI 泡沫。”" }),
+      it("s-v-ai-old", "video", "去年的 AI 泡沫讨论.mp4", { year: "去年", topics: ["AI 泡沫"], topicShare: 0.9, speaker: { gender: "女", age: 36 }, at: "02:30", text: "“AI 泡沫还远没到破的时候。”" }),
+    ],
+  };
+  // 周报每句的出处：只引用用户自己记的事（待办）和笔记
+  const weekly = d30.deliveries.find((d) => d.id === "d30-weekly");
+  if (weekly) weekly.sources = [
+    { text: "1. 客户管理系统二期已上线。", kind: "待办", title: "周四完成客户管理系统二期上线（已完成）", ref: "t-launch" },
+    { text: "2. 数据导出模块性能提升。", kind: "笔记", title: "周三笔记：导出接口改成分批处理，速度快了 3 倍", ref: "n-export" },
+    { text: "3. 下周：收集上线反馈。", kind: "待办", title: "下周一起收集二期上线反馈", ref: "t-feedback" },
+  ];
+})();

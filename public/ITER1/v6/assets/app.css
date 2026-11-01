@@ -703,3 +703,29 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .me-sw { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .me-uiadj { border-color: #f2dfb0; background: #fffbea; }
 .me-uiadj.reverted { background: var(--panel); border-color: var(--border); }
+
+/* ---------- v6 S09：按意思搜索与周报出处 ---------- */
+.sem-card { margin-bottom: 12px; }
+.sem-bar { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.sem-bar .input { flex: 1; min-width: 220px; }
+.sem-can { margin-top: 6px; }
+.sem-att { margin-top: 6px; font-size: 13px; }
+.sem-plan { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.sem-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 4px 2px 10px; border-radius: 12px; background: var(--primary-weak); color: var(--primary); }
+.sem-tag i { font-style: normal; color: var(--muted); }
+.sem-tag.sort { background: #f2f4f7; color: var(--muted); }
+.sem-tag.off { background: var(--bg); color: var(--muted); text-decoration: line-through; }
+.sem-x { border: none; background: transparent; cursor: pointer; color: inherit; font-size: 12px; padding: 0 4px; }
+.sem-fix { margin-top: 10px; }
+.sem-fix-opts { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.sem-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+.sem-gh { font-weight: 600; font-size: 13px; margin: 8px 0 4px; }
+.sem-item { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.sem-loc { font-size: 13px; margin-top: 2px; }
+.sem-at { font-size: 12px; color: var(--primary); margin-right: 4px; }
+.sem-note { font-size: 12px; color: var(--success); margin-top: 2px; }
+.sem-mention { margin-left: 4px; }
+.wk-line { display: inline; }
+.wk-src { border: none; background: var(--primary-weak); color: var(--primary); font-size: 11px; border-radius: 3px; padding: 0 5px; margin: 0 4px; cursor: pointer; }
+.wk-pop { display: block; margin-top: 6px; font-size: 12px; background: var(--bg); border-radius: 6px; padding: 4px 8px; }
+.wk-pop.hidden { display: none; }
