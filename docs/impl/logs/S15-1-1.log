@@ -1,0 +1,5 @@
+$ bash /root/.agents/skills/site-test/scripts/run-remote.sh .
+[32m==>[0m 已推送快照 7372ae7 到 test/ci
+[32m==>[0m 测试中：https://github.com/alangao2025-dev/daily-assistant-proto/actions/runs/41317168656
+[32m==>[0m 测试通过
+SITE-TEST PASS https://github.com/alangao2025-dev/daily-assistant-proto/actions/runs/41317168656

@@ -4,7 +4,8 @@ import { openScene } from "./v6-helpers";
 test("TC-23 说明模式出现规则角标，点开能看到规则和功能说明章节", async ({ page }) => {
   await openScene(page, "home.html?persona=p1&stage=1&explain=1");
 
-  const badge = page.locator('.rule-badge[data-rule-id="R-冷启动-01"]');
+  // 同一条规则会挂在多个带 data-rule 的元素上（控制条、卡片、助手区），这里只看助手区里的角标
+  const badge = page.locator('#butler .rule-badge[data-rule-id="R-冷启动-01"]').first();
   await expect(badge).toBeVisible();
   await expect(page.locator(".rule-badge")).not.toHaveCount(0);
 
