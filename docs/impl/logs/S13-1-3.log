@@ -1,0 +1,2 @@
+$ grep -q '原型v6-功能说明' README.md
+

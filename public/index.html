@@ -20,9 +20,24 @@
   <h2 style="margin:0 0 10px">迭代一（ITER1）</h2>
 
   <div class="card ver">
-    <div class="tag">v5</div>
+    <div class="tag">v6</div>
     <div style="flex:1">
-      <div class="row"><b>原型 v5</b><span class="badge green">最新</span><span class="badge">冻结</span><span class="muted small">2026-10-29</span><span class="spacer"></span><a class="btn primary" href="ITER1/v5/">打开 v5</a></div>
+      <div class="row"><b>原型 v6</b><span class="badge green">最新</span><span class="badge">评审中</span><span class="muted small">2026-10-31</span><span class="spacer"></span><a class="btn primary" href="ITER1/v6/">打开 v6</a></div>
+      <ul>
+        <li>改为冷启动成长线：第 1 天只问“这周最想搞定的一件事是什么？”，说一件当场给结果；第 7 天第一次主动出手；第 30 天完整管家汇报。页面顶部演示控制条可切换人物 / 阶段 / 时刻</li>
+        <li>1 个主角苏晴走完第 1 / 7 / 30 天；林舟、周可、何姐只演第 30 天，同一件“秋假出游”按职责得到不同帮助，另有学习考试、小店经营和生图点数场景</li>
+        <li>8 个领域包、画像五层、“我盯着的事”、资料全类型与按意思搜索（查询标签、条件纠错、跳到时刻、人脸单独同意）</li>
+        <li>界面按画像只调整已有参数（槽位顺序、密度、字号、用词、默认输入方式）；生图先出草稿不扣点，确认前告知档位与消耗，失败不扣点</li>
+        <li>演示直达：<a href="ITER1/v6/home.html?persona=p1&amp;stage=1&amp;moment=d1-first">第 1 天</a>、<a href="ITER1/v6/home.html?persona=p1&amp;stage=7&amp;moment=d7-ptm">第 7 天</a>、<a href="ITER1/v6/home.html?persona=p1&amp;stage=30&amp;moment=d30-trip">第 30 天</a>、<a href="ITER1/v6/home.html?persona=p2&amp;stage=30">林舟</a>、<a href="ITER1/v6/home.html?persona=p3&amp;stage=30">周可</a>、<a href="ITER1/v6/home.html?persona=p4&amp;stage=30">何姐</a>；地址后加 <code>&amp;explain=1</code> 打开说明模式（规则角标）</li>
+      </ul>
+      <div class="hint">功能说明：仓库 docs/ITER1/spec/原型v6-功能说明.md；变更明细与处理规则：仓库 docs/ITER1/review/原型评审变更记录.md（第 15 项、v6 原型实现说明）</div>
+    </div>
+  </div>
+
+  <div class="card ver">
+    <div class="tag" style="color:var(--muted)">v5</div>
+    <div style="flex:1">
+      <div class="row"><b>原型 v5</b><span class="badge">冻结</span><span class="muted small">2026-10-29</span><span class="spacer"></span><a class="btn" href="ITER1/v5/">打开 v5</a></div>
       <ul>
         <li>菜单收起 / 展开按钮改为图标（侧栏框 + 箭头），点击区和菜单项一样大，鼠标移上去有浅色底并提示“展开菜单”/“收起菜单”；展开后记住选择</li>
         <li>图标栏新增“💡 想做的事”：待办必须有日期，没有日期的记在这里（单独一页）；卡片主按钮“排个时间”选了日期即生成一条关联待办，想做的事保留</li>

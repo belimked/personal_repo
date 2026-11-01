@@ -23,11 +23,13 @@ public/                         发布到 Cloudflare 的内容（只放原型）
   ITER1/v3/                     原型 v3（冻结）
   ITER1/v4/                     原型 v4（冻结）
   ITER1/v5/                     原型 v5（冻结）
+  ITER1/v6/                     原型 v6（评审中）
 docs/                           不发布，只保存在仓库中
   ITER1/research/               调研资料
   ITER1/review/                 原型评审变更记录（编写需求文档时的输入）
   ITER1/requirements/           需求文档：需求文档-v1.md、需求文档-v2.md…
   ITER1/design/                 设计文档：设计文档-v1.md…
+  ITER1/spec/                   原型功能说明：原型v6-功能说明.md…
 ```
 
 ## 版本索引
@@ -40,6 +42,8 @@ docs/                           不发布，只保存在仓库中
 | 原型 | v2 | 2026-10-25 | 冻结 | 周视图改为从今天起 7 天；待办时长（快捷选项 + 时间轴拖拽 + 表单内拖拽色条）。标签 `ITER1-proto-v2` | `public/ITER1/v2/` |
 | 原型 | v3 | 2026-10-25 | 冻结 | 按 v2 评审 9 项变更：助手优先、近 3 天并入助手页、一键 / 批量完成、日期时间快捷选项、表单直接上传与去重、归档改删除、待安排（星标 / 期限 / 想法记录）、知识库标签化。标签 `ITER1-proto-v3`（冻结，不再移动） | `public/ITER1/v3/` |
 | 原型 | v4 | 2026-10-26 | 冻结 | 按 v3 评审第 10 项（12 条）改：助手页整页对话（助手先开口、气泡 + 结果卡片、问候改写带节日 / 天气、每天一次完整问候、对话记录保留 30 天）、会议录音整理由助手发消息并“晚点再说”、取消“待确认”菜单、随用随提示与建议说法、“最近安排”面板、菜单收成图标栏、各页“问助手”入口、主动提出代写文档（初稿可复制 / 导出 .doc）。标签 `ITER1-proto-v4` | `public/ITER1/v4/` |
+| 原型 | v6 | 2026-10-31 | 评审中 | 按 v5 评审后的产品方向共识第 11、12 节改：冷启动成长线（第 1 / 7 / 30 天），数据快照 + 演示控制条（人物 × 阶段 × 时刻、说明模式），1 个主角走完三阶段、另 3 个人物只演第 30 天；8 个领域包、画像五层、界面三池、资料全类型与按意思搜索、生图与点数流程。标签 `ITER1-proto-v6`（评审中） | `public/ITER1/v6/` |
+| 功能说明 | v6 | 2026-10-31 | 评审中 | 与原型 v6 同版本、一起打标签；规则编号 `R-<模块>-<两位数>`，含人物成长线、页面清单、演示剧本和原型对照表。规则表由 `node tools/gen-rules.mjs` 从本文生成 | `docs/ITER1/spec/原型v6-功能说明.md` |
 | 原型 | v5 | 2026-10-29 | 冻结 | 按 v4 评审第 11、12、13 项改：菜单收起 / 展开按钮改为图标并放大点击区；待办页左侧标签树（点标签名只看一类、勾选多选、全选 / 排除、可收起）；待办必须有日期，没有日期的改为与待办平级的“想做的事”（单独一页、可生成关联待办、新增“灵光一现”标签），取消“待安排”；助手支持记录 / 排期 / 追加 / 查询想做的事、逾期“先不做了”、做成了询问、会议行动项带日期、每周 / 每月回顾。回顾演示：`ITER1/v5/home.html?review=week`、`ITER1/v5/home.html?review=month`。标签 `ITER1-proto-v5`（2026-10-30 评审通过并冻结，不再移动；后续修改进 v6） | `public/ITER1/v5/` |
 | 需求文档 | — | — | 未开始 | 原型确认后编写 | `docs/ITER1/requirements/` |
 | 设计文档 | — | — | 未开始 | 需求确认后编写 | `docs/ITER1/design/` |
@@ -57,5 +61,13 @@ https://daily-assistant-proto.accrepo.com/
 
 - 每周回顾：https://daily-assistant-proto.accrepo.com/ITER1/v5/home.html?review=week
 - 每月回顾（灵光一现 + 90 天询问）：https://daily-assistant-proto.accrepo.com/ITER1/v5/home.html?review=month
+
+原型 v6 演示控制条直达示例（先登录，再打开下面地址；页面顶部的演示控制条可继续切换人物 / 阶段 / 时刻）：
+
+- 第 1 天（主角苏晴）：https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p1&stage=1&moment=d1-first
+- 第 7 天（家长会前一晚）：https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p1&stage=7&moment=d7-ptm
+- 第 30 天（出发前 3 天）：https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p1&stage=30&moment=d30-trip
+- 另 3 个人物的第 30 天：林舟 https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p2&stage=30 、周可 https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p3&stage=30 、何姐 https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p4&stage=30
+- 说明模式（规则角标）：在上面任一地址后加 `&explain=1`，例如 https://daily-assistant-proto.accrepo.com/ITER1/v6/home.html?persona=p1&stage=30&moment=d30-trip&explain=1
 
 演示账号：admin@demo.com（管理员）、lily@demo.com（一般用户），密码均为 demo1234。
