@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>领域包 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">领域包按功能说明的 8 个领域维护：每个包给<b>帮助清单</b>、<b>触发规则</b>、<b>结果模板</b>、<b>外部数据</b>和<b>评测样例数</b>。触发规则只引用功能说明里的规则编号；外部数据标“仅文档”的表示原型不接真实接口。</div>
+  <div class="hint" id="summary" style="margin-bottom:10px"></div>
+  <div id="list"></div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// S11：8 个领域包（领域名与 §3.6 一致），数据为演示配置，写在页面内联
+const DOMAINS = [
+  {
+    name: "出行", icon: "🚄", samples: 12,
+    helps: ["交通", "住宿", "行程", "天气", "物品清单", "证件检查"],
+    trigger: "R-出行-01 定了日期、出发前 3 天、天气变化时主动出手；R-出行-02 按职责交付：订行程的人先拿交通和行程，管后勤的人先拿衣物和物品清单",
+    template: "出行卡片：日期 + 交通 / 住宿 + 按职责分列的行前清单（含证件检查）",
+    external: ["天气", "地图交通", "节假日（仅文档：R-出行-04）"],
+    rules: ["R-出行-01", "R-出行-02", "R-出行-03", "R-出行-04"],
+  },
+  {
+    name: "孩子", icon: "🎒", samples: 10,
+    helps: ["课表与通知拍照冷启动", "第二天要带的东西", "家长会要带的和要问的"],
+    trigger: "R-孩子-01 每周日晚、活动前一晚、报名截止前主动出手；R-孩子-02 拍课表或通知即可开始",
+    template: "提醒卡片：时间 + 要带的东西清单 + 家长会问题清单（不满 14 岁需监护人单独同意，R-孩子-04）",
+    external: ["学校通知 / 课表照片（用户上传）"],
+    rules: ["R-孩子-01", "R-孩子-02", "R-孩子-03", "R-孩子-04"],
+  },
+  {
+    name: "家务", icon: "🧾", samples: 8,
+    helps: ["证件到期", "保险续费", "缴费", "维修", "物业"],
+    trigger: "R-家务-01 到期前 N 天提醒相关事项",
+    template: "R-家务-02 提醒卡片：到期日、要做什么、办理入口或材料；事项归入“我盯着的事”的“家里”或“钱”分组（R-家务-03）",
+    external: ["账单 / 证件（用户上传）"],
+    rules: ["R-家务-01", "R-家务-02", "R-家务-03"],
+  },
+  {
+    name: "健康", icon: "🩺", samples: 9,
+    helps: ["体检", "复诊", "用药", "疫苗", "老人挂号"],
+    trigger: "R-健康-02 预约日、复诊日、用药时间主动提醒；R-健康-01 只做安排和提醒，不做诊断",
+    template: "安排卡片：时间、地点、要带的材料；涉及诊断的问题提示找专业医生（R-健康-04）；健康信息首次出现单独同意（R-健康-03）",
+    external: ["医院 / 诊所信息（仅文档：R-健康-04）"],
+    rules: ["R-健康-01", "R-健康-02", "R-健康-03", "R-健康-04"],
+  },
+  {
+    name: "工作", icon: "💼", samples: 11,
+    helps: ["周五周报", "会议材料", "会议录音整理（轻做）"],
+    trigger: "R-工作-01 每周五备好周报，会议前备好会议材料",
+    template: "R-工作-03 周报每句可点回出处；只基于用户自己记的事和笔记（R-工作-02）",
+    external: ["用户自己的笔记、上传的会议录音（不外采）"],
+    rules: ["R-工作-01", "R-工作-02", "R-工作-03"],
+  },
+  {
+    name: "学习", icon: "📚", samples: 10,
+    helps: ["考试倒计时", "作业截止", "每周学习计划"],
+    trigger: "R-学习-01 考试倒计时、作业截止前主动出手",
+    template: "学习卡片：倒计时 + 本周计划；期末考可作临时界面因素，只影响槽位内容（R-学习-03）",
+    external: ["校历 / 考试日程（用户录入）"],
+    rules: ["R-学习-01", "R-学习-02", "R-学习-03"],
+  },
+  {
+    name: "人情", icon: "🎁", samples: 8,
+    helps: ["生日", "纪念日", "节日提醒", "祝福文案与贺卡草稿"],
+    trigger: "R-人情-01 生日、纪念日、节日前 3～7 天提醒",
+    template: "R-人情-02 祝福文案 + 贺卡草稿，正式生成需用户确认；送礼只给思路，不做导购（R-人情-03）",
+    external: ["节假日"],
+    rules: ["R-人情-01", "R-人情-02", "R-人情-03"],
+  },
+  {
+    name: "小店", icon: "🏪", samples: 9,
+    helps: ["节日促销", "接龙订单整理", "老客户回访"],
+    trigger: "R-小店-01 节日前、订单截止、老客户久未下单时主动出手",
+    template: "R-小店-03 促销文案和海报先出草稿，生成前告知点数消耗；接龙订单和回访清单（R-小店-02）",
+    external: ["接龙订单表 / 客户下单记录（用户上传）"],
+    rules: ["R-小店-01", "R-小店-02", "R-小店-03"],
+  },
+];
+
+if (PA.mount({ page: "admin-domains", title: "领域包（8 个领域）", admin: true })) {
+  const { esc } = PA;
+  const list = document.getElementById("list");
+  const totalSamples = DOMAINS.reduce((n, d) => n + (d.samples || 0), 0);
+  document.getElementById("summary").innerHTML =
+    `共 <b data-domain-count>${DOMAINS.length}</b> 个领域包 · 评测样例合计 <b>${totalSamples}</b> 个 · 规则编号来自功能说明，页面元素带 <code>data-rule</code>，供对照表检查`;
+
+  list.innerHTML = DOMAINS.map((d) => `
+    <div class="card" data-domain="${esc(d.name)}" data-samples-count="${d.samples}" data-rule="${d.rules.join(" ")}">
+      <div class="card-head">
+        <h3>${esc(d.icon)} ${esc(d.name)}</h3>
+        <span class="badge">${d.helps.length} 项帮助</span>
+        <span class="hint">评测样例 <b data-samples>${d.samples}</b> 个</span>
+        <span class="spacer"></span>
+        <span class="small muted">${d.rules.map((r) => `<code>${esc(r)}</code>`).join(" ")}</span>
+      </div>
+      <div class="kv">
+        <div class="k">帮助清单</div>
+        <div class="chip-list" data-field="helps">${d.helps.map((h) => `<span class="tag">${esc(h)}</span>`).join("")}</div>
+        <div class="k">触发规则</div>
+        <div data-field="trigger">${esc(d.trigger)}</div>
+        <div class="k">结果模板</div>
+        <div data-field="template">${esc(d.template)}</div>
+        <div class="k">外部数据</div>
+        <div data-field="external">${d.external.map((x) => `<span class="tag">${esc(x)}</span>`).join("")}</div>
+      </div>
+    </div>`).join("");
+}
+</script>
+</body>
+</html>

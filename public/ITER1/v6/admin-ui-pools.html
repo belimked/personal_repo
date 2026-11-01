@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>界面三池 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">三池分开管理、不一对一（R-界面-01）：画像因素池 → 界面需求池 → 界面组件池。组件只调已有参数——槽位顺序、信息密度、字号、用词、默认输入方式，不新增布局、导航位置固定（R-界面-03）。本页只读 <code>ui-rules.js</code> 的 <code>PA_UI</code>，不做真实配置下发。</div>
+  <div class="hint" id="summary" style="margin-bottom:10px"></div>
+  <div class="card" data-pool="factors" data-rule="R-界面-01 R-界面-05">
+    <div class="card-head"><h2>第一池：画像因素（<span data-count="factors"></span>）</h2><span class="hint">6～8 个因素，大模型只把画像归纳成这些标签</span></div>
+    <div class="chip-list" id="factor-list"></div>
+  </div>
+  <div class="card" data-pool="needs" data-rule="R-界面-01">
+    <div class="card-head"><h2>第二池：界面需求（<span data-count="needs"></span>）</h2><span class="hint">说人话的中间层：一个因素可能对应多个需求</span></div>
+    <div class="chip-list" id="need-list"></div>
+  </div>
+  <div class="card" data-pool="components" data-rule="R-界面-01 R-界面-03">
+    <div class="card-head"><h2>第三池：界面组件参数（<span data-count="components"></span>）</h2><span class="hint">只调已有参数，不新增布局</span></div>
+    <div class="table-wrap"><table class="table" id="comp-tbl"></table></div>
+  </div>
+  <div class="card" data-pool="rules" data-rule="R-界面-01 R-界面-03">
+    <div class="card-head"><h2>映射规则（<span data-rule-count></span> 条）</h2><span class="hint">因素 → 需求：命中即加；需求 → 组件：按先后取第一条命中</span></div>
+    <h3 style="font-size:14px;margin:6px 0 8px">因素 → 需求</h3>
+    <div class="table-wrap"><table class="table" data-rule-table="factorToNeed"></table></div>
+    <h3 style="font-size:14px;margin:16px 0 8px">需求 → 组件</h3>
+    <div class="table-wrap"><table class="table" data-rule-table="needToComponent"></table></div>
+  </div>
+  <div class="card" data-rule="R-界面-03 R-界面-04">
+    <div class="card-head"><h2>演示试算</h2><span class="hint">选一组演示因素，看映射出的界面配置（只改参数，不改布局）</span></div>
+    <div class="row" id="presets" style="margin-bottom:12px"></div>
+    <div id="preview" class="kv"></div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/ui-rules.js"></script>
+<script>
+if (PA.mount({ page: "admin-ui-pools", title: "界面三池（因素 → 需求 → 组件）", admin: true })) {
+  const { esc } = PA;
+  const UI = window.PA_UI;
+  const SLOT_LABEL = { proactive: "主动推送", done: "做好的结果", watch: "我盯着的事", decide: "要你拍板" };
+  if (!UI) {
+    document.getElementById("summary").textContent = "没有读到 PA_UI：请确认 ui-rules.js 已加载。";
+  } else {
+    const ftn = UI.rules.factorToNeed || [];
+    const ntc = UI.rules.needToComponent || {};
+    const ntcRows = Object.entries(ntc).flatMap(([comp, list]) => list.map((need) => ({ comp, need })));
+    // rules 是对象（factorToNeed / needToComponent），规则条数 = 两张表的行数之和；回写 length 便于对照
+    const totalRules = ftn.length + ntcRows.length;
+    UI.rules.length = totalRules;
+
+    document.getElementById("summary").innerHTML =
+      `三池：因素 <b>${UI.factors.length}</b> 个、需求 <b>${Object.keys(UI.needs).length}</b> 个、组件参数 <b>${Object.keys(UI.components).length}</b> 组 ·
+       映射规则 <b data-rule-count>${totalRules}</b> 条（因素 → 需求 ${ftn.length} 条，需求 → 组件 ${ntcRows.length} 条），与 <code>PA_UI.rules.length</code> 一致`;
+    document.querySelectorAll("[data-rule-count]").forEach((el) => (el.textContent = String(totalRules)));
+    document.querySelector('[data-count="factors"]').textContent = String(UI.factors.length);
+    document.querySelector('[data-count="needs"]').textContent = String(Object.keys(UI.needs).length);
+    document.querySelector('[data-count="components"]').textContent = String(Object.keys(UI.components).length);
+
+    document.getElementById("factor-list").innerHTML = UI.factors
+      .map((f) => `<span class="tag" data-factor="${esc(f.key)}">${esc(f.label)}</span>`).join("");
+    document.getElementById("need-list").innerHTML = Object.entries(UI.needs)
+      .map(([k, n]) => `<span class="tag" data-need="${esc(k)}">${esc(n.label)}</span>`).join("");
+
+    const compVal = (comp) => Object.entries(UI.components[comp] || {})
+      .map(([k, v]) => `<span class="tag">${esc(k)}：${esc(Array.isArray(v) ? v.map((s) => SLOT_LABEL[s] || s).join(" → ") : String(v))}</span>`).join("");
+    document.getElementById("comp-tbl").innerHTML =
+      "<tr><th>组件参数</th><th>可选值（来源需求）</th></tr>" +
+      Object.keys(UI.components).map((comp) => `<tr data-component="${esc(comp)}"><td><code>${esc(comp)}</code></td><td>${compVal(comp)}</td></tr>`).join("");
+
+    const tbl = (sel, head, rows) => {
+      const t = document.querySelector(`[data-rule-table="${sel}"]`);
+      t.innerHTML = `<tr><th>${head[0]}</th><th>${head[1]}</th><th>${head[2]}</th></tr>` + rows;
+    };
+    tbl("factorToNeed", ["编号", "需求", "说明（命中条件的人话描述）"],
+      ftn.map((r) => `<tr data-uid="${esc(r.id)}" data-rule="R-界面-01"><td><code>${esc(r.id)}</code></td><td>${esc((UI.needs[r.need] || {}).label || r.need)}</td><td>${esc(r.why)}</td></tr>`).join(""));
+    tbl("needToComponent", ["组件参数", "需求", "取值"],
+      ntcRows.map((r, i) => `<tr data-uid="C-${String(i + 1).padStart(2, "0")}" data-rule="R-界面-01"><td><code>${esc(r.comp)}</code></td><td>${esc((UI.needs[r.need] || {}).label || r.need)}</td><td><code>${esc(r.need)}</code></td></tr>`).join(""));
+
+    // 演示试算：三组演示因素（来自 p1 / p3 / p4 的典型标签），点击后重算配置
+    const PRESETS = [
+      { id: "p1", label: "p1 家长 · 详细", factors: { age: "38", digital: "中", roles: ["家长"], focus: "孩子秋假与工作汇报", timeDevice: "早晚用手机", infoPref: "详细", inputPref: "文字" } },
+      { id: "p3", label: "p3 学生 · 简洁语音", factors: { age: "22", digital: "高", roles: ["学生"], focus: "考研初试倒计时", timeDevice: "随时用手机", infoPref: "简洁", inputPref: "语音优先" } },
+      { id: "p4", label: "p4 店主 · 大字少槽位", factors: { age: "58", digital: "低", roles: ["小店店主"], focus: "七夕促销", timeDevice: "白天店里用平板", infoPref: "大字", inputPref: "语音优先" } },
+    ];
+    const show = (preset) => {
+      const cfg = UI.uiConfig(preset.factors);
+      document.getElementById("preview").innerHTML = `
+        <div class="k">试算因素</div><div data-preset="${preset.id}">${esc(preset.label)}</div>
+        <div class="k">命中的需求</div><div>${cfg.needs.map((n) => `<span class="tag">${esc((UI.needs[n] || {}).label || n)}</span>`).join("") || '<span class="muted">（无，走默认）</span>'}</div>
+        <div class="k">槽位顺序</div><div data-config="slotOrder">${cfg.slotOrder.map((s) => esc(SLOT_LABEL[s] || s)).join(" → ")}</div>
+        <div class="k">信息密度</div><div data-config="density">${esc(cfg.density)}</div>
+        <div class="k">字号</div><div data-config="fontScale">${esc(String(cfg.fontScale))}</div>
+        <div class="k">用词</div><div data-config="wording">${esc(cfg.wording)}</div>
+        <div class="k">默认输入</div><div data-config="inputDefault">${esc(cfg.inputDefault)}</div>`;
+    };
+    document.getElementById("presets").innerHTML = PRESETS
+      .map((p) => `<button class="btn sm" data-preset-btn="${p.id}">${esc(p.label)}</button>`).join("");
+    document.querySelectorAll("[data-preset-btn]").forEach((b) => (b.onclick = () => show(PRESETS.find((p) => p.id === b.dataset.presetBtn))));
+    show(PRESETS[0]);
+  }
+}
+</script>
+</body>
+</html>

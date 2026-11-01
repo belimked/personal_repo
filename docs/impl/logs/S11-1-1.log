@@ -1,0 +1,14 @@
+$ node --test tests/v6-admin.test.mjs
+✔ S11：管理员菜单追加领域包、界面三池、点数规则三项 (1561.778923ms)
+✔ S11：一般用户看不到三个配置页 (804.484997ms)
+✔ S11：admin-domains 显示 8 个领域及帮助清单、触发规则、结果模板、外部数据、评测样例数 (844.202276ms)
+✔ S11：admin-ui-pools 显示三池，规则条数与 PA_UI.rules 一致 (781.088455ms)
+✔ S11：admin-points 读 PA_POINTS，含快速 / 精细档位、扣点、每月赠送、每日上限 (580.71522ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6763.147461

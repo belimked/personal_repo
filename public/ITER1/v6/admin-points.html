@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>点数规则 · 个人日常助手</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="page">
+  <div class="note">额度用点数不用元（R-生成-02）。本页只读 <code>ui-rules.js</code> 的 <code>PA_POINTS</code> 和当前演示账户的 <code>state.points</code>：能力扣点、档位、会员每月赠送、每日上限。修改配置需要发布新版规则，不在原型里直接改。</div>
+  <div class="card" data-rule="R-生成-02 R-生成-06">
+    <div class="card-head"><h2>会员账户（演示）</h2><span class="hint">会员每月赠送额度，用不完不累积到原型判断里</span></div>
+    <div class="grid3">
+      <div class="field"><label>单位</label><div class="small" data-unit></div></div>
+      <div class="field"><label>会员每月赠送</label><div class="small"><b data-monthly></b> 点</div></div>
+      <div class="field"><label>当前剩余</label><div class="small"><b data-balance></b> 点</div></div>
+      <div class="field"><label>每日正式生成上限</label><div class="small"><b data-daily-limit></b> 次 / 天</div></div>
+      <div class="field"><label>成片后免费微调</label><div class="small"><b data-free-tweaks></b> 次</div></div>
+      <div class="field"><label>草稿 / 分镜</label><div class="small">不扣点（<b data-draft-cost></b> 点）</div></div>
+    </div>
+  </div>
+  <div class="card" data-rule="R-生成-01 R-生成-02">
+    <div class="card-head"><h2>各能力扣点与档位</h2><span class="hint">用户按快速 / 精细档位选，不直接选模型（R-生成-01）；视频按秒数 × 档位扣点</span></div>
+    <div class="table-wrap"><table class="table" id="ability-tbl"></table></div>
+  </div>
+  <div class="card" data-rule="R-生成-03 R-生成-04 R-生成-05 R-生成-06">
+    <div class="card-head"><h2>其他规则</h2></div>
+    <div class="kv">
+      <div class="k">先告知消耗</div><div>生成前弹确认，写明“约消耗 X 点，本月还剩 Y 点”（R-生成-03）</div>
+      <div class="k">先草稿后成片</div><div>先出分镜图或低清样片，确认后再出成片（R-生成-04）</div>
+      <div class="k">失败不扣点</div><div>生成失败不扣点（<b data-fail-charge></b> 点），不满意可有限次免费微调（R-生成-05）</div>
+      <div class="k">不自动付费生成</div><div>主动服务只备好分镜和文案，正式生成必须用户点确认；每天上限 <b data-daily-limit-2></b> 次防滥用（R-生成-06）</div>
+    </div>
+  </div>
+</div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/ui-rules.js"></script>
+<script>
+if (PA.mount({ page: "admin-points", title: "点数规则", admin: true })) {
+  const { esc, state } = PA;
+  const P = window.PA_POINTS;
+  const tbl = document.getElementById("ability-tbl");
+  if (!P) {
+    tbl.innerHTML = '<tr><td>没有读到 PA_POINTS：请确认 ui-rules.js 已加载。</td></tr>';
+  } else {
+    const pts = state.points || {};
+    const num = (v, d) => (Number.isFinite(+v) ? +v : d);
+    const set = (sel, v) => document.querySelectorAll(sel).forEach((el) => (el.textContent = String(v)));
+    set("[data-unit]", P.unit || "点");
+    set("[data-monthly]", num(pts.monthly, 200));
+    set("[data-balance]", num(pts.balance, num(pts.monthly, 200)));
+    set("[data-daily-limit]", num(P.dailyLimit, 10));
+    set("[data-daily-limit-2]", num(P.dailyLimit, 10));
+    set("[data-free-tweaks]", num(P.freeTweaks, 0));
+    set("[data-draft-cost]", num(P.draftCost, 0));
+    set("[data-fail-charge]", num(P.failCharge, 0));
+
+    const rows = [];
+    Object.entries(P.abilities || {}).forEach(([key, a]) => {
+      const tiers = Object.entries(a.tiers || {});
+      tiers.forEach(([tier, t], i) => {
+        const price = a.perSecond ? `${t.cost} 点 / 秒` : `${t.cost} 点 / 次`;
+        const name = i === 0
+          ? `<td rowspan="${tiers.length}"><b data-ability="${esc(key)}">${esc(a.label || key)}</b>${a.perSecond ? '<div class="small muted">按秒数 × 档位</div>' : '<div class="small muted">按次</div>'}</td>`
+          : "";
+        rows.push(`<tr data-ability-row="${esc(key)}" data-tier="${esc(tier)}" data-rule="R-生成-01 R-生成-02">
+          ${name}<td><span class="badge ${tier === "fast" ? "" : "blue"}">${esc(t.label)}</span></td><td>${esc(price)}</td>
+          <td class="small muted">${esc(a.perSecond ? `以 10 秒计：${P.cost(key, tier, 10)} 点` : `一次生成扣 ${P.cost(key, tier)} 点`)}</td></tr>`);
+      });
+    });
+    tbl.innerHTML = "<tr><th>能力</th><th>档位</th><th>扣点</th><th>说明</th></tr>" + rows.join("");
+  }
+}
+</script>
+</body>
+</html>

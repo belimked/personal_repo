@@ -972,6 +972,10 @@
     ["admin-filetypes", "admin-filetypes.html", "📄", "文件类型"],
     ["admin-usage", "admin-usage.html", "📊", "存储与数据用量"],
     ["admin-logs", "admin-logs.html", "📜", "操作日志"],
+    // S11：后台三个配置页
+    ["admin-domains", "admin-domains.html", "🧩", "领域包"],
+    ["admin-ui-pools", "admin-ui-pools.html", "🎛", "界面三池"],
+    ["admin-points", "admin-points.html", "🎟", "点数规则"],
   ];
   function updateBadges() {
     const u = upcoming(), n = u.days[0].list.length, od = u.overdue.length;

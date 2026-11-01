@@ -88,3 +88,8 @@ test("v6 未登录访问会跳转到登录页", async () => {
 test("v6 包含 S08 新页面：我盯着的事、我了解的你", () => {
   for (const p of ["watch.html", "me.html"]) assert.ok(pages.includes(p), p);
 });
+
+// S11：后台三个配置页也在冒烟列表里
+test("v6 包含 S11 后台配置页：领域包、界面三池、点数规则", () => {
+  for (const p of ["admin-domains.html", "admin-ui-pools.html", "admin-points.html"]) assert.ok(pages.includes(p), p);
+});
