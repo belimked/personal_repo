@@ -1034,7 +1034,8 @@
       "model_used": "cheap",
       "actual_min": 2.4,
       "last_error": null,
-      "finished_at": "2026-11-01T14:43:06.935Z"
+      "finished_at": "2026-11-01T14:43:06.935Z",
+      "commit": "2ae1e96"
     }
   ],
   "post_run": [
