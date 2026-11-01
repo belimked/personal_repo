@@ -1,0 +1,972 @@
+{
+  "meta": {
+    "name": "proto-v6",
+    "lang": "zh",
+    "mode": "lite",
+    "design": {
+      "path": "docs/design/原型v6-设计.md",
+      "version": "v1",
+      "sha256": "aca9dc5e3d80395567801bdf39d2a7361cb2e2f02cc404f13638a3cacc513f2f",
+      "sealed_at": "2026-11-01T06:38:07.339Z"
+    },
+    "milestones": {
+      "M1": "功能说明与 v6 骨架",
+      "M2": "原型主体",
+      "M3": "对照与登记",
+      "M4": "测试与发布"
+    },
+    "smoke": {
+      "command": "node --test tests/v6-smoke.test.mjs",
+      "owner": "S01"
+    },
+    "shared_files": [
+      "public/ITER1/v6/assets/app.js",
+      "public/ITER1/v6/assets/app.css",
+      "public/ITER1/v6/assets/data.js",
+      "public/ITER1/v6/assets/chat.js",
+      "public/ITER1/v6/home.html",
+      "public/ITER1/v6/files.html",
+      "public/ITER1/v6/assets/personas-p1.js",
+      "public/ITER1/v6/assets/personas-others.js",
+      "docs/ITER1/spec/原型v6-功能说明.md",
+      "tests/helpers.mjs",
+      "tests/v6-smoke.test.mjs",
+      "docs/test/测试方案.md"
+    ],
+    "step_timeout_min": 30,
+    "history": [
+      {
+        "pv": 1,
+        "design_version": "v1",
+        "design_sha": "aca9dc5e3d80395567801bdf39d2a7361cb2e2f02cc404f13638a3cacc513f2f",
+        "date": "2026-11-01",
+        "note": "初始生成 16 步"
+      }
+    ],
+    "plan_version": 1,
+    "sections": {
+      "§1": {
+        "l": "4-16",
+        "h": "92f772a5b7"
+      },
+      "§1.1": {
+        "l": "5-9",
+        "h": "c2158a07ac"
+      },
+      "§1.2": {
+        "l": "10-16",
+        "h": "1385071e65"
+      },
+      "§2": {
+        "l": "17-23",
+        "h": "e340e19aef"
+      },
+      "§3": {
+        "l": "24-106",
+        "h": "c6350fe8fb"
+      },
+      "§3.1": {
+        "l": "25-29",
+        "h": "56b0251f75"
+      },
+      "§3.2": {
+        "l": "30-33",
+        "h": "6e31fd2041"
+      },
+      "§3.3": {
+        "l": "34-41",
+        "h": "174ead373b"
+      },
+      "§3.4": {
+        "l": "42-51",
+        "h": "2523bcf659"
+      },
+      "§3.5": {
+        "l": "52-60",
+        "h": "9ad997b55e"
+      },
+      "§3.6": {
+        "l": "61-69",
+        "h": "fb001e23c8"
+      },
+      "§3.7": {
+        "l": "70-76",
+        "h": "a4307e195a"
+      },
+      "§3.8": {
+        "l": "77-84",
+        "h": "94f384b0a7"
+      },
+      "§3.9": {
+        "l": "85-90",
+        "h": "c399cedeca"
+      },
+      "§3.10": {
+        "l": "91-94",
+        "h": "321c5c5ffb"
+      },
+      "§3.11": {
+        "l": "95-98",
+        "h": "f2e8d973f7"
+      },
+      "§3.12": {
+        "l": "99-102",
+        "h": "1cf7e842b7"
+      },
+      "§3.13": {
+        "l": "103-106",
+        "h": "641fe81fcb"
+      },
+      "§4": {
+        "l": "107-113",
+        "h": "97cd947092"
+      },
+      "§5": {
+        "l": "114-125",
+        "h": "5cdce15989"
+      },
+      "§6": {
+        "l": "126-129",
+        "h": "96d2954954"
+      },
+      "§7": {
+        "l": "130-137",
+        "h": "7e47164de9"
+      },
+      "§8": {
+        "l": "138-144",
+        "h": "b364cc17bd"
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "S01",
+      "milestone": "M1",
+      "order": 1,
+      "title": "复制 v5 为 v6，菜单改为管家五项",
+      "goal": "public/ITER1/v6/ 成为独立的原型 v6，一级菜单变成管家、我盯着的事、交给我的资料、我了解的你、设置。",
+      "deps": [],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "high",
+      "difficulty_reason": "第一个步骤，建立 v6 目录与测试模式",
+      "model_tier": "main",
+      "sections": [
+        "§3.2",
+        "§4"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/admin-filetypes.html",
+        "public/ITER1/v6/admin-logs.html",
+        "public/ITER1/v6/admin-models.html",
+        "public/ITER1/v6/admin-system.html",
+        "public/ITER1/v6/admin-usage.html",
+        "public/ITER1/v6/admin-users.html",
+        "public/ITER1/v6/forgot.html",
+        "public/ITER1/v6/index.html",
+        "public/ITER1/v6/inbox.html",
+        "public/ITER1/v6/reminders.html",
+        "public/ITER1/v6/profile.html",
+        "public/ITER1/v6/idea.html",
+        "public/ITER1/v6/ideas.html",
+        "public/ITER1/v6/todo.html",
+        "public/ITER1/v6/todos.html",
+        "tests/v6-smoke.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "cp -r public/ITER1/v5 public/ITER1/v6，KEY 改 pa_ITER1_v6、sessionStorage 前缀 pa5_ 改 pa6_（含页面内联脚本）、“原型 v5”字样改“原型 v6”；种子版本号加一",
+        "菜单 NAV_USER 改为 §3.2 的 5 项：home.html、watch.html、files.html、me.html、profile.html；watch.html、me.html 本步不建（S08 负责），冒烟测试只加载已存在的页面",
+        "todos/ideas/todo/idea 页面保留可访问，只是不在一级菜单；页面里“想做的事”“待办”二级链接保持可用",
+        "home 底部输入框占位文字改为“吩咐一声…”，外观缩小；首页其他改造由 S06 负责",
+        "tests/v6-smoke.test.mjs：仿照 tests/v5-smoke.test.mjs，loadPage(...,{version:'v6'})，断言无错误、含“原型 v6”、不含“原型 v5”，并断言菜单 5 项、无“待办事项”“想做的事”一级入口",
+        "不改 v1–v5 和 samples；v5 的旧测试必须继续通过"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "npm --prefix tests install --no-audit --no-fund",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "git diff --quiet HEAD -- public/ITER1/v1 public/ITER1/v2 public/ITER1/v3 public/ITER1/v4 public/ITER1/v5 public/ITER1/samples",
+          "grep -q pa_ITER1_v6 public/ITER1/v6/assets/app.js"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "tests/helpers.mjs",
+        "tests/v5-smoke.test.mjs",
+        "public/ITER1/v5/assets/app.js"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "6ba529c628",
+      "pv": 1
+    },
+    {
+      "id": "S02",
+      "milestone": "M1",
+      "order": 2,
+      "title": "功能说明文档与规则编号工具",
+      "goal": "写出 v6 功能说明（7 节、19 个模块、每条规则带编号），并能自动生成原型使用的规则表 rules.js。",
+      "deps": [
+        "S01"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "规则编号是原型和文档对应的基础，内容量大",
+      "model_tier": "main",
+      "sections": [
+        "§3.1",
+        "§1.1"
+      ],
+      "files_owned": [
+        "tools/gen-rules.mjs",
+        "public/ITER1/v6/assets/rules.js",
+        "tests/v6-rules-tool.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "功能说明路径 docs/ITER1/spec/原型v6-功能说明.md（共享文件，后续步骤回写）；7 节按共识 12.4；规则内容取自共识 §3–9、§11，写成可核对的规则，不抄长段",
+        "规则行格式严格为 `- **R-<模块>-<两位数>** <标题>：<内容>`，仅文档的在行末加 〔仅文档〕；section 取所在的最近一级标题编号（如“4.2”）",
+        "第 3 节页面清单、第 5 节演示剧本先写骨架（S12 补全）；第 6 节对照表只放 <!-- MAP:BEGIN --> 与 <!-- MAP:END --> 两个标记（S12 生成内容）",
+        "gen-rules.mjs 只用 Node 标准库；无参数时写 rules.js（window.PA_RULES = {...}，文件头注明“自动生成，勿手改”）；--check 时比对，不一致或编号重复/格式错时退出码 1 并打印原因",
+        "tests/v6-rules-tool.test.mjs：19 个模块各 ≥3 条、无重复编号、--check 通过；再用临时文档测重复编号会报错",
+        "rules.js 本步就要在 v6 页面引入（app.js 动态加载或各页 <script>），确保冒烟测试通过"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node tools/gen-rules.mjs",
+          "node tools/gen-rules.mjs --check",
+          "node --test tests/v6-rules-tool.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "test -f docs/ITER1/spec/原型v6-功能说明.md"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "docs/ITER1/review/产品方向共识.md"
+      ],
+      "size_reason": "19 个模块的规则文档 + 生成工具",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "96ec0474ec",
+      "pv": 1
+    },
+    {
+      "id": "S03",
+      "milestone": "M1",
+      "order": 3,
+      "title": "主角三个阶段的画像与演示数据",
+      "goal": "主角苏晴第 1 / 7 / 30 天三份快照数据就绪：五层画像（含证据、状态）、盯着的事、资料、交付卡片、反馈、界面因素、点数、时刻。",
+      "deps": [
+        "S02"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "数据结构是后续所有页面的基础",
+      "model_tier": "main",
+      "sections": [
+        "§3.4",
+        "§5"
+      ],
+      "files_owned": [
+        "tests/v6-personas.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "数据放 public/ITER1/v6/assets/personas-p1.js（共享文件），全局 PA_PERSONAS.p1 = {1:{...},7:{...},30:{...}}；字段按 §5，本步定下的字段名后续步骤沿用",
+        "画像条目数：第 1 天 ≤2，第 7 天 5～10（约一半 guess），第 30 天 ≥25，五层都有，三种状态都有；第 30 天出行职责条目 status=confirmed",
+        "第 30 天交付卡片：秋假出游 depth=full（第一项交通行程），体检 depth=skeleton；每张卡片 rules 引用 rules.js 里存在的编号",
+        "时刻列表：第 7 天至少含“家长会前一晚”；第 30 天至少含 §3.6 列出的 p1 时刻；卡片按 moment 关联",
+        "资料只放少量演示条目（搜索索引由 S09 补），反馈记录至少 3 条",
+        "不做：切换逻辑和控制条（S05）；p2–p4（S04）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-personas.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "docs/ITER1/review/产品方向共识.md"
+      ],
+      "size_reason": "三份完整快照数据",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "c4f98a6a69",
+      "pv": 1
+    },
+    {
+      "id": "S04",
+      "milestone": "M1",
+      "order": 4,
+      "title": "另外三个人物的第 30 天数据",
+      "goal": "另一半林舟、大学生周可、花店何姐的第 30 天快照就绪，四个人物合计覆盖 8 个领域。",
+      "deps": [
+        "S03"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "照 S03 的结构补数据",
+      "model_tier": "main",
+      "sections": [
+        "§3.4",
+        "§3.6"
+      ],
+      "files_owned": [
+        "tests/v6-personas-others.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "数据放 public/ITER1/v6/assets/personas-others.js（共享文件），PA_PERSONAS.p2/p3/p4 只有 30；字段与 personas-p1.js 一致",
+        "p2 秋假出游第一推荐为行李与孩子用品清单（按天气和孩子年龄），more 为交通、预算；职责条目“管家里后勤”",
+        "p3：学习与考试、社团报名接龙（轻量成品）；界面因素简洁 + 语音优先",
+        "p4：小店经营（七夕促销、老客回访）、人情；界面因素大字、数字熟练度低；点数余额与 S10 的海报流程配合（如 balance 120）",
+        "测试：p1/p2 秋假第一项不同；p1–p4 第 30 天卡片合计覆盖 8 个领域 id（与 §3.6 领域名一致）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-personas-others.test.mjs",
+          "node --test tests/v6-personas.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "8de056e42d",
+      "pv": 1
+    },
+    {
+      "id": "S05",
+      "milestone": "M1",
+      "order": 5,
+      "title": "演示控制条、快照切换、时刻与说明模式",
+      "goal": "原型顶部有演示控制条，能切换阶段、人物、时刻，整个原型一起变化；打开说明模式后界面元素显示规则编号角标。",
+      "deps": [
+        "S04"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "跨所有页面的公共机制，切换时状态易错",
+      "model_tier": "main",
+      "sections": [
+        "§3.3",
+        "§5"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/assets/demo.js",
+        "tests/v6-demo.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "demo.js 在 app.js 渲染外壳后挂控制条；所有 v6 页面引入 demo.js 与 personas*.js；切换时只替换业务数据（profile、evidence、watch、deliveries、feedback、todos、ideas、files、uiFactors、points、consents），保留登录会话和 demo 设置",
+        "地址参数 ?persona=&stage=&moment=&explain= 优先于已存的 demo 设置；时刻把“现在”设为该时刻（复用 PA_TODAY 机制或 PA.now()）",
+        "人物没有某阶段时对应按钮置灰（disabled）；“重置”恢复当前快照初始数据",
+        "说明模式：扫描 [data-rule] 元素加角标 .rule-badge；点角标弹层显示编号、标题、摘要、“功能说明 §x”；数据来自 window.PA_RULES；关闭时不显示角标；页面内容动态更新后要重新扫描（MutationObserver 或渲染后调用）",
+        "控制条加 data-rule 指向冷启动模块的规则；控制条收起状态存 state.demo.barCollapsed",
+        "测试覆盖 §3.3 完成标准每一条"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-demo.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "442cad8a74",
+      "pv": 1,
+      "size_reason": "跨所有页面的公共机制：控制条、快照切换、时刻、说明模式，拆开会互相依赖"
+    },
+    {
+      "id": "S06",
+      "milestone": "M2",
+      "order": 6,
+      "title": "管家首页三个阶段与结果卡片组件",
+      "goal": "首页按阶段变成“第一件事”引导、开始盯事、完整管家汇报；结果卡片能说出依据、分骨架和一步到位、带“还可以帮你”和“这个别记”。",
+      "deps": [
+        "S05"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "第一个建立卡片组件模式的步骤，首页交互多",
+      "model_tier": "main",
+      "sections": [
+        "§3.5"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/assets/cards.js",
+        "tests/v6-home.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "cards.js 导出 PA.renderCard(delivery, opts)，后续页面复用；卡片根元素带 data-rule（delivery.rules 合并模块规则）",
+        "第 1 天首件事流程用规则模拟：4 个例子各有预设结果卡、1 个追问和 2～3 个选项；选后卡片文字更新、profile 新增 1 条并显示“我记下了：…，可以随时改”",
+        "“还可以帮你”点击：展开对应内容，feedback 追加 {action:'more', signal:'职责:<领域>'}；“这个别记”：从 profile 删除对应条目并提示",
+        "骨架卡点“展开看完整版”后显示完整内容（演示数据里预置 full 版本）",
+        "首次涉及孩子信息时弹单独同意卡片，consents.child 记录；拒绝后不记孩子相关画像",
+        "generalMode 为真时不显示“因为…”黄条（S08 提供开关）",
+        "不做：时刻消息的具体场景（S07）、界面因素排序（S10）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-home.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "reads": [
+        "public/ITER1/samples/v6-assistant-demo.html"
+      ],
+      "size_reason": "首页三阶段 + 公共卡片组件",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "a3a92e76d1",
+      "pv": 1
+    },
+    {
+      "id": "S07",
+      "milestone": "M2",
+      "order": 7,
+      "title": "主动时刻与 8 个领域场景",
+      "goal": "每个人物的每个时刻，首页都会出现对应的主动消息和结果卡片，8 个领域都能演示到。",
+      "deps": [
+        "S06"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "mid",
+      "difficulty_reason": "按 §3.6 逐个场景补数据和渲染",
+      "model_tier": "main",
+      "sections": [
+        "§3.6"
+      ],
+      "files_owned": [
+        "tests/v6-moments.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "场景数据补进 personas-p1.js / personas-others.js（共享）；渲染复用 PA.renderCard",
+        "主动消息标记 push 与否：推送的显示“📣 推送”和 pushReason，安静的只出现在首页",
+        "47 天前想法被重提：卡片带“开始做”，点后生成轻量成品（如记账小程序的说明页卡片），想做的事状态更新",
+        "健康卡片必须含“只做安排和提醒，不做诊断”类说明；人情卡片的祝福图只出草稿，不扣点",
+        "测试遍历每个人物的全部时刻，断言有主动消息且无脚本错误，并覆盖 §3.6 完成标准",
+        "不做：周报出处（S09）、海报扣点流程（S10）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-moments.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "size_reason": "4 个人物十余个场景",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "db54b0d8e4",
+      "pv": 1
+    },
+    {
+      "id": "S08",
+      "milestone": "M2",
+      "order": 8,
+      "title": "我盯着的事、交给我的资料、我了解的你",
+      "goal": "新增“我盯着的事”“我了解的你”两页，资料页改名并有空状态引导；画像能看来源、改、删、确认，敏感开关、通用模式、导出和忘掉我可演示。",
+      "deps": [
+        "S07"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "mid",
+      "difficulty_reason": "三个页面，交互规则明确",
+      "model_tier": "main",
+      "sections": [
+        "§3.7"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/watch.html",
+        "public/ITER1/v6/me.html",
+        "tests/v6-pages.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "watch.html 按领域分组，只显示当前人物用到的领域；顶部二级入口链到 todos.html、ideas.html；第 1 天空状态",
+        "files.html 是共享文件：本步只改标题“交给我的资料”、空状态和“拍照 / 截图 / 分享链接”入口，搜索部分由 S09 负责",
+        "me.html 五层分组；每条可展开看 evidence；删除、修改、确认猜测写回 state.profile；敏感开关写 consents 并隐藏对应条目；通用模式写 state.generalMode",
+        "导出：生成 JSON 下载（jsdom 下只断言生成了 Blob 或链接）；忘掉我：二次确认后清空 profile、evidence、feedback",
+        "第 30 天显示“上次界面调整”说明和“撤回”（撤回后 uiFactors 恢复默认，S10 的映射据此生效）",
+        "两个新页面加入 v6 冒烟测试的页面列表（tests/v6-smoke.test.mjs 视为本步可追加修改）"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-pages.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "size_reason": "两个新页面 + 资料页改造",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "993b3247b3",
+      "pv": 1
+    },
+    {
+      "id": "S09",
+      "milestone": "M2",
+      "order": 9,
+      "title": "按意思搜索与周报出处",
+      "goal": "资料页能按意思搜索：显示可修改的查询计划、按类型分组、定位到时刻，两个指定样例都能演示；周报每句可点回出处。",
+      "deps": [
+        "S08"
+      ],
+      "size": "L",
+      "est_min": 35,
+      "difficulty": "high",
+      "difficulty_reason": "搜索模拟的规则和样例纠错有陷阱",
+      "model_tier": "main",
+      "sections": [
+        "§3.8"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/assets/search.js",
+        "tests/v6-search.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "search.js 导出 PA.planQuery(text) → 查询计划标签数组、PA.runQuery(plan) → 分组结果；规则模拟，不调模型",
+        "索引演示数据（文件 / 片段 / 时刻 + 结构化字段）补进 personas-p1.js；需含多次新疆行程、一次新疆西藏连走行程、纳木错视频、目标人物照片、多条 AI 泡沫视频（男女博主、只提到的）",
+        "样例 a：识别“纳木错 + 新疆”矛盾，先给提示和两个改正选项；人脸未同意时先弹同意卡片（consents.face）",
+        "样例 b：估计属性只用于排序，不过滤；第一条为目标视频，其余仍在结果里并标“只是提到”",
+        "查询计划标签可点掉，结果重新计算；显示模拟用时“用时 1.2 秒”",
+        "周报卡片（S07 已有）每句加出处标签，点开显示来源标题；只引用用户自己记的事和笔记"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-search.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "size_reason": "搜索模拟 + 两个复杂样例 + 周报出处",
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "52e007ddd2",
+      "pv": 1
+    },
+    {
+      "id": "S10",
+      "milestone": "M2",
+      "order": 10,
+      "title": "界面三池映射与生图点数流程",
+      "goal": "不同人物的首页顺序、密度、字号、默认输入方式按界面因素自动不同；小店老板生成海报前会告知消耗，确认后才扣点。",
+      "deps": [
+        "S09"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "映射规则 + 一个确认流程",
+      "model_tier": "main",
+      "sections": [
+        "§3.9"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/assets/ui-rules.js",
+        "tests/v6-ui-points.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "ui-rules.js 导出 PA_UI = {factors, needs, components, rules}，函数 PA.uiConfig(uiFactors) → {slotOrder, density, fontScale, wording, inputDefault}；只调整已有参数，不新增布局",
+        "首页（home.html / cards.js 渲染处）应用 uiConfig：槽位顺序、body 样式类（如 ui-large、ui-compact）、默认输入方式",
+        "海报流程：草稿不扣点；点“生成正式海报”弹确认（档位快速 / 精细、消耗点数、剩余点数）；确认扣 points.balance 并写 points.log；取消不变；失败演示不扣点",
+        "扣点规则数据放 ui-rules.js 旁的 PA_POINTS（同文件即可），S11 后台读取",
+        "测试覆盖 §3.9 完成标准，含单元测试 uiConfig"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-ui-points.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "6051978b56",
+      "pv": 1
+    },
+    {
+      "id": "S11",
+      "milestone": "M2",
+      "order": 11,
+      "title": "后台三个配置页",
+      "goal": "管理员能看到领域包、界面三池、点数规则三个配置页。",
+      "deps": [
+        "S10"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "low",
+      "difficulty_reason": "照已有后台页复制，只读展示为主",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.10"
+      ],
+      "files_owned": [
+        "public/ITER1/v6/admin-domains.html",
+        "public/ITER1/v6/admin-ui-pools.html",
+        "public/ITER1/v6/admin-points.html",
+        "tests/v6-admin.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "版式参照已有后台页（见 reads）；管理员菜单 NAV_ADMIN 追加 3 项（app.js 共享）",
+        "领域包数据（8 个领域的帮助清单、触发规则、结果模板、外部数据、评测样例数）可写在页面内联或 personas-others.js 外的独立常量；与 §3.6 领域名一致",
+        "admin-ui-pools 读 PA_UI，规则条数与 PA_UI.rules.length 一致；admin-points 读 PA_POINTS",
+        "页面元素带 data-rule；3 个新页面加入冒烟测试页面列表"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node --test tests/v6-admin.test.mjs",
+          "node --test tests/v6-smoke.test.mjs",
+          "node --test \"tests/*.test.mjs\"",
+          "node tools/gen-rules.mjs --check"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "26222f665b",
+      "pv": 1,
+      "reads": [
+        "public/ITER1/v6/admin-models.html"
+      ]
+    },
+    {
+      "id": "S12",
+      "milestone": "M3",
+      "order": 12,
+      "title": "演示剧本、对照表与文档回写",
+      "goal": "功能说明补全页面清单和演示剧本，对照表自动生成，原型和文档的编号互相对得上。",
+      "deps": [
+        "S11"
+      ],
+      "size": "M",
+      "est_min": 25,
+      "difficulty": "mid",
+      "difficulty_reason": "需要通读原型引用并修正不一致",
+      "model_tier": "main",
+      "sections": [
+        "§3.11"
+      ],
+      "files_owned": [
+        "tools/rule-map.mjs",
+        "tests/v6-rule-map.test.mjs"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "rule-map.mjs 扫描 public/ITER1/v6 下 html/js 中的 data-rule 和 rules: [...] 引用（可能多个编号空格分隔）；无参数时重写 MAP 标记之间的对照表；--check 按 §3.11 三条判断",
+        "对照表列：编号｜标题｜原型位置（文件，多个用顿号）｜阶段（1/7/30，按引用所在快照或页面推断，推断不出写“通用”）｜状态",
+        "补全功能说明第 3 节页面清单和第 5 节演示剧本（4 个人物、3 个阶段、每个时刻对应编号）",
+        "原型里没被引用的非〔仅文档〕规则：要么在对应界面元素上补 data-rule，要么在文档里改成〔仅文档〕并在第 7 节写原因",
+        "改完重新运行 gen-rules.mjs"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "node tools/gen-rules.mjs",
+          "node tools/gen-rules.mjs --check",
+          "node tools/rule-map.mjs",
+          "node tools/rule-map.mjs --check",
+          "node --test tests/v6-rule-map.test.mjs",
+          "node --test \"tests/*.test.mjs\""
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "9e8e3de539",
+      "pv": 1
+    },
+    {
+      "id": "S13",
+      "milestone": "M3",
+      "order": 13,
+      "title": "版本登记：README、原型首页、评审记录",
+      "goal": "README、原型首页和评审记录登记 v6 与功能说明，本地打版本标签。",
+      "deps": [
+        "S12"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "文档登记",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.12"
+      ],
+      "files_owned": [
+        "README.md",
+        "public/index.html",
+        "docs/ITER1/review/原型评审变更记录.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "README 版本索引：v5 保持冻结，新增原型 v6（评审中）、功能说明 v6；目录结构加 ITER1/v6/、docs/ITER1/spec/；访问地址写演示控制条直达示例",
+        "public/index.html：v6 卡片标“最新”，v5 去掉“最新”",
+        "评审记录新增“## 15. 原型 v6：冷启动成长线与功能说明”，末尾新增“## v6 原型实现说明”（模拟方式与差异：搜索、画像推断、生图、点数都是规则模拟）",
+        "git tag -f ITER1-proto-v6 由主代理在提交后打；本步不推送"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "grep -q 'ITER1/v6' README.md",
+          "grep -q 'ITER1-proto-v6' README.md",
+          "grep -q '原型v6-功能说明' README.md",
+          "grep -q 'ITER1/v6/' public/index.html",
+          "grep -q '## 15\\.' docs/ITER1/review/原型评审变更记录.md",
+          "grep -q 'v6 原型实现说明' docs/ITER1/review/原型评审变更记录.md",
+          "node --test \"tests/*.test.mjs\""
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "91e0979199",
+      "pv": 1
+    },
+    {
+      "id": "S14",
+      "milestone": "M4",
+      "order": 14,
+      "title": "测试方案与浏览器测试代码",
+      "goal": "测试方案和针对 v6 的浏览器测试写好，本机检查全部通过。",
+      "deps": [
+        "S13"
+      ],
+      "size": "M",
+      "est_min": 20,
+      "difficulty": "low",
+      "difficulty_reason": "按 site-test 模板写",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.13",
+        "§4"
+      ],
+      "files_owned": [
+        "playwright.config.ts"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "按 site-test skill（/root/.agents/skills/site-test/SKILL.md）第 2、3 节：先改测试方案再写代码；不运行远端测试（S15 负责）；本机不装浏览器",
+        "测试方案改为 v6（docs/test/测试方案.md 共享）；保留 v5 的 e2e 用例文件，新增 e2e/v6-*.spec.ts 覆盖 §3.13 列出的 8 个流程，标题以 TC-xx 开头",
+        "登录 lily@demo.com / demo1234；用地址参数 ?persona=&stage=&moment= 直达场景，每个用例新 context",
+        "服务命令沿用 npx wrangler dev --local --port 4173"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "npm install --no-audit --no-fund",
+          "npx playwright test --list",
+          "npm test"
+        ]
+      },
+      "gaps": [],
+      "dirs_owned": [
+        "e2e"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "348ac67cc7",
+      "pv": 1
+    },
+    {
+      "id": "S15",
+      "milestone": "M4",
+      "order": 15,
+      "title": "在 GitHub 上运行浏览器测试",
+      "goal": "浏览器测试在 GitHub Actions 上全部通过。",
+      "deps": [
+        "S14"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "运行脚本并等待结果",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.13"
+      ],
+      "files_owned": [
+        "docs/test/远端测试结果.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "运行 bash /root/.agents/skills/site-test/scripts/run-remote.sh .（仓库已存在，不加 --create-repo）",
+        "失败时按 site-test 第 5 节：测试写错可修 e2e/ 下测试（最多 2 次，需登记 allow）；网站 bug 不改网站代码、不放宽断言，报 FAIL 并写清用例、期望、实际",
+        "结果写到 docs/test/远端测试结果.md"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "bash /root/.agents/skills/site-test/scripts/run-remote.sh ."
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "44f9897c2b",
+      "pv": 1
+    },
+    {
+      "id": "S16",
+      "milestone": "M4",
+      "order": 16,
+      "title": "发布并推送版本标签",
+      "goal": "原型 v6 发布到预览地址并能访问，标签 ITER1-proto-v6 推到 GitHub。",
+      "deps": [
+        "S15"
+      ],
+      "size": "S",
+      "est_min": 10,
+      "difficulty": "low",
+      "difficulty_reason": "运行发布脚本",
+      "model_tier": "cheap",
+      "sections": [
+        "§3.13",
+        "§4"
+      ],
+      "files_owned": [
+        "docs/test/发布记录.md"
+      ],
+      "contracts": {
+        "owns": [],
+        "uses": []
+      },
+      "notes": [
+        "运行 bash /root/.agents/skills/site-builder/scripts/publish.sh -m \"ITER1 原型 v6：冷启动成长线、画像管家与功能说明\" .（bash 超时至少 600 秒）",
+        "发布后 git tag -f ITER1-proto-v6 并 git push origin ITER1-proto-v6；不改业务文件",
+        "预览地址、发布时间追加到 docs/test/发布记录.md"
+      ],
+      "acceptance": {
+        "type": "auto",
+        "commands": [
+          "bash /root/.agents/skills/site-builder/scripts/publish.sh -m \"ITER1 原型 v6：冷启动成长线、画像管家与功能说明\" .",
+          "curl -sfL -o /dev/null https://daily-assistant-proto.accrepo.com/ITER1/v6/",
+          "git tag -f ITER1-proto-v6",
+          "git push -f origin ITER1-proto-v6"
+        ]
+      },
+      "gaps": [],
+      "status": "pending",
+      "attempts": 0,
+      "spec_sha": "e68bcd66a1",
+      "pv": 1
+    }
+  ],
+  "post_run": [
+    {
+      "id": "A01",
+      "kind": "manual",
+      "title": "在浏览器里试用 v6 并对照功能说明",
+      "after": "S16",
+      "src": "§2",
+      "steps": [
+        "打开 https://daily-assistant-proto.accrepo.com/ITER1/v6/ ，用 lily@demo.com / demo1234 登录",
+        "用演示控制条依次看：苏晴第 1 天首件事 → 第 7 天家长会前一晚 → 第 30 天各时刻；切到林舟看秋假；切到周可、何姐",
+        "资料页试搜索样例 a、b；我了解的你试删除、通用模式；打开说明模式点几个角标对照功能说明"
+      ],
+      "pass": [
+        "§2 的 5 个场景都能在页面上走通",
+        "说明模式角标的编号都能在功能说明里找到",
+        "视觉朴素、无明显错位或遮挡"
+      ],
+      "affects": [
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10"
+      ]
+    }
+  ]
+}
