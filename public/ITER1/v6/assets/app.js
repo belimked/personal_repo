@@ -1099,3 +1099,78 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
   else run();
 })();
+
+// ---------------- 主动时刻与领域场景（S07）：给首页 #butler 里的结果卡片补“推送 / 安静”标记、领域、说明和“开始做” ----------------
+// 卡片由 cards.js 的 PA.renderCard 渲染；这里用 MutationObserver 在每次（重）绘后补充，不改卡片组件本身。
+(function () {
+  const PA = window.PA;
+  if (!PA || !PA.state) return;
+  const { state, esc, save } = PA;
+  const delOf = (id) => (state.deliveries || []).find((d) => d.id === id);
+
+  // 点“开始做”：生成轻量成品卡片，想做的事记一条记录并更新状态，盯事更新
+  function startIdea(d) {
+    if (!d || !d.start || d.started) return null;
+    const p = JSON.parse(JSON.stringify(d.start.product));
+    p.moment = d.moment;
+    p.ideaId = d.ideaId || "";
+    p.lightProduct = true;
+    state.deliveries = state.deliveries || [];
+    if (!state.deliveries.some((x) => x.id === p.id)) state.deliveries.push(p);
+    d.started = PA.nowStr();
+    const idea = d.ideaId && (state.ideas || []).find((i) => i.id === d.ideaId);
+    if (idea) {
+      idea.progress = "started";
+      idea.startedAt = d.started;
+      PA.addRecord(idea, `开始做了：已生成轻量成品《${p.title}》`);
+    }
+    (state.watch || []).filter((w) => w.ideaId && w.ideaId === d.ideaId).forEach((w) => { w.doing = "已开始：轻量成品做好了，等你试用后再加功能"; });
+    (state.feedback = state.feedback || []).push({ id: PA.uid("fb"), deliveryId: d.id, action: "adopt", at: d.started, signal: "开始做想做的事" });
+    save();
+    PA.toast("开始做了：轻量成品已生成");
+    if (PA.renderHome) PA.renderHome();
+    return p;
+  }
+
+  function decorate(card) {
+    if (card.querySelector(":scope > .pc-s07")) return;
+    const d = delOf(card.dataset.deliveryId);
+    if (!d) return;
+    const mark = document.createElement("div");
+    mark.className = "pc-s07";
+    mark.hidden = true;
+    card.appendChild(mark);
+    const title = card.querySelector(".pc-title");
+    if (title && d.domain && !title.querySelector(".pc-domain")) title.insertAdjacentHTML("afterbegin", `<span class="badge pc-domain">${esc(d.domain)}</span>`);
+    if (card.closest(".home-proactive")) {
+      card.dataset.push = d.push ? "push" : "quiet";
+      const tag = d.push
+        ? `<div class="pc-push push" data-rule="R-做多深-03 R-做多深-04">📣 推送 · ${esc(d.pushReason || "")}</div>`
+        : '<div class="pc-push quiet" data-rule="R-做多深-03">🏠 安静出现在首页，不推送</div>';
+      card.insertAdjacentHTML("afterbegin", tag);
+    }
+    const body = card.querySelector(".pc-body");
+    if (d.notice && body) body.insertAdjacentHTML("afterend", `<div class="pc-notice" data-rule="${esc((d.notice.rules || []).join(" "))}">ℹ️ ${esc(d.notice.text)}</div>`);
+    if (d.start && body) {
+      const html = d.started
+        ? `<div class="pc-start done">✅ 已开始做，轻量成品在下面</div>`
+        : `<div class="pc-start" data-rule="R-做多深-01 R-帮什么-01"><button type="button" class="btn primary sm" data-c="start">${esc(d.start.label || "开始做")}</button></div>`;
+      (card.querySelector(".pc-notice") || body).insertAdjacentHTML("afterend", html);
+      const b = card.querySelector('[data-c="start"]');
+      if (b) b.onclick = () => startIdea(d);
+    }
+  }
+  const decorateAll = (root) => root.querySelectorAll(".pa-card").forEach(decorate);
+
+  function watchButler() {
+    const host = document.getElementById("butler");
+    if (!host || host.dataset.s07) return;
+    host.dataset.s07 = "1";
+    decorateAll(host);
+    new MutationObserver(() => decorateAll(host)).observe(host, { childList: true, subtree: true });
+  }
+  PA.startIdea = startIdea;
+  PA.decorateCards = decorateAll;
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watchButler);
+  else setTimeout(watchButler, 0);
+})();

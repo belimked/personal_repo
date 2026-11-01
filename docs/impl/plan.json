@@ -496,7 +496,8 @@
       "model_used": "main",
       "actual_min": 22.7,
       "last_error": null,
-      "finished_at": "2026-11-01T08:31:57.043Z"
+      "finished_at": "2026-11-01T08:31:57.043Z",
+      "commit": "b3fe82b"
     },
     {
       "id": "S07",
@@ -541,10 +542,15 @@
       },
       "gaps": [],
       "size_reason": "4 个人物十余个场景",
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "db54b0d8e4",
-      "pv": 1
+      "pv": 1,
+      "started_at": "2026-11-01T08:32:15.896Z",
+      "model_used": "main",
+      "actual_min": 34,
+      "last_error": null,
+      "finished_at": "2026-11-01T09:06:15.946Z"
     },
     {
       "id": "S08",

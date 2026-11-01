@@ -670,3 +670,11 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .home-report-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .home-saved { color: var(--success); font-size: 13px; }
 .home-saved b { font-size: 20px; }
+/* ---------- v6 S07：主动消息“推送 / 安静”标记、领域、说明、“开始做” ---------- */
+.pa-card .pc-push { font-size: 12px; border-radius: 6px; padding: 2px 8px; margin-bottom: 6px; display: inline-block; }
+.pa-card .pc-push.push { background: #fdecec; color: #b42318; }
+.pa-card .pc-push.quiet { background: #f2f4f7; color: var(--muted); }
+.pa-card .pc-domain { font-size: 11px; background: var(--primary-weak); color: var(--primary); }
+.pa-card .pc-notice { margin-top: 6px; font-size: 12px; color: var(--muted); background: #f7f7fb; border-radius: 6px; padding: 4px 8px; }
+.pa-card .pc-start { margin-top: 8px; }
+.pa-card .pc-start.done { font-size: 13px; color: var(--success); }

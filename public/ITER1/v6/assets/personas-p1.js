@@ -261,3 +261,33 @@
 
   P.p1 = { 1: day1, 7: day7, 30: day30 };
 })();
+
+// ---------- S07：第 30 天场景补充（47 天前想法“开始做”、健康 / 人情说明） ----------
+(function () {
+  const d30 = ((window.PA_PERSONAS || {}).p1 || {})[30];
+  if (!d30) return;
+  const byId = (id) => d30.deliveries.find((d) => d.id === id);
+  const greet = byId("d30-greet");
+  if (greet) Object.assign(greet, {
+    title: "47 天前你想做的家庭记账，要不要现在开始？",
+    body: "早上好。你 47 天前记下“做个家庭记账的小程序”。点“开始做”，我先做个轻量版：按月汇总，股票记账单独一栏，只记不给建议。",
+    ideaId: "i-ledger",
+    start: {
+      label: "开始做",
+      product: {
+        id: "d30-ledger-page", domain: "想做的事", title: "家庭记账小程序：说明页（轻量成品）", depth: "full",
+        body: "轻量成品已生成——说明页：1. 在对话里说“午饭 35”就记一笔；2. 每月 1 日自动出上月汇总；3. 股票盈亏单独一栏，只记不给建议；4. 复制链接发给林舟就能一起记。",
+        because: "因为你点了“开始做”，47 天前的想法先落成一个能用的版本",
+        more: [{ label: "导入上个月的记录", body: "从对话里找到 12 条开销，已按类别排好" }],
+        rules: ["R-做多深-01", "R-帮什么-01"], push: false, pushReason: "",
+      },
+    },
+  });
+  const checkup = byId("d30-checkup");
+  if (checkup) checkup.notice = { text: "只做安排和提醒，不做诊断；身体不适或看报告请找专业医生。", rules: ["R-健康-01", "R-健康-04"] };
+  const mom = byId("d30-mombday");
+  if (mom) {
+    mom.more = [{ label: "看祝福卡草稿（不扣点）", body: "草稿：一张暖黄底的卡片，写着“妈妈，生日快乐，愿你天天开心”；正式生成成片需你确认，确认后才扣 10 点" }];
+    mom.notice = { text: "祝福卡只出草稿，不扣点；正式生成要你确认。送礼只给思路，不做导购。", rules: ["R-人情-02", "R-人情-03"] };
+  }
+})();
