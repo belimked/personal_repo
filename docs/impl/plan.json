@@ -1026,13 +1026,15 @@
         ]
       },
       "gaps": [],
-      "status": "in_progress",
+      "status": "done",
       "attempts": 1,
       "spec_sha": "e68bcd66a1",
       "pv": 1,
-      "actual_base": 0,
       "started_at": "2026-11-01T14:40:45.236Z",
-      "model_used": "cheap"
+      "model_used": "cheap",
+      "actual_min": 2.4,
+      "last_error": null,
+      "finished_at": "2026-11-01T14:43:06.935Z"
     }
   ],
   "post_run": [

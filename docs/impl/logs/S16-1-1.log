@@ -1,0 +1,6 @@
+$ bash /root/.agents/skills/site-builder/scripts/publish.sh -m "ITER1 原型 v6：冷启动成长线、画像管家与功能说明" .
+[32m==>[0m 已推送 f750398
+[32m==>[0m 发布中：https://github.com/alangao2025-dev/daily-assistant-proto/actions/runs/41317521678
+[32m==>[0m 发布成功
+[32m==>[0m 可访问：https://daily-assistant-proto.accrepo.com
+[32m==>[0m 可访问：https://daily-assistant-proto.alangao2025.workers.dev
