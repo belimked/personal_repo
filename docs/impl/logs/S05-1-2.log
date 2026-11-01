@@ -1,0 +1,31 @@
+$ node --test tests/v6-smoke.test.mjs
+✔ v6 包含全部页面 (7.595212ms)
+✔ v6 冒烟：admin-filetypes.html (1548.82562ms)
+✔ v6 冒烟：admin-logs.html (759.315312ms)
+✔ v6 冒烟：admin-models.html (677.252669ms)
+✔ v6 冒烟：admin-system.html (359.949102ms)
+✔ v6 冒烟：admin-usage.html (528.771041ms)
+✔ v6 冒烟：admin-users.html (307.248051ms)
+✔ v6 冒烟：files.html (637.735386ms)
+✔ v6 冒烟：forgot.html (417.6603ms)
+✔ v6 冒烟：home.html (325.891779ms)
+✔ v6 冒烟：idea.html (288.399283ms)
+✔ v6 冒烟：ideas.html (286.990343ms)
+✔ v6 冒烟：inbox.html (48.842499ms)
+✔ v6 冒烟：index.html (140.12921ms)
+✔ v6 冒烟：profile.html (321.100939ms)
+✔ v6 冒烟：reminders.html (45.023173ms)
+✔ v6 冒烟：todo.html (329.181165ms)
+✔ v6 冒烟：todos.html (636.497429ms)
+✔ v6 使用独立的演示数据键 (254.350719ms)
+✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (236.78501ms)
+✔ v6 待办、想做的事页面仍可访问 (1236.489773ms)
+✔ v6 未登录访问会跳转到登录页 (246.57863ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11796.054677

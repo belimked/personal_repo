@@ -614,3 +614,21 @@ mark { background: #fff1a8; padding: 0 1px; border-radius: 2px; }
 .chat .composer-box { padding: 6px 10px; border-radius: 20px; }
 .chat .composer-box .composer-row textarea { min-height: 24px; max-height: 96px; padding: 3px 0; }
 .chat .composer-box .ibtn { transform: scale(.9); }
+
+/* ---------- v6 S05：演示控制条与说明模式角标 ---------- */
+.demo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 6px 20px; background: #fff8e6; border-bottom: 1px solid #f2dfb0; font-size: 12px; color: #7a5a12; flex-shrink: 0; }
+.demo-bar.collapsed { padding: 3px 20px; }
+.demo-bar .demo-lbl { font-weight: 600; background: #f5c242; color: #4a3500; border-radius: 4px; padding: 0 6px; }
+.demo-bar .demo-group { display: inline-flex; align-items: center; gap: 4px; }
+.demo-bar .spacer { flex: 1; }
+.demo-bar button, .demo-bar select { font-size: 12px; border: 1px solid #e3cf9b; background: #fff; border-radius: 5px; padding: 2px 8px; cursor: pointer; }
+.demo-bar .demo-stage.on { background: #f5c242; border-color: #e0a800; font-weight: 600; }
+.demo-bar button:disabled { opacity: .4; cursor: not-allowed; }
+.demo-bar .demo-toggle { margin-left: auto; border: none; background: none; color: #7a5a12; }
+.rule-badges { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 4px; }
+.rule-badge { font-size: 10px; line-height: 16px; padding: 0 5px; border-radius: 8px; border: 1px solid #8854d0; background: #f3ecfd; color: #6b35b8; cursor: pointer; white-space: nowrap; }
+.rule-pop { position: fixed; z-index: 120; width: 300px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 12px 14px; font-size: 13px; }
+.rule-pop .close { position: absolute; right: 8px; top: 4px; border: none; background: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+.rule-pop .rule-id { font-size: 12px; color: #6b35b8; }
+.rule-pop .rule-title { font-weight: 600; margin: 2px 0 4px; }
+.rule-pop .rule-sec { margin-top: 6px; font-size: 12px; color: var(--muted); }

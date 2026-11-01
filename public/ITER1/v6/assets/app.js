@@ -1077,3 +1077,25 @@
   s.dataset.paRules = "1";
   (document.head || document.documentElement).appendChild(s);
 })();
+
+// ---------------- 演示控制（S05）：没有直接引入 demo.js 的页面在 DOMContentLoaded 时补加载 ----------------
+// home.html、files.html 直接引入 personas*.js 和 demo.js（在页面脚本之前生效）；其他页面由这里按顺序补加载，
+// demo.js 发现外壳已渲染时会立即挂控制条。
+(function () {
+  const cur = document.currentScript;
+  const base = cur && cur.src ? cur.src : location.href.replace(/[^/]*$/, "") + "assets/app.js";
+  const load = (list) => {
+    if (!list.length) return;
+    const s = document.createElement("script");
+    s.src = new URL(list[0], base).href;
+    s.onload = () => load(list.slice(1));
+    (document.head || document.documentElement).appendChild(s);
+  };
+  const run = () => {
+    if (window.PA_DEMO || !window.PA) return;
+    const pp = window.PA_PERSONAS || {};
+    load([...(pp.p1 ? [] : ["personas-p1.js"]), ...(pp.p2 ? [] : ["personas-others.js"]), "demo.js"]);
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
+  else run();
+})();

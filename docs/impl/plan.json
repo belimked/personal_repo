@@ -381,7 +381,8 @@
       "model_used": "main",
       "actual_min": 5.4,
       "last_error": null,
-      "finished_at": "2026-11-01T07:43:55.370Z"
+      "finished_at": "2026-11-01T07:43:55.370Z",
+      "commit": "026257a"
     },
     {
       "id": "S05",
@@ -427,11 +428,16 @@
         ]
       },
       "gaps": [],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "spec_sha": "442cad8a74",
       "pv": 1,
-      "size_reason": "跨所有页面的公共机制：控制条、快照切换、时刻、说明模式，拆开会互相依赖"
+      "size_reason": "跨所有页面的公共机制：控制条、快照切换、时刻、说明模式，拆开会互相依赖",
+      "started_at": "2026-11-01T07:44:13.648Z",
+      "model_used": "main",
+      "actual_min": 24.6,
+      "last_error": null,
+      "finished_at": "2026-11-01T08:08:51.503Z"
     },
     {
       "id": "S06",
