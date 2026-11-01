@@ -335,3 +335,27 @@
     { text: "3. 下周：收集上线反馈。", kind: "待办", title: "下周一起收集二期上线反馈", ref: "t-feedback" },
   ];
 })();
+
+// ---------- S12：第 7 天卡片补规则编号（反馈记录、先推断再求证） ----------
+(function () {
+  const P = (window.PA_PERSONAS || {}).p1 || {};
+  const ADD = [
+    { stage: 7, id: "d7-trip", rules: ["R-画像-08", "R-收集-04"] }, // 依据来自第 3、5 天的反馈，“家里出行由你张罗”还是猜测
+  ];
+  ADD.forEach((a) => {
+    const d = ((P[a.stage] || {}).deliveries || []).find((x) => x.id === a.id);
+    if (d) a.rules.forEach((r) => { if (!d.rules.includes(r)) d.rules.push(r); });
+  });
+})();
+
+// ---------- S12：第 30 天卡片补规则编号（按职责分配、排序依据） ----------
+(function () {
+  const P = (window.PA_PERSONAS || {}).p1 || {};
+  const ADD = [
+    { stage: 30, id: "d30-trip", rules: ["R-画像-03", "R-帮什么-02"] }, // 订票的是她：交通排第一，行李和天气放“还可以帮你”
+  ];
+  ADD.forEach((a) => {
+    const d = ((P[a.stage] || {}).deliveries || []).find((x) => x.id === a.id);
+    if (d) a.rules.forEach((r) => { if (!d.rules.includes(r)) d.rules.push(r); });
+  });
+})();

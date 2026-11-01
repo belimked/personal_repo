@@ -22,3 +22,8 @@
 {"t":"2026-11-01T10:27:35.008Z","pv":1,"ev":"done","step":"S10","min":20.8,"msg":"main"}
 {"t":"2026-11-01T10:27:57.564Z","pv":1,"ev":"begin","step":"S11","msg":"cheap"}
 {"t":"2026-11-01T10:39:51.712Z","pv":1,"ev":"done","step":"S11","min":11.9,"msg":"cheap"}
+{"t":"2026-11-01T10:40:13.004Z","pv":1,"ev":"begin","step":"S12","msg":"main"}
+{"t":"2026-11-01T11:14:19.772Z","pv":1,"ev":"fail","step":"S12","msg":"改动超出本步范围：public/ITER1/v6/assets/rules.js（测试产物请加进 .gitignore；用户批准的改动用 allow 登记；其他文件请撤销改动，或在补全模式中调整 files_owned）"}
+{"t":"2026-11-01T13:55:04.239Z","pv":1,"ev":"allow","step":"S12","msg":"public/ITER1/v6/assets/rules.js：用户批准：S12 修改功能说明后需重新生成规则表 rules.js（自动生成文件）"}
+{"t":"2026-11-01T13:59:40.975Z","pv":1,"ev":"fix","step":"S12","min":165.4}
+{"t":"2026-11-01T13:59:40.988Z","pv":1,"ev":"done","step":"S12","min":34.1,"msg":"main"}

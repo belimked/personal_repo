@@ -94,7 +94,7 @@ window.PA_RULES = {
     "title": "跳过冷却",
     "text": "用户跳过的问题 30 天内不再问。",
     "section": "4.3",
-    "docOnly": false
+    "docOnly": true
   },
   "R-收集-04": {
     "title": "先推断再求证",

@@ -1,34 +1,38 @@
 $ node --test tests/v6-smoke.test.mjs
-✔ v6 包含全部页面 (7.994803ms)
-✔ v6 冒烟：admin-filetypes.html (1601.20075ms)
-✔ v6 冒烟：admin-logs.html (776.11966ms)
-✔ v6 冒烟：admin-models.html (697.2198ms)
-✔ v6 冒烟：admin-system.html (365.246313ms)
-✔ v6 冒烟：admin-usage.html (555.715041ms)
-✔ v6 冒烟：admin-users.html (317.857848ms)
-✔ v6 冒烟：files.html (702.923247ms)
-✔ v6 冒烟：forgot.html (412.924049ms)
-✔ v6 冒烟：home.html (400.27888ms)
-✔ v6 冒烟：idea.html (312.721579ms)
-✔ v6 冒烟：ideas.html (299.827794ms)
-✔ v6 冒烟：inbox.html (45.282618ms)
-✔ v6 冒烟：index.html (189.43171ms)
-✔ v6 冒烟：me.html (364.101042ms)
-✔ v6 冒烟：profile.html (341.455701ms)
-✔ v6 冒烟：reminders.html (45.980011ms)
-✔ v6 冒烟：todo.html (258.86339ms)
-✔ v6 冒烟：todos.html (643.776483ms)
-✔ v6 冒烟：watch.html (338.007184ms)
-✔ v6 使用独立的演示数据键 (595.276457ms)
-✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (302.173062ms)
-✔ v6 待办、想做的事页面仍可访问 (784.9668ms)
-✔ v6 未登录访问会跳转到登录页 (327.322024ms)
-✔ v6 包含 S08 新页面：我盯着的事、我了解的你 (2.951426ms)
-ℹ tests 25
+✔ v6 包含全部页面 (8.339894ms)
+✔ v6 冒烟：admin-domains.html (1753.372983ms)
+✔ v6 冒烟：admin-filetypes.html (670.785195ms)
+✔ v6 冒烟：admin-logs.html (661.523893ms)
+✔ v6 冒烟：admin-models.html (653.132819ms)
+✔ v6 冒烟：admin-points.html (471.685663ms)
+✔ v6 冒烟：admin-system.html (351.973469ms)
+✔ v6 冒烟：admin-ui-pools.html (839.037891ms)
+✔ v6 冒烟：admin-usage.html (474.19274ms)
+✔ v6 冒烟：admin-users.html (368.6213ms)
+✔ v6 冒烟：files.html (581.991606ms)
+✔ v6 冒烟：forgot.html (166.282968ms)
+✔ v6 冒烟：home.html (392.431416ms)
+✔ v6 冒烟：idea.html (319.392633ms)
+✔ v6 冒烟：ideas.html (308.164411ms)
+✔ v6 冒烟：inbox.html (58.053528ms)
+✔ v6 冒烟：index.html (243.374704ms)
+✔ v6 冒烟：me.html (246.312834ms)
+✔ v6 冒烟：profile.html (404.437383ms)
+✔ v6 冒烟：reminders.html (49.293875ms)
+✔ v6 冒烟：todo.html (228.07643ms)
+✔ v6 冒烟：todos.html (939.160547ms)
+✔ v6 冒烟：watch.html (222.045612ms)
+✔ v6 使用独立的演示数据键 (286.894322ms)
+✔ v6 一级菜单为管家五项，不含待办事项、想做的事 (324.35971ms)
+✔ v6 待办、想做的事页面仍可访问 (849.068438ms)
+✔ v6 未登录访问会跳转到登录页 (219.389663ms)
+✔ v6 包含 S08 新页面：我盯着的事、我了解的你 (1.88736ms)
+✔ v6 包含 S11 后台配置页：领域包、界面三池、点数规则 (0.701497ms)
+ℹ tests 29
 ℹ suites 0
-ℹ pass 25
+ℹ pass 29
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 12879.846614
+ℹ duration_ms 14361.355081

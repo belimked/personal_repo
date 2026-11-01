@@ -209,3 +209,16 @@
   d.poster = { ability: "生图", draft: "海报草稿：红玫瑰花束 + “七夕预订 199 元”大字标题", note: "七夕促销海报", done: null, failed: "", tweaksLeft: 0 };
   ["R-生成-03", "R-生成-04"].forEach((r) => { if (!d.rules.includes(r)) d.rules.push(r); });
 })();
+
+// ---------- S12：第 30 天卡片补规则编号（林舟按职责先拿行李清单；何姐海报只讲档位不讲模型） ----------
+(function () {
+  const P = window.PA_PERSONAS || {};
+  const ADD = [
+    { persona: "p2", stage: 30, id: "p2-d-trip", rules: ["R-画像-03", "R-帮什么-02"] },
+    { persona: "p4", stage: 30, id: "p4-d-qixi", rules: ["R-模型-02"] },
+  ];
+  ADD.forEach((a) => {
+    const d = (((P[a.persona] || {})[a.stage] || {}).deliveries || []).find((x) => x.id === a.id);
+    if (d) a.rules.forEach((r) => { if (!d.rules.includes(r)) d.rules.push(r); });
+  });
+})();

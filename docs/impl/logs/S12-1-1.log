@@ -1,0 +1,2 @@
+$ node tools/gen-rules.mjs
+已生成 public/ITER1/v6/assets/rules.js：90 条规则

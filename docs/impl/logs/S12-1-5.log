@@ -1,0 +1,14 @@
+$ node --test tests/v6-rule-map.test.mjs
+✔ --check 通过；对照表行数等于规则总数，列与状态正确 (286.987732ms)
+✔ 每条非〔仅文档〕规则都在原型里被引用，原型引用的编号都在文档里 (77.135606ms)
+✔ scanText：识别 data-rule、dataset.rule、rules 数组，多个编号，按快照和分节推断阶段 (4.251224ms)
+✔ 演示剧本覆盖 4 个人物和 3 个阶段，页面清单不再有“待补” (4.545439ms)
+✔ 临时目录：缺引用、未知编号、表过期都报错；重写后通过 (820.82312ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1636.999123

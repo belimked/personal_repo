@@ -1186,3 +1186,31 @@
   PA.UI_FACTORS_DEFAULT = { age: "未知", digital: "未知", roles: [], focus: "未知", timeDevice: "未知", infoPref: "未知", inputPref: "打字" };
   PA.uiFactorsDefault = () => JSON.parse(JSON.stringify(PA.UI_FACTORS_DEFAULT));
 })();
+
+// ---------------- 规则标注补充（S12）：给页面骨架里已有的元素追加 data-rule（不覆盖原有编号），动态出现的元素也补上 ----------------
+(function () {
+  const MARKS = [
+    { sel: ".sidebar .nav-group:first-of-type", rules: ["R-界面-06"] }, // 一级菜单 5 项
+    { sel: ".mnav", rules: ["R-界面-06"] },
+    { sel: "#cbox", rules: ["R-界面-06"] }, // 底部“吩咐一声”
+    { sel: "#sem", rules: ["R-资料-02"] }, // 结果按文件 / 片段 / 时刻定位
+  ];
+  function mark(root) {
+    MARKS.forEach((m) => (root.querySelectorAll ? root : document).querySelectorAll(m.sel).forEach((el) => {
+      const cur = (el.getAttribute("data-rule") || "").split(/\s+/).filter(Boolean);
+      const add = m.rules.filter((r) => !cur.includes(r));
+      if (add.length) el.setAttribute("data-rule", [...cur, ...add].join(" "));
+    }));
+  }
+  function boot() {
+    mark(document);
+    let busy = false;
+    new MutationObserver(() => {
+      if (busy) return;
+      busy = true;
+      setTimeout(() => { busy = false; mark(document); }, 0);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else setTimeout(boot, 0);
+})();
