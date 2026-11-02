@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>个人日常助手 · 办公 AI 对比与合规调研（2026-11-02）</title>
+<style>
+  :root { --c:#2f5d50; --bg:#f7f7f5; --line:#e2e2dc; --muted:#6b6b66; --warn:#b54708; --y:#fff7d6; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#222; background:var(--bg); }
+  main { max-width:1080px; margin:0 auto; padding:32px 20px 80px; }
+  h1 { font-size:26px; margin:0 0 6px; }
+  h2 { font-size:21px; margin:44px 0 12px; padding-top:12px; border-top:2px solid var(--c); color:var(--c); }
+  h3 { font-size:17px; margin:26px 0 8px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin:14px 0; }
+  .note { background:var(--y); border-left:4px solid #e0b400; padding:10px 14px; border-radius:6px; margin:14px 0; }
+  .warn { color:var(--warn); font-weight:600; }
+  table { width:100%; border-collapse:collapse; background:#fff; font-size:13.5px; margin:10px 0; }
+  th, td { border:1px solid var(--line); padding:7px 9px; vertical-align:top; text-align:left; }
+  th { background:#eef3f1; }
+  .wrap { overflow-x:auto; }
+  nav a { margin-right:14px; color:var(--c); }
+  a { color:var(--c); word-break:break-all; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:10px; background:#eef3f1; color:var(--c); margin-right:4px; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px){ .two { grid-template-columns:1fr; } }
+  ul, ol { padding-left:22px; }
+  small { color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+<h1>办公 AI 对比与合规调研</h1>
+<p class="meta">个人日常助手 · ITER1 · v6 评审后讨论（v7 准备阶段）· 2026-11-02<br>
+状态：<b>初步资料</b>。v7 完成后还要做两项详细分析（见第 3 节），本页是它们的输入，不是最终结论。<br>
+联网资料由子代理收集，关键条款已抽查原文；未核实的内容都标了“存疑”或“推断”。完整报告在仓库 <code>docs/ITER1/research/</code> 目录下。</p>
+<nav><a href="#a">1. 我们 vs. 办公 AI</a><a href="#b">2. 合规</a><a href="#c">3. v7 后必须做的两件事</a></nav>
+
+<h2 id="a">1. 我们的产品 vs. 办公软件 AI</h2>
+
+<div class="card">
+<h3 style="margin-top:0">1.1 讨论背景</h3>
+<ul>
+<li>v7 把<b>工作领域</b>从“轻做”改成<b>首发主力</b>，目标用户是职场白领。用户说的“摸鱼神器”，意思是大幅提高工作效率，原来 8 小时的活半小时做完，不做任何伪装、偷懒类功能。</li>
+<li>典型场景：从邮件读下属周报，对照会议录音和纪要审核；把多份下属周报汇总给老板；按进度报告汇总项目进度；按和老板开会的内容写汇报。</li>
+<li>工作领域分九类帮助：A 向上汇报、B 管理团队、C 会议、D 邮件、E 文档写作、F 项目跟进、G 个人节奏、H 工作资料查找、I 对接对象偏好。<b>A–D 做深</b>，E、F、H 中等，G、I 作为支撑。</li>
+</ul>
+</div>
+
+<h3>1.2 各产品现状（调研结论，截至 2026-11-02）</h3>
+<div class="wrap"><table>
+<tr><th>产品</th><th>能读的数据</th><th>跨厂商</th><th>长期记忆 / 偏好</th><th>主动服务</th><th>周报 / 汇总下属</th><th>付费与价格</th><th>个人生活</th></tr>
+<tr><td><b>飞书</b><br><small>工作伙伴（2026-08 起“智能伙伴”改名）</small></td><td>飞书文档、文件、妙记、聊天、日程、待办；只限用户有权限的部分</td><td>不能直接读其他厂商；可用开放平台自建</td><td>✅ 每天抽取工作记忆，可定制说话风格</td><td>✅ 每天 7 点摘要、每日前瞻 / 回顾、会议提醒、定时 / 事件触发</td><td>✅ 官方示例“每周四根据本周工作自动整理周报”；有团队日报周报方案（汇总、打分、向管理者推送风险）</td><td>个人可买：AI 会员 69 元 / 月、138 元 / 月起；豆包订阅 68 / 200 / 500 元 / 月。对话只有本人可见，不用于训练</td><td>❌</td></tr>
+<tr><td><b>企业微信</b><br><small>智能助理“大圆”、智能总结</small></td><td>聊天、文档、表格、会议录制、邮件、本地文件</td><td>企业内系统、微信生态；不能读飞书、钉钉、Outlook</td><td>未查到官方说明</td><td>部分（定时任务）</td><td>✅ 官方写“撰写工作周报”“邀请同事参与，自动汇总成一份整体总结”</td><td>WorkBuddy 198 元 / 人 / 月，由管理员购买；大圆定价未查到</td><td>❌</td></tr>
+<tr><td><b>钉钉</b><br><small>钉钉 ONE、AI 听记 / 搜问</small></td><td>钉钉聊天、文档、会议、日程、表格</td><td>MCP 广场、连接平台</td><td>未查到个人记忆的官方说明</td><td>部分（情报助理推送）</td><td>日志 AI 汇总未查到官方说明</td><td>价格页未取得</td><td>❌</td></tr>
+<tr><td><b>WPS 灵犀</b></td><td>WPS 云文档、本地文件、浏览器页面；读不到邮件、日历、聊天、会议</td><td>可在微信、企微、QQ、飞书、钉钉里远程下指令</td><td>✅ 核心记忆 + 知识库，可查看、纠正、删除、关闭，不用于训练</td><td>部分（定时任务，不主动推送）</td><td>能写周报，不能审核、汇总下属周报</td><td>个人 48 / 128 / 398 元 / 月</td><td>部分</td></tr>
+<tr><td><b>Microsoft 365 Copilot</b></td><td>Outlook、Teams、SharePoint、OneDrive、组织目录（租户内）</td><td>连接器支持 Gmail、Notion 等；不能读微信、钉钉、飞书</td><td>✅ 预览版：记忆存在 Exchange 隐藏文件夹，管理员可通过 eDiscovery 查看</td><td>✅ Cowork：定时 + 事件触发、每日简报、会前准备、敏感操作需确认</td><td>能生成周报和汇总材料，没有专门的下属周报审核</td><td>企业 163 元 / 席 / 月（促销 139.72）；个人版 398 / 498 元 / 年</td><td>✅ 个人版 / 家庭版</td></tr>
+<tr><td><b>豆包 / 元宝</b></td><td>上传的文件、网页、录音；没有企业数据</td><td>❌</td><td>未查到</td><td>部分（豆包定时任务）</td><td>能写报告，不能汇总下属</td><td>元宝免费；豆包 68 / 200 / 500 元 / 月</td><td>✅</td></tr>
+</table></div>
+<p><small>存疑或未查到：钉钉价格和日志 AI 汇总；企业微信大圆的定价、记忆和对话可见性；飞书原生“汇报”功能是否有 AI 汇总（目前只查到方案）；飞书邮箱 AI；WPS AI 会员官方价格。主要来源：<a href="https://aily.feishu.cn/hc/1u7kleqg_jsmwydi4.md">飞书专属工作伙伴说明</a>、<a href="https://aily.feishu.cn/hc/1u7kleqg_1cnvbb55.md">飞书计费说明</a>（周报示例和价格原文已抽查）。其余来源见仓库完整报告。</small></p>
+
+<h3>1.3 双方观点（还没有结论，v7 完成后再详细讨论）</h3>
+<div class="two">
+<div class="card"><b>用户观点</b>
+<ul>
+<li>站在客户的立场上，“了解用户，甚至在一定程度上了解他工作环境里的同事”是明显优势：公司的 AI 就算更了解，它服务的是公司，<b>我们服务的是我们的客户</b>。</li>
+<li>第二个优势是<b>一站式集成</b>：用户不用像用办公软件那样考虑软件之间怎么倒数据、怎么同步，有时还得让 LLM 写小工具。</li>
+<li>飞书、Copilot 365 这类产品的<b>使用方式和我们不一样，也不是以用户画像为服务的出发点</b>。</li>
+</ul></div>
+<div class="card"><b>助手观点</b>
+<ul>
+<li>“服务的是客户”这个立场同意。但飞书工作伙伴已经有长期工作记忆、主动推送、自动周报和团队周报汇总，而且对话只有本人可见、个人可以买。在<b>全面使用飞书的公司里，和“摸鱼神器”核心功能的重合度较高</b>。</li>
+<li>“了解工作环境”方面，办公 AI 由公司授权，能读的数据更全；我们只能看到用户自己交来的那部分。</li>
+<li>站得住的差异：<b>跨工具</b>（调研里没有一家能同时读 Outlook、微信、飞书、钉钉）、<b>属于个人</b>（公司看不到，换工作也带得走）、<b>工作和生活一起管、主动做事</b>。</li>
+</ul></div>
+</div>
+
+<h3>1.4 已写进共识的初步结论（共识 14.11）</h3>
+<ol>
+<li>差异定为四点：从用户画像出发（了解用户本人和他要对接的人）、跨工具一站式、属于个人不属于公司、工作和生活一起管且主动做事。</li>
+<li>首发目标白领：沟通以邮件和微信为主、多套办公工具混用、公司没有购买 AI 的白领（外企、传统行业、中小企业）。全面使用飞书或企业微信的公司不作为首发重点。</li>
+<li>会员定价参考飞书 AI 会员 69 元 / 月起、WPS 灵犀 48 元 / 月起。</li>
+<li>“牛马”只作为内部对用户群的称呼，不出现在产品文案里。</li>
+</ol>
+
+<h3>1.5 和对比相关的产品决定</h3>
+<ul>
+<li><b>工作邮箱</b>：单独授权、默认只读；草稿保存在我们系统里。用户说“发给小周”时，打开手机邮件 App 并填好收件人和正文，由用户自己点发送；想一句话直接发出的用户，单独开通发送权限，每封发之前确认（共识 14.10）。</li>
+<li><b>风险</b>（推断，未核实）：很多公司的 Microsoft 365 要管理员同意员工才能授权第三方应用；Gmail 读取邮件的权限需要通过安全评估；企业邮箱的 IMAP 常被关闭。所以要准备不依赖邮箱的路线：上传文件、粘贴内容、从别的 App 分享过来、拍会议白板。</li>
+<li><b>项目分工、团队成员不进画像</b>，放在个人知识库里，用的时候再查；画像只记长期稳定的内容，例如“给王总的汇报：先说结论，一页纸以内”。</li>
+<li><b>删除“绩效素材积累”</b>：不在后台给任何人建长期表现档案；用户要写考核时当场查资料、列出事实和出处。</li>
+</ul>
+
+<h2 id="b">2. 合规（中国大陆上架 AI 个人助手）</h2>
+<div class="note">以下是调研摘要，<b>不是法律意见</b>。来源发布日期都标在后面；“推断”和“行业经验”不是官方要求。</div>
+
+<h3>2.1 备案和许可</h3>
+<div class="wrap"><table>
+<tr><th>事项</th><th>要点</th><th>来源</th></tr>
+<tr><td>App 备案</td><td>在境内从事互联网信息服务的 App 必须备案，未备案不得提供服务。主办者向住所地省通管局申请，由接入服务商或分发平台代为提交；材料齐全的 20 个工作日内备案。新 App 先备案再上线。</td><td><a href="https://www.miit.gov.cn/jgsj/xgj/wjfb/art/2023/art_dd783a581c9644a4aee10afa582811db.html">工信部信管〔2023〕105 号</a>（2023-08-04）</td></tr>
+<tr><td>应用商店</td><td>苹果：中国区 App 要填 ICP 备案号，并与工信部备案信息一致（原文已抽查；约 2023-09 开始要求）。国内安卓商店：新 App 从 2023-09-01 起备案后才能上架。</td><td><a href="https://developer.apple.com/cn/help/app-store-connect/reference/app-information/">Apple App 信息帮助页</a></td></tr>
+<tr><td>收费需要经营许可</td><td>个人只能办非经营性备案；订阅、内购属于经营性服务，需要公司主体和 ICP 经营许可证（B25）。</td><td><a href="https://www.gov.cn/gongbao/content/2000/content_60531.htm">《互联网信息服务管理办法》</a></td></tr>
+<tr><td>生成式 AI</td><td>自研或微调模型：要做大模型备案。<b>只调用已备案模型：由地方网信办做“应用 / 功能登记”</b>（原文已抽查）。具有舆论属性时，还要做算法备案（服务上线 10 个工作日内填报）和安全评估。</td><td><a href="https://www.thepaper.cn/newsdetail_forward_31170807">网信办 2025 年 4–6 月备案公告</a>；<a href="https://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm">《生成式人工智能服务管理暂行办法》</a></td></tr>
+<tr><td>商店的 AI 资质</td><td>小米 2023-08 公告要求：算法备案、安全评估报告、全国互联网安全管理服务平台截图、软著、ICP。其他商店的清单没有完全公开。</td><td><a href="https://www.ithome.com/0/711/575.htm">IT 之家转载</a>（二手来源）</td></tr>
+</table></div>
+
+<h3>2.2 AI 生成内容标识（2025-09-01 起施行，已有 App 因此被查处）</h3>
+<ul>
+<li>文本可以在开头、结尾或中间加文字提示，或在界面里加明显提示；<b>提供下载、复制、导出时，文件里要带显式标识</b>（原文已抽查）。</li>
+<li><b>第九条</b>：用户申请不带显式标识的内容时，可以在用户协议里写明用户的标识义务和使用责任后提供，并留存日志不少于 6 个月（原文已抽查）。</li>
+<li>第七条：应用商店上架审核时要核验标识材料。配套强制性国标 GB 45438-2025。</li>
+<li>来源：<a href="https://www.cac.gov.cn/2025-03/14/c_1743654684782215.htm">《人工智能生成合成内容标识办法》</a>；执法案例：<a href="http://www.xinhuanet.com/politics/20251125/43ce6f4396244922b4f59be99298836e/c.html">2025-11-25 新华网</a>。</li>
+</ul>
+<p class="warn">对我们的影响：给老板的周报如果带着“AI 生成”字样，工作领域就没法用。初步建议按第九条处理，等法务确认。</p>
+
+<h3>2.3 个人信息合规（监管实际查的内容）</h3>
+<ul>
+<li>2026-06 网信办通报 30 款 App，高频问题：<b>没有有效的注销功能</b>（14 款）、SDK 没有列全、反复索要非必要权限、没有公开收集规则（<a href="https://www.news.cn/politics/20260611/c8924126c5da49ebb2b2e4f347f45a79/c.html">新华网</a>）。</li>
+<li>首次启动弹出隐私政策，主界面 4 次点击以内能找到；权限在用到时才申请并说明用途，拒绝后不反复弹，也不影响基本功能。</li>
+<li>要有“已收集个人信息清单”和“与第三方共享清单”（含 SDK）（<a href="https://www.gov.cn/zhengce/zhengceku/2021-11/06/content_5649420.htm">工信部 524 行动</a>）。</li>
+<li>不能因为用户不同意提供非必要信息就拒绝基本功能（<a href="https://www.cac.gov.cn/2021-03/22/c_1617990997054277.htm">必要个人信息范围规定</a>）。推断：强制手机号登录有风险。</li>
+<li>处理敏感信息、把数据交给大模型厂商、做自动化决策之前，要先做个人信息保护影响评估，报告保存 3 年（个保法第 55、56 条）。</li>
+<li>敏感信息（不满 14 岁未成年人、健康、金融账户、行踪轨迹、生物识别）要单独同意（第 28、29、31 条）。</li>
+<li>个性化推荐要能关闭，关闭后立即停止，用户可以删除标签（算法推荐规定第 17 条）。</li>
+<li>未成年人模式：社交、音视频类必须做；纯工具类没有强制，但只要允许未成年人使用，就要监护人同意并有专门的处理规则。</li>
+</ul>
+
+<h3>2.4 数据出境与模型</h3>
+<ul>
+<li>调用境外模型、境外云，就构成数据出境，要根据人数选择标准合同、认证或安全评估（<a href="https://www.cac.gov.cn/2024-03/22/c_1712776611775634.htm">《促进和规范数据跨境流动规定》</a>）。</li>
+<li><b>已定（共识 14.12）：国内版只用国内已备案的模型</b>；境外模型只留给以后的海外版。</li>
+</ul>
+
+<h3>2.5 移动端</h3>
+<ul>
+<li><b>已定（共识 14.13）：正式产品移动端做原生 App</b>（推送可靠、支持“从别的 App 分享过来”、录音拍照更稳定）；原型仍然用网页在手机外框里演示。</li>
+<li>国内 Android 推送要分别接入华为、小米、OPPO、vivo、荣耀，或用聚合推送服务；统一推送工委会只做标准，不是统一的推送通道。</li>
+<li>两端都不能做的功能：读取其他 App 的数据（如微信聊天记录）、通话录音、读短信、长时间后台录音。</li>
+</ul>
+
+<h3>2.6 上架前清单（时间多为行业经验，不是官方时限）</h3>
+<div class="wrap"><table>
+<tr><th>事项</th><th>大致时间</th></tr>
+<tr><td>公司主体；收费要办 ICP 经营许可证</td><td>法定审查 60 日；实务上 2–4 个月</td></tr>
+<tr><td>软著</td><td>1–3 个月</td></tr>
+<tr><td>App 备案</td><td>省通管局 20 个工作日</td></tr>
+<tr><td>地方网信办生成式 AI 应用登记</td><td>没有官方时限；行业经验 2–8 周</td></tr>
+<tr><td>算法备案、安全评估（具有舆论属性时）</td><td>上线 10 个工作日内填报；30 个工作日完成备案</td></tr>
+<tr><td>隐私政策、两份清单、注销、权限、影响评估</td><td>2–6 周</td></tr>
+<tr><td>AI 标识改造、用户协议、日志 6 个月</td><td>2–4 周</td></tr>
+<tr><td>推送接入</td><td>2–4 周</td></tr>
+</table></div>
+<p><b>初步判断</b>：合计可能要 3–6 个月，要和开发同时进行；网页端同样要 ICP 和 AI 登记。“用境外模型”“个人收费运营”“不做 AI 标识”是最容易导致无法上架或被下架的三条红线。</p>
+
+<h2 id="c">3. v7 完成后必须做的两件事（共识 14.15，不在 v7 范围）</h2>
+<div class="card">
+<ol>
+<li><b>市场竞品详细分析</b>：Copilot 365、飞书、企业微信、钉钉、WPS 灵犀、豆包 / 元宝和本产品逐项对比优势和劣势。重点讨论用户的判断：<b>飞书、Copilot 365 的使用方式和我们不一样，也不是以用户画像为服务出发点</b>。从使用方式、服务出发点、数据来源、授权和付费、目标用户几方面分析，据此确认定位和首发目标用户。</li>
+<li><b>合规详细分析</b>：确认“<b>先做网页版、完成合规并取得 ICP，再做 App 的 ICP 备案和上架</b>”是不是最好的路径，有没有其他最佳实践，例如：网页和 App 同时办；先做免费的非经营性版本；公司主体和许可证的办理顺序；地方网信办登记、算法备案、安全评估分别在什么时候办；AI 标识第九条能不能用。必要时请法务确认。</li>
+</ol>
+</div>
+<p class="meta">完整调研报告：仓库 <code>docs/ITER1/research/2026-11-02-办公软件内置AI助手能力调研.md</code>、<code>2026-11-02-App上架与合规调研.md</code>；决定记录：<code>docs/ITER1/review/产品方向共识.md</code> 第 13、14 节。</p>
+</main>
+</body>
+</html>
