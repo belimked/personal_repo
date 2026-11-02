@@ -1,6 +1,7 @@
 # 收尾清单（proto-v6 · P1）
 
 > 脚本生成，不要手工编辑。登记命令在项目根目录运行。
+> 计划已归档（完成，2026-11-02）：原型 v6 全部完成，用户试用确认 OK，同意归档
 
 共 1 项：数据 0 项（预计 0 分钟）、核对 0 项、人工验收 1 项；已登记 1 项。按下面的顺序做。
 
@@ -17,5 +18,5 @@
   - [x] 说明模式角标的编号都能在功能说明里找到
   - [x] 视觉朴素、无明显错位或遮挡
 - 不通过会影响：S05、S06、S07、S08、S09、S10
-- 登记：`post A01 ok --reason "…"` / `post A01 fail --reason "<原因>"` / `post A01 skip --reason "<原因>"`
+- 登记：`post A01 ok docs/impl-archive/20261102-proto-v6 --reason "…"` / `post A01 fail docs/impl-archive/20261102-proto-v6 --reason "<原因>"` / `post A01 skip docs/impl-archive/20261102-proto-v6 --reason "<原因>"`
 - 结果：✅ 通过 · 2026-11-02 09:43 · 用户试用后确认原型 v6 OK
