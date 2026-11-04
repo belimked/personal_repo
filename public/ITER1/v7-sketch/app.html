@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小禾 · App 首页草图（v7 临时）</title>
+<style>
+  :root{
+    --bg:#ecebe7; --paper:#fbfaf7; --card:#ffffff; --line:#ebe8e1;
+    --ink:#24262a; --sub:#6b6f76; --faint:#a3a6ab;
+    --pri:#2f6b57; --pri-soft:#e8f1ec; --warn:#c2412d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;color:var(--ink);font-size:15px;line-height:1.6}
+  .page{display:flex;gap:48px;justify-content:center;flex-wrap:wrap;padding:40px 20px 60px}
+  .cap{text-align:center;color:var(--sub);font-size:13px;margin-bottom:12px}
+  .phone{width:390px;height:844px;background:var(--paper);border-radius:44px;box-shadow:0 0 0 10px #1d1f22,0 24px 60px rgba(0,0,0,.18);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .status{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;font-size:13px;font-weight:600}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 6px}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#dfe7e2;color:var(--pri);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+  .top .title{font-size:17px;font-weight:600}
+  .top .ph{width:34px}
+  .scroll{flex:1;overflow:hidden;padding:8px 20px 0}
+
+  /* 小禾消息 */
+  .who{display:flex;align-items:center;gap:8px;color:var(--sub);font-size:13px;margin:10px 0 8px}
+  .who .dot{width:22px;height:22px;border-radius:50%;background:var(--pri);display:flex;align-items:center;justify-content:center}
+  .msg{background:var(--card);border-radius:20px;padding:18px 18px 8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .hello{font-size:19px;font-weight:600;line-height:1.5;margin-bottom:14px}
+  .sec{font-size:13px;color:var(--faint);margin:6px 0 2px}
+  .item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .item .t{flex:1}
+  .item .time{color:var(--sub);font-size:13px}
+  .chev{color:var(--faint)}
+  .more{color:var(--sub);font-size:13px;padding:8px 0 10px}
+
+  /* 快捷方式 */
+  .shortcuts{display:flex;gap:10px;margin:22px 0 0}
+  .sc{flex:1;background:var(--card);border-radius:16px;padding:12px 12px;min-height:72px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .sc .k{font-size:12px;color:var(--sub)}
+  .sc .v{font-weight:600;display:flex;align-items:center;gap:4px}
+  .sc.add{background:transparent;border:1.5px dashed #d6d2c8;box-shadow:none;align-items:center;justify-content:center;color:var(--faint);font-size:22px}
+
+  /* 收起的简报 + 对话 */
+  .brief-line{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:14px;padding:10px 14px;color:var(--sub);font-size:14px}
+  .brief-line .t{flex:1}
+  .me{display:flex;justify-content:flex-end;margin:18px 0 6px}
+  .me span{background:var(--pri);color:#fff;border-radius:18px 18px 4px 18px;padding:9px 14px;max-width:80%}
+  .reply{background:var(--card);border-radius:18px 18px 18px 4px;padding:14px 16px;max-width:92%}
+  .strip{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+  .strip .ic{width:36px;height:36px;border-radius:10px;background:var(--pri-soft);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .strip .b{flex:1;min-width:0}
+  .strip .n{font-weight:600}
+  .strip .s{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btn{background:var(--pri);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;white-space:nowrap}
+
+  /* 输入框 + 底部导航 */
+  .chips{display:flex;gap:8px;padding:0 20px 8px;overflow:hidden}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--sub);white-space:nowrap}
+  .input{margin:0 16px 10px;background:var(--card);border-radius:26px;height:52px;display:flex;align-items:center;gap:10px;padding:0 8px 0 16px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .input .ph{flex:1;color:var(--faint)}
+  .mic{width:38px;height:38px;border-radius:50%;background:var(--pri);display:flex;align-items:center;justify-content:center}
+  .nav{height:82px;border-top:1px solid var(--line);background:var(--paper);display:flex;padding:8px 6px 0}
+  .nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--faint);text-decoration:none;position:relative}
+  .nav a.on{color:var(--pri)}
+  .nav a .sp{position:absolute;top:-4px;right:calc(50% - 22px)}
+  .home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1d1f22}
+  .note{max-width:900px;margin:0 auto 40px;color:var(--sub);font-size:13px;padding:0 20px}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<!-- 共用小图标 -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="sprout" viewBox="0 0 24 24"><path d="M12 21v-8" stroke="#3f8f62" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M12 13c0-4 3-7 8-7 0 4-3 7-8 7z" fill="#7cc48f"/><path d="M12 15c0-3-2.5-5.5-7-5.5 0 3 2.5 5.5 7 5.5z" fill="#a6dbb1"/></symbol>
+    <symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-13 0 9-5 13-14 13z" fill="#fff"/><path d="M5 19l8-8" stroke="#2f6b57" stroke-width="1.6"/></symbol>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="clip" viewBox="0 0 24 24"><path d="M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7" fill="none" stroke="#8a8e94" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 12.5l3 3 5-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+
+  <!-- 状态一：每天第一次打开 -->
+  <div>
+    <div class="cap">① 今天第一次打开：小禾的今日简报</div>
+    <div class="phone">
+      <div class="status"><span>9:12</span><span>●●● ▮</span></div>
+      <div class="top"><div class="avatar">陆</div><div class="title">管家</div><div class="ph"></div></div>
+
+      <div class="scroll">
+        <div class="who"><span class="dot"><svg width="13" height="13"><use href="#leaf"/></svg></span>小禾 · 今天 9:12</div>
+        <div class="msg">
+          <div class="hello">早上好，陆航。今天周五，<br>周报 18:00 前要交。</div>
+
+          <div class="sec">今天要留意</div>
+          <div class="item"><span class="t">交团队周报给王总</span><span class="time">18:00</span><span class="chev">›</span></div>
+          <div class="item"><span class="t">小李的接口确认还没回</span><span class="chev">›</span></div>
+
+          <div class="sec" style="margin-top:14px">已经帮你做好</div>
+          <div class="item"><span class="t">团队周报初稿</span><svg width="18" height="18"><use href="#sprout"/></svg><span class="chev">›</span></div>
+          <div class="item"><span class="t">收件箱已分好</span><svg width="18" height="18"><use href="#sprout"/></svg><span class="chev">›</span></div>
+        </div>
+
+        <div class="shortcuts">
+          <div class="sc"><span class="k">工作</span><span class="v">已完成 <svg width="16" height="16"><use href="#sprout"/></svg></span></div>
+          <div class="sc"><span class="k">个人</span><span class="v">盯着</span></div>
+          <div class="sc add">＋</div>
+        </div>
+      </div>
+
+      <div class="input"><svg width="22" height="22"><use href="#clip"/></svg><span class="ph">说一句，或打一句…</span><span class="mic"><svg width="18" height="18"><use href="#mic"/></svg></span></div>
+      <div class="nav">
+        <a class="on"><svg width="24" height="24"><use href="#i-home"/></svg>管家</a>
+        <a><svg width="24" height="24"><use href="#i-eye"/></svg>盯着</a>
+        <a><svg width="24" height="24"><use href="#i-done"/></svg>已完成<svg class="sp" width="14" height="14"><use href="#sprout"/></svg></a>
+        <a><svg width="24" height="24"><use href="#i-box"/></svg>资料</a>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+  <!-- 状态二：当天再次打开，聊过一句 -->
+  <div>
+    <div class="cap">② 当天再打开：简报收成一行，下面是对话</div>
+    <div class="phone">
+      <div class="status"><span>16:05</span><span>●●● ▮</span></div>
+      <div class="top"><div class="avatar">陆</div><div class="title">管家</div><div class="ph"></div></div>
+
+      <div class="scroll">
+        <div class="brief-line"><svg width="16" height="16"><use href="#sprout"/></svg><span class="t">今日简报 · 2 件要留意，2 件已做好</span><span class="chev">›</span></div>
+
+        <div class="me"><span>把周报改成给王总的三行版</span></div>
+        <div class="reply">
+          好了，按你前几次给王总的写法，先说结论。
+          <div class="strip">
+            <span class="ic">💼</span>
+            <span class="b"><span class="n">团队周报 · 三行版</span><span class="s" style="display:block">完成 3 项，延期 1 项（支付对接）…</span></span>
+            <span class="btn">复制</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chips"><span class="chip">发给王总…</span><span class="chip">生成 PPT 大纲</span><span class="chip">今天个人有什么安排</span></div>
+      <div class="input"><svg width="22" height="22"><use href="#clip"/></svg><span class="ph">说一句，或打一句…</span><span class="mic"><svg width="18" height="18"><use href="#mic"/></svg></span></div>
+      <div class="nav">
+        <a class="on"><svg width="24" height="24"><use href="#i-home"/></svg>管家</a>
+        <a><svg width="24" height="24"><use href="#i-eye"/></svg>盯着</a>
+        <a><svg width="24" height="24"><use href="#i-done"/></svg>已完成<svg class="sp" width="14" height="14"><use href="#sprout"/></svg></a>
+        <a><svg width="24" height="24"><use href="#i-box"/></svg>资料</a>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <b>临时草图，只看感觉，不可点击。</b>
+  左上角头像 = “我的”（放设置）；没有通知铃铛；有新内容用 🌱 小禾苗，不用数字；输入框常驻，上方小块是“还可以帮你”。
+</div>
+
+</body>
+</html>
