@@ -134,7 +134,11 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <style id="ios-fix">
+body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
+</style>
+</head>
 <body class="h-full flex items-center justify-center p-0 md:p-6 overflow-hidden select-none">
 <!-- iOS Device Frame Container (390 x 844) -->
 <main class="ios-shell relative flex flex-col justify-between overflow-hidden shadow-2xl md:rounded-[54px] border border-black/10">
@@ -195,10 +199,7 @@
 <section class="w-full bg-surface-container-lowest rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-black/[0.04] flex flex-col gap-4">
 <!-- Card Main Title -->
 <div class="space-y-1">
-<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#EBF1FE] text-primary-container text-[11px] font-caption-2 font-medium mb-1">
-<span class="material-symbols-outlined text-[13px]" data-icon="flag">flag</span>
-<span>待确认事项</span>
-</div>
+
 <h2 class="text-title-3 font-title-3 text-on-surface leading-snug tracking-tight">
             小周的周报有 2 处和例会不一样
           </h2>
@@ -223,7 +224,7 @@
 <!-- Recommended Reply Container (Light blue tint box) -->
 <div class="rounded-lg bg-[#EBF1FE] p-3.5 mt-1 border border-primary-container/10">
 <div class="flex items-start gap-2">
-<span class="material-symbols-outlined text-primary-container text-[18px] shrink-0 mt-0.5" data-icon="smart_toy">smart_toy</span>
+
 <p class="font-subheadline text-subheadline text-[#1A45A0] leading-relaxed select-text">
 <span class="font-semibold text-primary-container">建议回复：</span>“支付对接按例会改成下周三完成；另外补上压测报告。”
             </p>

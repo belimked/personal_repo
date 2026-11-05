@@ -125,68 +125,30 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <style id="ios-fix">
+body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
+</style>
+</head>
 <body class="bg-background text-on-surface antialiased flex justify-center items-center min-h-screen select-none font-body">
 <!-- iPhone 15 Pro Frame 390x844 -->
-<div class="relative w-[390px] h-[844px] bg-[#F2F2F7] rounded-[54px] shadow-2xl overflow-hidden border-[7px] border-[#2C2C2E] flex flex-col justify-between">
+<div class="relative w-[390px] h-[844px] bg-[#F2F2F7] overflow-hidden flex flex-col justify-between">
 <!-- 1. 背景层：页面 ① 的内容呈现 (带背景毛玻璃虚化感) -->
 <div class="absolute inset-0 z-0 bg-[#F2F2F7] flex flex-col pointer-events-none select-none">
-<!-- 页面 1 Header 占位 -->
-<div class="pt-14 px-4 pb-3 flex justify-between items-center">
-<div class="flex items-center gap-2">
-<div class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center font-headline text-callout">禾</div>
-<span class="font-title-3 text-title-3 text-on-surface">管家</span>
-</div>
-<div class="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
-<span class="material-symbols-outlined text-outline">history</span>
-</div>
-</div>
-<!-- 页面 1 对话/助手卡片流内容模拟 (底层被弱化呈现) -->
-<div class="px-4 space-y-4 pt-3">
-<!-- 欢迎卡片 Bento -->
-<div class="bg-white rounded-2xl p-4 shadow-sm">
-<div class="flex items-center gap-2 mb-2">
-<span class="w-2 h-2 rounded-full bg-[#34C759]"></span>
-<span class="text-caption-1 font-caption-1 text-outline">今天 09:41 · 主动服务已就绪</span>
-</div>
-<div class="text-headline font-headline text-on-surface mb-1">早安，张工</div>
-<div class="text-subheadline font-subheadline text-outline leading-relaxed">
-            今天上午 10:30 有“年度产品架构评审”，准备资料已为您备好。
-          </div>
-</div>
-<!-- Bento Grid 示例 -->
-<div class="grid grid-cols-2 gap-3">
-<div class="bg-white p-3.5 rounded-2xl shadow-sm">
-<div class="text-caption-1 font-caption-1 text-outline mb-1">待办事项</div>
-<div class="text-title-3 font-title-3 text-primary">3 项紧急</div>
-<div class="text-caption-1 font-caption-1 text-on-surface-variant mt-2">已同步飞书日历</div>
-</div>
-<div class="bg-white p-3.5 rounded-2xl shadow-sm">
-<div class="text-caption-1 font-caption-1 text-outline mb-1">资料收集</div>
-<div class="text-title-3 font-title-3 text-secondary">86 份归档</div>
-<div class="text-caption-1 font-caption-1 text-on-surface-variant mt-2">新存 2 个汇报PPT</div>
-</div>
-</div>
-<!-- 助手气泡模拟 -->
-<div class="flex gap-2.5 items-start mt-2">
-<div class="w-7 h-7 rounded-full bg-primary-container text-white flex items-center justify-center font-subheadline text-xs flex-shrink-0 mt-0.5">禾</div>
-<div class="bg-white rounded-2xl rounded-tl-sm p-3.5 shadow-sm max-w-[270px]">
-<p class="text-subheadline font-subheadline text-on-surface">需要我把今天的要点梳理出来发给团队吗？</p>
-</div>
-</div>
-</div>
+<div class="pt-14 px-4 pb-2 flex items-center"><div class="flex items-center gap-2 bg-[#EBF1FE] rounded-full pl-1 pr-3 py-1"><div class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center text-[12px]">禾</div><span class="text-[14px] text-primary-container font-semibold">管家 ▾</span></div></div>
+<div class="px-5 pt-14"><div class="text-[28px] font-bold text-on-surface">下午好，陆航</div><div class="text-[17px] text-on-surface mt-1 leading-relaxed">有 <b class="text-primary-container">3 件</b>我已经备好了办法，<br>等你确认一下，大约 2 分钟。</div></div>
+<div class="mx-4 mt-4 bg-white rounded-xl divide-y divide-[rgba(60,60,67,0.12)]">
+<div class="px-4 py-3 text-[16px]">1　小周的周报</div><div class="px-4 py-3 text-[16px]">2　客户问能否提前上线</div><div class="px-4 py-3 text-[16px]">3　团队周报，18:00 前交</div></div>
+<div class="absolute left-4 right-4 bottom-[110px] flex gap-2"><div class="flex-[7] h-[50px] rounded-xl bg-primary-container text-white flex items-center justify-center text-[17px] font-semibold">开始</div><div class="flex-[3] h-[50px] rounded-xl bg-[#E5E5EA] text-primary-container flex items-center justify-center text-[17px] font-semibold">说一句</div></div>
 </div>
 <!-- 2. 全局半透明深色压暗遮罩 (rgba(0,0,0,0.4)) -->
 <div class="absolute inset-0 bg-black/40 z-10 backdrop-blur-[2px] transition-opacity duration-300"></div>
 <!-- 3. iOS 原生状态栏与灵动岛 (Dynamic Island) 处于遮罩上方或穿透保持清晰 -->
 <div class="relative z-30 pt-3 px-7 flex justify-between items-center text-white font-headline text-footnote tracking-tight">
-<span class="font-headline text-[15px] font-semibold text-white drop-shadow-sm">09:41</span>
+<span class="font-headline text-[15px] font-semibold text-white drop-shadow-sm">16:00</span>
 <!-- 灵动岛 (Dynamic Island 126x36) -->
 <div class="w-[126px] h-[36px] bg-black rounded-full absolute left-1/2 -translate-x-1/2 top-2.5 flex items-center justify-between px-3 shadow-md border border-white/10">
-<div class="flex items-center gap-1.5">
-<div class="w-2.5 h-2.5 rounded-full bg-[#34C759] animate-pulse"></div>
-<span class="text-[11px] text-white/90 font-medium">管家运行</span>
-</div>
+<div></div>
 <div class="w-3 h-3 rounded-full bg-[#1C1C1E] border border-white/20 flex items-center justify-center">
 <div class="w-1.5 h-1.5 rounded-full bg-[#0A84FF]"></div>
 </div>
@@ -210,10 +172,7 @@
 <span class="text-subheadline font-headline text-on-surface font-semibold tracking-tight">管家</span>
 <span class="text-[10px] text-on-surface-variant font-bold leading-none ml-[-2px]">▲</span>
 </button>
-<!-- 右侧辅助按钮 (半透浅白) -->
-<div class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white active:opacity-70 transition-opacity">
-<span class="material-symbols-outlined text-[20px]">more_horiz</span>
-</div>
+
 </div>
 <!-- 从顶部顺畅滑出的白色圆角面板 (不透明纯白 #FFFFFF，圆角 16px，自然柔和原生系统阴影) -->
 <div class="mx-4 mt-1 bg-white rounded-[16px] ios-drop-shadow overflow-hidden border border-black/5 animate-in fade-in slide-in-from-top-4 duration-200">
@@ -222,7 +181,7 @@
 <div class="h-9 bg-[#E5E5EA] rounded-[10px] flex items-center px-3 gap-2">
 <span class="material-symbols-outlined text-[#8E8E93] text-[18px]">search</span>
 <input class="w-full bg-transparent border-0 p-0 text-subheadline font-subheadline text-on-surface placeholder-[#8E8E93] focus:ring-0 text-[14px]" placeholder="搜资料、事情、说过的话…" readonly="" type="text"/>
-<span class="material-symbols-outlined text-[#8E8E93] text-[18px] cursor-pointer">mic</span>
+
 </div>
 </div>
 <!-- 5 行 iOS Inset Grouped 风格列表项 -->
@@ -310,7 +269,7 @@
 <div class="bg-surface/85 backdrop-blur-2xl flex justify-around items-center px-4 pt-2 pb-2 border-t border-outline-variant/20 shadow-lg">
 <!-- 标签 1: 管家 (激活状态) -->
 <div class="flex flex-col items-center justify-center text-primary cursor-pointer">
-<span class="material-symbols-outlined text-[24px]">smart_toy</span>
+<span class="material-symbols-outlined text-[24px]">home</span>
 <span class="text-caption-2 font-caption-2 mt-0.5 font-semibold">管家</span>
 </div>
 <!-- 标签 2: 盯着 (未激活) -->

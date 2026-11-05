@@ -145,7 +145,11 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <style id="ios-fix">
+body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
+</style>
+</head>
 <body class="flex justify-center items-center min-h-screen bg-surface-dim/40 antialiased p-0 sm:p-4">
 <!-- Mobile Viewport Container: 390 x 844 iPhone Canvas -->
 <div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] overflow-hidden flex flex-col justify-between shadow-2xl sm:rounded-[50px] border border-black/5">
@@ -189,10 +193,7 @@
 <span class="text-[14px] font-medium text-on-surface tracking-tight ml-0.5">管家</span>
 <span class="material-symbols-outlined text-[16px] text-outline leading-none" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
 </button>
-<!-- Trailing Action -->
-<button class="tap-scale w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface active:opacity-70 transition-opacity">
-<span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span>
-</button>
+
 </div>
 <!-- Main Content Canvas: High-end iOS Quiet Completion View -->
 <main class="flex-1 flex flex-col justify-center px-4 -mt-6">
@@ -243,7 +244,7 @@
 <nav class="shrink-0 relative w-full bg-surface/85 backdrop-blur-2xl px-4 pt-2 pb-7 flex justify-around items-center z-50">
 <!-- Tab 1: 管家 (Active) -->
 <button aria-label="管家" class="flex flex-col items-center justify-center text-primary tap-scale w-16">
-<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="smart_toy" data-weight="fill">smart_toy</span>
+<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="home" data-weight="fill">home</span>
 <span class="font-caption-2 text-caption-2 font-medium tracking-tight">管家</span>
 </button>
 <!-- Tab 2: 盯着 (Inactive) -->

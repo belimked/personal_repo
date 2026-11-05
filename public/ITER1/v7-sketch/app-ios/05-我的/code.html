@@ -128,7 +128,11 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <style id="ios-fix">
+body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
+</style>
+</head>
 <body class="bg-surface-container text-on-surface antialiased flex justify-center items-start min-h-screen">
 <!-- iPhone 15/16 Pro Frame Simulation (390 x 844) -->
 <main class="w-full max-w-[390px] min-h-[844px] bg-[#F2F2F7] relative flex flex-col overflow-hidden select-none pb-28">
@@ -155,9 +159,7 @@
 <div class="flex items-center justify-between">
 <h1 class="text-large-title font-large-title text-on-surface tracking-tight">我的</h1>
 <!-- Subtle Secondary Action or Cloud Sync Icon -->
-<button aria-label="更多操作" class="w-8 h-8 rounded-full flex items-center justify-center text-outline active:opacity-70 transition-opacity" type="button">
-<span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span>
-</button>
+
 </div>
 </section>
 <!-- Scrollable Content Canvas -->
@@ -256,7 +258,7 @@
 <nav aria-label="底栏导航" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 bg-[#F9F9F9]/85 dark:bg-inverse-surface/85 backdrop-blur-2xl px-4 pt-2 pb-8 flex justify-around items-center">
 <!-- Tab 1: 管家 (Inactive) -->
 <a class="flex flex-col items-center justify-center text-on-surface-variant/70 active:opacity-70 transition-opacity" href="#butler">
-<span class="material-symbols-outlined text-[24px]" data-icon="smart_toy">smart_toy</span>
+<span class="material-symbols-outlined text-[24px]" data-icon="home">home</span>
 <span class="text-caption-2 font-caption-2 mt-0.5">管家</span>
 </a>
 <!-- Tab 2: 盯着 (Inactive) -->

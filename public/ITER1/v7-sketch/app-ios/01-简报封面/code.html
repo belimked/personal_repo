@@ -132,7 +132,11 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <style id="ios-fix">
+body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
+</style>
+</head>
 <body class="flex items-center justify-center min-h-screen p-0 sm:p-4 text-on-surface">
 <!-- iPhone Container (390 x 844 frame standard) -->
 <div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] flex flex-col justify-between overflow-hidden sm:rounded-[50px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E1E1E]">
@@ -252,7 +256,7 @@
 <div class="flex justify-around items-center px-4 pt-2 pb-1">
 <!-- Tab 1: 管家 (Active 选中激活) -->
 <button class="flex flex-col items-center justify-center text-primary-container active:opacity-70 transition-opacity duration-150 flex-1">
-<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
 <span class="font-caption-2 text-caption-2 mt-0.5 font-medium">管家</span>
 </button>
 <!-- Tab 2: 盯着 (Inactive) -->
