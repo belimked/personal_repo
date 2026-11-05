@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 隐私与个人信息</title><link rel="stylesheet" href="app.css">
+<style>
+.fact{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;position:relative}
+.fact + .fact::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
+.fact .main{flex:1}
+.fact .t{font-size:17px;line-height:24px}
+.fact .src{margin-top:2px}
+.fact .no{font-size:15px;color:var(--acc-ink);height:24px;padding:0 4px}
+.note{font-size:13px;line-height:18px;color:var(--t3);padding:8px 16px 0}
+.note a{color:var(--acc-ink)}
+.toggle{width:51px;height:31px;border-radius:16px;background:#E9E9EA;position:relative;flex:none}
+.toggle::after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.danger{color:var(--bad)}
+.link{color:var(--acc-ink)}
+</style></head>
+<body>
+<main class="screen">
+  <div data-sb></div>
+  <div class="nav">
+    <a class="back" href="05-我的.html"><i data-i="left"></i>我的</a>
+    <span class="mid">隐私与个人信息</span><span></span>
+  </div>
+  <div class="body" style="overflow:auto;padding-bottom:24px">
+    <div class="group-label" style="padding-top:16px">我了解的你：工作</div>
+    <section class="card">
+      <div class="fact"><div class="main"><div class="t">给王总的汇报：先说结论，一页以内</div><div class="src"><i data-i="doc"></i>来自：你发出的周报</div></div><button class="no">不对</button></div>
+      <div class="fact"><div class="main"><div class="t">每周五 <span class="num">18:00</span> 前交团队周报</div><div class="src"><i data-i="doc"></i>来自：周三例会纪要</div></div><button class="no">不对</button></div>
+    </section>
+
+    <div class="group-label">健康</div>
+    <section class="card">
+      <div class="fact"><div class="main"><div class="t">每年 <span class="num">11</span> 月做一次体检</div><div class="src"><i data-i="doc"></i>来自：去年的体检预约截图</div></div><button class="no">不对</button></div>
+    </section>
+    <p class="note">这些是我为了把事办好而记下的，左滑可删掉。<a href="#">查看全部，含还没确认的</a></p>
+
+    <div class="group-label">不按你的情况定制</div>
+    <section class="card">
+      <div class="row"><span class="label">通用模式</span><span class="toggle" role="switch" aria-checked="false"></span></div>
+      <a class="row" href="#"><span class="label">敏感类别</span><span class="value"><span class="num">4</span> 项开</span><i data-i="right" class="chev"></i></a>
+    </section>
+    <p class="note">健康、财务、孩子、位置、人脸</p>
+
+    <div class="group-label">客服查看记录</div>
+    <section class="card"><div class="row"><span class="label">没有授权</span></div></section>
+    <p class="note">除非你授权，我们的工作人员看不到你的记录</p>
+
+    <section class="card" style="margin-top:32px">
+      <button class="row" style="width:100%"><span class="label link" style="text-align:left">导出全部数据</span></button>
+      <button class="row" style="width:100%"><span class="label danger" style="text-align:left">忘掉我</span></button>
+    </section>
+  </div>
+</main>
+<script src="shell.js"></script>
+</body></html>

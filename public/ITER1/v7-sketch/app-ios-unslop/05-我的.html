@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 我的</title><link rel="stylesheet" href="app.css">
+<style>
+.me{display:flex;align-items:center;gap:16px;padding:16px}
+.avatar{width:56px;height:56px;border-radius:28px;background:var(--acc-tint);color:var(--acc-ink);display:grid;place-items:center;font-size:22px;font-weight:500}
+.me .n{font-size:17px;line-height:24px;font-weight:500}
+.me .e{font-size:13px;line-height:18px;color:var(--t3)}
+.me .main{flex:1}
+.me .chev{width:16px;height:16px;color:#C2C2C7}
+</style></head>
+<body>
+<main class="screen">
+  <div data-sb></div>
+  <div class="body" style="overflow:auto">
+    <header class="head" style="padding:12px 4px 16px"><h1 class="title">我的</h1></header>
+
+    <a class="card me" href="#">
+      <span class="avatar">陆</span>
+      <div class="main"><div class="n">陆航</div><div class="e">luhang@company.com</div></div>
+      <i data-i="right" class="chev"></i>
+    </a>
+
+    <section class="card" style="margin-top:24px">
+      <a class="row" href="#"><span class="label">会员与点数</span><span class="value">本月剩 <span class="num">320</span> 点</span><i data-i="right" class="chev"></i></a>
+    </section>
+
+    <div class="group-label">设置</div>
+    <section class="card">
+      <a class="row" href="#"><span class="label">主动服务</span><span class="value">开</span><i data-i="right" class="chev"></i></a>
+      <a class="row" href="#"><span class="label">工作邮箱</span><span class="value">已接入，只读</span><i data-i="right" class="chev"></i></a>
+      <a class="row" href="#"><span class="label">通知</span><span class="value">只发错过就晚的</span><i data-i="right" class="chev"></i></a>
+      <a class="row" href="#"><span class="label">通用</span><i data-i="right" class="chev"></i></a>
+    </section>
+
+    <section class="card" style="margin-top:24px">
+      <a class="row" href="06-隐私与个人信息.html"><span class="label">隐私与个人信息</span><i data-i="right" class="chev"></i></a>
+    </section>
+  </div>
+  <div data-tabs="我的"></div>
+</main>
+<script src="shell.js"></script>
+</body></html>

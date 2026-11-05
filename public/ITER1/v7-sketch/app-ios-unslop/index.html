@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 App · iOS 打磨版对比</title>
+<style>
+body{margin:0;background:#EDEDF0;color:#1C1C1E;font:14px/22px -apple-system,"PingFang SC","Noto Sans SC",sans-serif;padding:32px 24px 64px}
+h1{font-size:22px;font-weight:500;margin:0 0 8px}
+.lead{color:#56565C;max-width:960px;margin:0 0 32px}
+.pair{display:flex;gap:24px;align-items:flex-start;margin-bottom:48px;flex-wrap:wrap}
+figure{margin:0}
+figcaption{font-size:13px;color:#56565C;margin-bottom:8px}
+img{width:300px;border-radius:24px;display:block;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.notes{max-width:360px;font-size:13px;line-height:20px;color:#56565C}
+.notes h2{font-size:15px;font-weight:500;color:#1C1C1E;margin:28px 0 8px}
+.notes ul{margin:0;padding-left:18px}
+a{color:#2F5BD3}
+</style></head><body>
+<h1>小禾 App · iOS 打磨版（unslop）</h1>
+<p class="lead">左边是 Stitch A 套原稿（<code>.tmp/ios/app-ios/</code>），右边是打磨版。只用了打磨模式：主色 #3F6EE8、冷灰底、系统字体都没动。方向：稳妥、利落、带一点体贴，像下午四点秘书递来的一页简报。标志细节是“出处”行，只出现在逐件过和隐私页。</p>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 简报封面</figcaption><img src="原稿-01-简报封面.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="01-简报封面.html">打开</a></figcaption><img src="01-简报封面.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>问候语“下午好，陆航”换成“3 件事等你定”</li>
+    <li>三件事做成一张“周五简报”：顶部写时间，等宽件号 01–03，截止时间放右侧</li>
+    <li>标题字重从 800 观感降到 500</li></ul></div>
+</div>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 逐件过</figcaption><img src="原稿-02-逐件过.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="02-逐件过.html">打开</a></figcaption><img src="02-逐件过.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>按钮文案不再截断：“确认并发给小周”</li>
+    <li>差异项改成“标签 + 内容”两列；建议回复的标签和正文分两行，正文用主文字色</li>
+    <li>“出处”行加文件图标，作为标志细节</li>
+    <li>“改一改 · 这不算问题”拆成两个独立按钮</li>
+    <li>顶部的灰带和边框残留已去掉</li></ul></div>
+</div>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 结束页</figcaption><img src="原稿-03-结束页.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="03-结束页.html">打开</a></figcaption><img src="03-结束页.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>带绿色光晕的大实心勾，换成 44px 描边勾，靠左对齐</li>
+    <li>加一张同款简报卡，逐件回顾结果（已发给小周、已回复客户；团队周报 18:00 截止，17:30 再提醒），把中间的空白用掉</li></ul></div>
+</div>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 下拉面板</figcaption><img src="原稿-04-下拉面板.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="04-下拉面板.html">打开</a></figcaption><img src="04-下拉面板.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>入口原来是五色图标底块，统一成中性灰底，图标用次要文字色</li>
+    <li>搜索框占位文字改成“搜索”</li>
+    <li>状态栏统一，不再单独显示 5G</li></ul></div>
+</div>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 我的</figcaption><img src="原稿-05-我的.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="05-我的.html">打开</a></figcaption><img src="05-我的.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>头像从主色实心圆改成浅色底，主色只留给选中的 Tab</li>
+    <li>名字字重降低；“已接入 · 只读”改成“已接入，只读”</li></ul></div>
+</div>
+
+<div class="pair">
+  <figure><figcaption>原稿 · 隐私与个人信息</figcaption><img src="原稿-06-隐私与个人信息.png" alt=""></figure>
+  <figure><figcaption>打磨版 · <a href="06-隐私与个人信息.html">打开</a></figcaption><img src="06-隐私与个人信息.png" alt=""></figure>
+  <div class="notes"><h2>改了什么</h2><ul>
+    <li>分组标题和导航栏之间补出间距</li>
+    <li>“来自：…”和逐件过的“出处”用同一套样式</li>
+    <li>“健康、财务、孩子、位置、人脸”太长、会挤到一行里，按页面结构 §M-06 改成行名“敏感类别”，具体类别放到下方说明</li></ul></div>
+</div>
+
+<p class="lead">全局：字号收成 13 / 15 / 17 / 22 / 28 五档，字重 400 / 500；间距都是 4 的倍数；去掉 transition-all 和彩色按钮阴影；6 屏共用一套状态栏和 Tab bar（<code>shell.js</code>），图标统一为 1.5 描边的线框图标；不再依赖 Tailwind CDN 和 Google 字体。</p>
+<p class="lead" style="font-size:12px;color:#8A8A8E">按 unslop by @heydamir（CC BY 4.0）流程完成</p>
+</body></html>

@@ -1,0 +1,102 @@
+/* 小禾 App · iOS（unslop 打磨版）
+   方向：稳妥、利落、带一点体贴；下午四点秘书递来的简报。标志细节 = “出处”行。
+   字号 5 档：13 / 15 / 17 / 22 / 28；字重 400 / 500 / 600；间距 4 的倍数。 */
+:root{
+  --bg:#F2F2F7; --card:#FFFFFF; --raised:#E9E9EE; --line:rgba(60,60,67,.12);
+  --t1:#1C1C1E; --t2:#56565C; --t3:#8A8A8E;
+  --acc:#3F6EE8; --acc-ink:#2F5BD3; --acc-tint:#EEF2FD;
+  --ok:#2FA45A; --bad:#D93A33;
+  --mono:"SF Mono",ui-monospace,Menlo,"DejaVu Sans Mono",monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:grid;place-items:center;background:#DCDCE1;padding:24px;
+  font:15px/22px -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+  color:var(--t1);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+
+/* 屏幕 */
+.screen{position:relative;width:390px;height:844px;background:var(--bg);border-radius:48px;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.body{flex:1;display:flex;flex-direction:column;padding:0 16px;min-height:0}
+.grow{flex:1}
+
+/* 状态栏（全部屏共用一套） */
+.sb{height:54px;flex:none;position:relative;display:flex;align-items:center;justify-content:space-between;padding:4px 28px 0 36px}
+.sb .time{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.sb .island{position:absolute;left:50%;top:11px;width:124px;height:36px;margin-left:-62px;background:#000;border-radius:18px}
+.sb .sys{display:flex;align-items:center;gap:6px}
+.sb .sys svg{stroke:none;fill:var(--t1)}
+
+/* 管家切换器 */
+.switch{height:36px;display:inline-flex;align-items:center;gap:8px;padding:0 12px 0 4px;margin-top:4px;
+  background:var(--card);border:1px solid var(--line);border-radius:18px;align-self:flex-start;font-size:15px;font-weight:500}
+.mark{width:28px;height:28px;border-radius:14px;background:var(--acc);color:#fff;display:grid;place-items:center;font-size:15px;font-weight:500}
+.switch svg{width:16px;height:16px;color:var(--t3)}
+
+/* 标题 */
+.title{font-size:28px;line-height:36px;font-weight:500}
+.lede{font-size:15px;line-height:22px;color:var(--t2);margin-top:8px}
+.head{padding:24px 4px 24px}
+
+/* 卡片与行 */
+.card{background:var(--card);border-radius:16px;border:1px solid var(--line)}
+.group-label{font-size:13px;line-height:18px;color:var(--t3);padding:24px 16px 8px}
+.row{min-height:52px;display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative;transition:background-color .15s var(--ease)}
+.row:active{background:var(--raised)}
+.row + .row::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
+.row .label{flex:1;font-size:17px;line-height:24px}
+.row .value{font-size:15px;color:var(--t3)}
+.row .chev{width:16px;height:16px;color:#C2C2C7}
+.card .row:first-child{border-radius:15px 15px 0 0}
+.card .row:last-child{border-radius:0 0 15px 15px}
+.card .row:only-child{border-radius:15px}
+
+/* 简报（重点时刻 1） */
+.brief-top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:13px;line-height:18px;color:var(--t2);border-bottom:1px solid var(--line)}
+.brief-top .mono{color:var(--t3)}
+.item{display:flex;gap:12px;align-items:flex-start;padding:16px;position:relative}
+.item + .item::before{content:"";position:absolute;top:0;left:56px;right:0;height:1px;background:var(--line)}
+.item .no{width:28px;font-size:13px;line-height:24px;color:var(--t3)}
+.item .main{flex:1;min-width:0}
+.item .h{font-size:17px;line-height:24px;font-weight:500}
+.item .s{font-size:15px;line-height:22px;color:var(--t2);margin-top:2px}
+.item .meta{font-size:13px;line-height:24px;color:var(--t2)}
+.item .chev{width:16px;height:16px;color:#C2C2C7;margin-top:4px}
+
+/* 标志细节：出处 */
+.src{display:inline-flex;align-items:center;gap:4px;font-size:13px;line-height:18px;color:var(--t3);margin-top:4px}
+.src svg{width:14px;height:14px}
+a.src{color:var(--acc-ink)}
+
+/* 按钮 */
+.actions{display:flex;gap:12px;padding:16px 0 12px}
+.btn{height:50px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:17px;font-weight:500;
+  transition:background-color .15s var(--ease),transform .15s var(--ease)}
+.btn:active{transform:scale(.98)}
+.btn-primary{flex:1;background:var(--acc);color:#fff}
+.btn-primary:active{background:#2D56CA}
+.btn-second{background:var(--raised);color:var(--t1);padding:0 20px}
+.btn-second svg{width:18px;height:18px;color:var(--t2)}
+.btn-second:active{background:#DEDEE3}
+.btn-text{height:44px;font-size:15px;color:var(--acc-ink);padding:0 12px;transition:opacity .15s var(--ease)}
+.btn-text:active{opacity:.5}
+
+/* 导航栏 */
+.nav{height:44px;flex:none;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 8px}
+.nav .back{display:inline-flex;align-items:center;gap:2px;color:var(--acc-ink);font-size:17px;justify-self:start;height:44px;padding-right:8px}
+.nav .back svg{width:22px;height:22px}
+.nav .mid{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.nav .end{justify-self:end;color:var(--acc-ink);font-size:17px;height:44px;padding:0 8px}
+
+/* Tab bar */
+.tabs{height:83px;flex:none;display:flex;align-items:flex-start;padding-top:8px;background:rgba(249,249,251,.96);border-top:1px solid var(--line);position:relative}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--t3);font-size:11px;line-height:12px;font-weight:500}
+.tab svg{width:24px;height:24px}
+.tab.on{color:var(--acc)}
+.home{position:absolute;left:50%;bottom:8px;width:136px;height:5px;margin-left:-68px;border-radius:3px;background:var(--t1)}

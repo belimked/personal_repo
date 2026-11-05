@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 结束页</title><link rel="stylesheet" href="app.css">
+<style>
+.done{width:44px;height:44px;border-radius:22px;border:1.5px solid var(--ok);color:var(--ok);display:grid;place-items:center}
+.done svg{width:22px;height:22px;stroke-width:2}
+.log .item{align-items:center}
+.state{display:inline-flex;align-items:center;gap:4px;font-size:13px;line-height:18px;color:var(--t3)}
+.state svg{width:14px;height:14px}
+.state.ok{color:var(--ok)}
+.row .ic{width:20px;height:20px;color:var(--t2)}
+</style></head>
+<body>
+<main class="screen">
+  <div data-sb></div>
+  <div class="body">
+    <button class="switch"><span class="mark">禾</span>管家<i data-i="down"></i></button>
+
+    <header class="head" style="padding-top:40px">
+      <div class="done"><i data-i="check"></i></div>
+      <h1 class="title" style="margin-top:16px">今天的都过完了</h1>
+      <p class="lede">处理了 <span class="num">2</span> 件，<span class="num">1</span> 件 <span class="num">17:30</span> 再提醒你</p>
+    </header>
+
+    <section class="card log" aria-label="本次简报">
+      <div class="brief-top"><span>周五简报</span><span class="mono">16:00</span></div>
+      <div class="item"><span class="no mono">01</span><div class="main"><div class="h">小周的周报</div></div><span class="state ok"><i data-i="check"></i>已发给小周</span></div>
+      <div class="item"><span class="no mono">02</span><div class="main"><div class="h">客户问能否提前上线</div></div><span class="state ok"><i data-i="check"></i>已回复客户</span></div>
+      <div class="item"><span class="no mono">03</span><div class="main"><div class="h">团队周报</div></div><span class="state"><i data-i="clock"></i><span class="mono">17:30</span> 提醒</span></div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <a class="row" href="#"><i data-i="shield" class="ic"></i><span class="label">另有 <span class="num">7</span> 件我在办</span><span class="value">不用你管</span><i data-i="right" class="chev"></i></a>
+    </section>
+
+    <div class="grow"></div>
+    <div class="actions"><button class="btn btn-second" style="flex:1"><i data-i="msg"></i>有别的事，说一句</button></div>
+  </div>
+  <div data-tabs="管家"></div>
+</main>
+<script src="shell.js"></script>
+</body></html>

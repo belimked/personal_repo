@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 逐件过</title><link rel="stylesheet" href="app.css">
+<style>
+.progress{display:flex;gap:4px;padding:4px 16px 16px}
+.progress span{flex:1;height:4px;border-radius:2px;background:#DEDEE3}
+.progress span.on{background:var(--acc)}
+.task{padding:20px}
+.task h2{font-size:22px;line-height:30px;font-weight:500;text-wrap:balance}
+.diff{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.diff li{display:flex;gap:12px;font-size:15px;line-height:22px}
+.diff .k{width:56px;flex:none;color:var(--t3);font-size:13px;line-height:22px}
+.diff b{font-weight:500}
+.reply{margin-top:20px;background:var(--acc-tint);border-radius:8px;padding:12px 16px}
+.reply .k{font-size:13px;line-height:18px;color:var(--acc-ink)}
+.reply p{font-size:15px;line-height:22px;margin-top:4px}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+.foot .ai{font-size:13px;color:var(--t3)}
+.hint{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--t3);padding-top:16px}
+.hint svg{width:16px;height:16px}
+.secondary{display:flex;justify-content:center;gap:8px;padding-bottom:4px}
+</style></head>
+<body>
+<main class="screen">
+  <div data-sb></div>
+  <div class="nav">
+    <a class="back" href="01-简报封面.html"><i data-i="left"></i>简报</a>
+    <span class="mid num">1 / 3</span>
+    <button class="end">稍后</button>
+  </div>
+  <div class="progress" aria-hidden="true"><span class="on"></span><span></span><span></span></div>
+
+  <div class="body">
+    <article class="card task">
+      <h2>小周的周报有 2 处和例会不一样</h2>
+      <ul class="diff">
+        <li><span class="k">支付对接</span><span>他写“本周完成”，例会定的是<b>下周三</b></span></li>
+        <li><span class="k">漏项</span><span>没写“压测报告”</span></li>
+      </ul>
+      <div class="reply">
+        <div class="k">建议回复</div>
+        <p>支付对接按例会改成下周三完成；另外补上压测报告。</p>
+      </div>
+      <div class="foot">
+        <a class="src" href="#"><i data-i="doc"></i>出处：周三例会纪要</a>
+        <span class="ai">内容由 AI 生成</span>
+      </div>
+    </article>
+    <p class="hint"><i data-i="swipe"></i>右滑可暂存，稍后再处理</p>
+
+    <div class="grow"></div>
+    <div class="actions"><button class="btn btn-primary">确认并发给小周</button></div>
+    <div class="secondary">
+      <button class="btn-text">改一改</button>
+      <button class="btn-text">这不算问题</button>
+    </div>
+  </div>
+  <div data-homebar></div>
+</main>
+<script src="shell.js"></script>
+</body></html>
