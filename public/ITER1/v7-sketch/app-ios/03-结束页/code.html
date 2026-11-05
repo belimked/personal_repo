@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>小禾 - 今天的都过完了</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-container": "#fffeff",
+            "on-tertiary-fixed": "#410001",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e3e2e7",
+            "primary-fixed": "#dbe1ff",
+            "surface-dim": "#dad9df",
+            "on-secondary-fixed-variant": "#00531c",
+            "secondary-fixed-dim": "#53e16f",
+            "on-secondary-fixed": "#002107",
+            "outline-variant": "#c3c6d6",
+            "primary-fixed-dim": "#b4c5ff",
+            "surface-container-high": "#e9e7ed",
+            "inverse-on-surface": "#f1f0f5",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#ffffff",
+            "primary": "#1c54ce",
+            "secondary-fixed": "#72fe88",
+            "on-surface-variant": "#434654",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-container": "#e42620",
+            "on-error-container": "#93000a",
+            "surface-container-highest": "#e3e2e7",
+            "outline": "#737685",
+            "secondary-container": "#6ffb85",
+            "inverse-primary": "#b4c5ff",
+            "on-background": "#1a1b1f",
+            "primary-container": "#3f6ee8",
+            "on-surface": "#1a1b1f",
+            "on-primary-fixed": "#00174b",
+            "tertiary-fixed": "#ffdad5",
+            "on-tertiary-fixed-variant": "#930005",
+            "tertiary": "#be000a",
+            "on-tertiary": "#ffffff",
+            "surface-container-low": "#f4f3f8",
+            "background": "#faf9fe",
+            "surface-container": "#eeedf3",
+            "error": "#ba1a1a",
+            "on-secondary-container": "#00732a",
+            "surface-bright": "#faf9fe",
+            "inverse-surface": "#2f3034",
+            "on-primary-fixed-variant": "#003da9",
+            "surface-tint": "#1e55cf",
+            "tertiary-fixed-dim": "#ffb4aa",
+            "surface": "#faf9fe",
+            "error-container": "#ffdad6",
+            "secondary": "#006e28"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "gutter": "1rem",
+            "margin": "1rem",
+            "space-md": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xl": "1.5rem",
+            "space-lg": "1rem"
+          },
+          "fontFamily": {
+            "title-1": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "headline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "footnote": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "callout": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "caption-1": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "subheadline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "large-title": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "title-2": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "title-3": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "caption-2": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"]
+          },
+          "fontSize": {
+            "title-1": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+            "body": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline": ["17px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "footnote": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "callout": ["16px", { "lineHeight": "21px", "fontWeight": "400" }],
+            "caption-1": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "subheadline": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "large-title": ["34px", { "lineHeight": "41px", "fontWeight": "700" }],
+            "title-2": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+            "title-3": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+            "caption-2": ["11px", { "lineHeight": "13px", "fontWeight": "500" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #F2F2F7;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    .tap-scale {
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+    }
+    .tap-scale:active {
+      transform: scale(0.97);
+      opacity: 0.85;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex justify-center items-center min-h-screen bg-surface-dim/40 antialiased p-0 sm:p-4">
+<!-- Mobile Viewport Container: 390 x 844 iPhone Canvas -->
+<div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] overflow-hidden flex flex-col justify-between shadow-2xl sm:rounded-[50px] border border-black/5">
+<!-- 1. Native iOS Status Bar with Dynamic Island -->
+<header class="relative z-50 w-full pt-3 px-7 flex justify-between items-center shrink-0">
+<!-- Time -->
+<span class="text-[15px] font-semibold tracking-tight text-on-surface select-none pt-0.5">16:00</span>
+<!-- Dynamic Island Capsule -->
+<div class="absolute left-1/2 -translate-x-1/2 top-2.5 w-[124px] h-[34px] bg-black rounded-full flex items-center justify-between px-3 shadow-sm">
+<div class="w-3 h-3 rounded-full bg-[#111111] flex items-center justify-center">
+<div class="w-1.5 h-1.5 rounded-full bg-[#0a183d]/60"></div>
+</div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#141414] ring-[0.5px] ring-white/10"></div>
+</div>
+<!-- System Status Glyphs (Signal, Wi-Fi, Battery) -->
+<div class="flex items-center space-x-1.5 text-on-surface">
+<svg class="w-4 h-3.5 fill-current" viewbox="0 0 17 12">
+<rect height="4" rx="0.5" width="3" x="0" y="8"></rect>
+<rect height="6.5" rx="0.5" width="3" x="4.5" y="5.5"></rect>
+<rect height="9" rx="0.5" width="3" x="9" y="3"></rect>
+<rect height="12" rx="0.5" width="3" x="13.5" y="0"></rect>
+</svg>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 12">
+<path d="M8 2.5C10.8 2.5 13.3 3.6 15.1 5.4L16 4.5C13.9 2.4 11.1 1 8 1C4.9 1 2.1 2.4 0 4.5L0.9 5.4C2.7 3.6 5.2 2.5 8 2.5ZM8 6.5C9.7 6.5 11.2 7.2 12.3 8.3L13.2 7.4C11.9 6.1 10 5.2 8 5.2C6 5.2 4.1 6.1 2.8 7.4L3.7 8.3C4.8 7.2 6.3 6.5 8 6.5ZM8 10.2C8.7 10.2 9.2 10.7 9.2 11.4C9.2 12.1 8.7 12.6 8 12.6C7.3 12.6 6.8 12.1 6.8 11.4C6.8 10.7 7.3 10.2 8 10.2Z"></path>
+</svg>
+<div class="flex items-center pl-0.5">
+<div class="w-6 h-[11.5px] border-[1.2px] border-on-surface rounded-[3px] p-[1px] flex items-center">
+<div class="w-full h-full bg-on-surface rounded-[1px]"></div>
+</div>
+<div class="w-[1.5px] h-[4px] bg-on-surface rounded-r-sm ml-[0.5px]"></div>
+</div>
+</div>
+</header>
+<!-- Top App Bar / Capsule Row (Shared Component Navigation Anchor) -->
+<div class="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
+<!-- Capsule Button: Blue avatar + "管家 ▾" -->
+<button class="tap-scale flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-surface-container-lowest/90 backdrop-blur-md rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04]">
+<div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-headline text-[12px] font-semibold leading-none shadow-inner">
+          禾
+        </div>
+<span class="text-[14px] font-medium text-on-surface tracking-tight ml-0.5">管家</span>
+<span class="material-symbols-outlined text-[16px] text-outline leading-none" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+<!-- Trailing Action -->
+<button class="tap-scale w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<!-- Main Content Canvas: High-end iOS Quiet Completion View -->
+<main class="flex-1 flex flex-col justify-center px-4 -mt-6">
+<!-- 3. Mid-Upper Prominent Status Zone -->
+<section class="flex flex-col items-center text-center">
+<!-- Native iOS Green Circle Checkmark: 64x64 -->
+<div class="w-16 h-16 rounded-full bg-[#34C759] flex items-center justify-center shadow-[0_4px_16px_rgba(52,199,89,0.28)] mb-5">
+<span class="material-symbols-outlined text-white text-[38px] font-bold" data-icon="check" data-weight="fill">check</span>
+</div>
+<!-- Large Title: 28pt Bold -->
+<h1 class="font-title-1 text-title-1 tracking-tight text-on-surface font-bold mb-2">
+          今天的都过完了
+        </h1>
+<!-- Subtitle: 15pt Neutral Gray -->
+<p class="font-subheadline text-subheadline text-[rgba(60,60,67,0.7)] tracking-normal max-w-[280px]">
+          处理了 2 件，1 件 17:30 再提醒你
+        </p>
+</section>
+<!-- 4. iOS Inset Grouped Card Section -->
+<div class="mt-9">
+<div class="bg-surface-container-lowest rounded-[12px] overflow-hidden border border-black/[0.04] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+<button class="w-full flex items-center justify-between px-4 py-3.5 tap-scale text-left">
+<div class="flex items-center space-x-3 min-w-0">
+<!-- Small Badge Icon (Shield/Security) -->
+<div class="w-7 h-7 rounded-lg bg-[#F2F2F7] flex items-center justify-center shrink-0 text-outline">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="shield" data-weight="fill">shield</span>
+</div>
+<!-- Text -->
+<span class="font-body text-[15px] font-normal text-on-surface tracking-tight truncate">
+                其他 7 件我在办，不用你管
+              </span>
+</div>
+<!-- Standard iOS Chevron Right -->
+<span class="material-symbols-outlined text-[19px] text-outline-variant shrink-0 ml-2" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- 5. Native Quiet Action Area -->
+<div class="mt-4">
+<!-- Full-width 50px pill button, light-gray system style #E5E5EA -->
+<button class="w-full h-[50px] bg-[#E5E5EA] hover:bg-[#DDDDE2] text-[#1C1C1E] rounded-[12px] font-headline text-[16px] font-medium flex items-center justify-center gap-2 tap-scale shadow-none active:bg-[#D1D1D6] transition-colors">
+<span class="material-symbols-outlined text-[19px] text-[#1C1C1E]/80" data-icon="chat_bubble">chat_bubble</span>
+<span>有别的事，说一句</span>
+</button>
+</div>
+</main>
+<!-- 6. iOS Native Bottom Tab Bar (Shared Component strictly mapped to JSON) -->
+<nav class="shrink-0 relative w-full bg-surface/85 backdrop-blur-2xl px-4 pt-2 pb-7 flex justify-around items-center z-50">
+<!-- Tab 1: 管家 (Active) -->
+<button aria-label="管家" class="flex flex-col items-center justify-center text-primary tap-scale w-16">
+<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="smart_toy" data-weight="fill">smart_toy</span>
+<span class="font-caption-2 text-caption-2 font-medium tracking-tight">管家</span>
+</button>
+<!-- Tab 2: 盯着 (Inactive) -->
+<button aria-label="盯着" class="flex flex-col items-center justify-center text-on-surface-variant/70 tap-scale w-16">
+<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="visibility">visibility</span>
+<span class="font-caption-2 text-caption-2 font-medium tracking-tight">盯着</span>
+</button>
+<!-- Tab 3: 我的 (Inactive) -->
+<button aria-label="我的" class="flex flex-col items-center justify-center text-on-surface-variant/70 tap-scale w-16">
+<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="person">person</span>
+<span class="font-caption-2 text-caption-2 font-medium tracking-tight">我的</span>
+</button>
+<!-- 7. iOS Home Indicator -->
+<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-[134px] h-[5px] bg-[#000000] rounded-full opacity-80 pointer-events-none"></div>
+</nav>
+</div>
+</body></html>
