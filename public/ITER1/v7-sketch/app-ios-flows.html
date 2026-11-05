@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小禾 · App iOS 风格 · 方案 B 其余流程（v7 临时）</title>
+<style>
+  :root{--bg:#f2f2f7;--card:#fff;--sep:rgba(60,60,67,.14);--l2:rgba(60,60,67,.6);--l3:rgba(60,60,67,.3);--tint:#3f6ee8;--soft:#ebf1fe;--red:#ff3b30;--green:#34c759;--fill:#e5e5ea}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e5e5ea;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;color:#000;font-size:17px;line-height:1.35;-webkit-font-smoothing:antialiased}
+  h1.top{font-size:20px;text-align:center;padding:28px 20px 4px}
+  .lead{text-align:center;color:#555;font-size:13px;padding:0 20px 6px}
+  section.flow{max-width:1500px;margin:26px auto 0;padding:0 20px}
+  section.flow h2{font-size:17px;margin:0 0 4px 6px}
+  section.flow p.idea{font-size:13px;color:#555;margin:0 0 14px 6px}
+  .row3{display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start}
+  .cap{text-align:center;color:#555;font-size:13px;margin-bottom:10px}
+  .ph{width:390px;height:844px;background:var(--bg);border-radius:52px;box-shadow:0 0 0 10px #111,0 20px 50px rgba(0,0,0,.22);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:35px;border-radius:20px;background:#000;z-index:9}
+  .sb{height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 36px;font-size:16px;font-weight:600}
+  .bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;position:relative}
+  .bat::after{content:"";position:absolute;inset:1.5px;right:5px;background:currentColor;border-radius:1.5px}
+  .bd{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .grow{flex:1}
+  .home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#000;z-index:9}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 16px;flex:none}
+  .nav .b{color:var(--tint);min-width:70px}.nav .t{font-weight:600}.nav .r{color:var(--tint);min-width:70px;text-align:right}
+  .kb{display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--tint);border-radius:99px;padding:3px 12px 3px 3px;font-size:15px;font-weight:600}
+  .kb i{font-style:normal;width:26px;height:26px;border-radius:50%;background:var(--tint);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .large{font-size:34px;font-weight:700;padding:2px 16px 8px}
+  .hi{font-size:28px;font-weight:700;padding:16px 20px 6px}
+  .lo{font-size:17px;color:#333;padding:0 20px;line-height:1.5}.lo b{color:var(--tint)}
+  .hdr{font-size:13px;color:var(--l2);padding:18px 32px 7px}
+  .ftr{font-size:13px;color:var(--l2);padding:7px 32px 0}
+  .grp{background:var(--card);margin:0 16px;border-radius:12px;overflow:hidden}
+  .it{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 16px;position:relative}
+  .it+.it::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+  .it .x{flex:1;padding:11px 0}.it .x small{display:block;font-size:13px;color:var(--l2);margin-top:2px}
+  .chev{color:var(--l3);font-size:20px}
+  .num{width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--tint);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+  .card{background:var(--card);margin:0 16px;border-radius:14px;padding:18px}
+  .card h3{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.35}
+  .card p{font-size:15px;color:#333;line-height:1.5}
+  .card .src{font-size:13px;color:var(--tint);margin-top:12px;display:flex;justify-content:space-between}
+  .card .src span{color:var(--l3);font-size:12px}
+  .sug{background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:15px;line-height:1.5}
+  .sug b{color:var(--tint)}
+  .prog{display:flex;gap:6px;padding:2px 16px 12px;flex:none}.prog i{flex:1;height:4px;border-radius:2px;background:var(--fill)}.prog i.on{background:var(--tint)}
+  .foot{flex:none;padding:12px 16px 24px}
+  .btns{display:flex;gap:10px}
+  .big{height:50px;border-radius:12px;font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .big.p{background:var(--tint);color:#fff;flex:7}.big.o{background:var(--fill);color:var(--tint);flex:3}.big.g{background:var(--fill);color:#1c1c1e}
+  .minor{text-align:center;font-size:15px;color:var(--tint);padding-top:12px}.minor.gray{color:var(--l2)}
+  .done{display:flex;flex-direction:column;align-items:center;text-align:center;padding:110px 30px 0}
+  .done .ok{width:64px;height:64px;border-radius:50%;background:var(--green);color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+  .done .ok.blue{background:var(--tint)}
+  .done h2{font-size:26px;font-weight:700;margin-bottom:8px}.done p{color:var(--l2);font-size:15px;line-height:1.5}
+  .tab{flex:none;height:83px;background:rgba(249,249,249,.94);border-top:.5px solid var(--sep);display:flex;padding-top:7px}
+  .tab a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:500;color:#999}.tab a.on{color:var(--tint)}
+  .dim{position:absolute;inset:0;background:rgba(0,0,0,.3);z-index:4}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:14px 14px 0 0;padding:8px 16px 34px;z-index:5}
+  .sheet .bar{width:36px;height:5px;border-radius:3px;background:#d1d1d6;margin:0 auto 14px}
+  .sheet h4{font-size:20px;font-weight:700;text-align:center;margin-bottom:16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{background:var(--fill);border-radius:16px;padding:7px 14px;font-size:15px}
+  .input{display:flex;align-items:center;gap:10px;background:var(--fill);border-radius:22px;height:44px;padding:0 6px 0 14px;color:var(--l2)}
+  .input .x{flex:1}.input .mic{width:32px;height:32px;border-radius:50%;background:var(--tint);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .banner{display:flex;align-items:center;gap:8px;background:#fff;margin:0 16px 10px;border-radius:12px;padding:10px 14px;font-size:15px}
+  .banner .x{flex:1}.banner a{color:var(--tint)}
+  .banner .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .ex{font-size:15px;color:var(--l2);padding:6px 20px;line-height:1.7}
+  .ai{font-size:12px;color:var(--l3);margin-top:8px}
+  .lock{background:linear-gradient(160deg,#3a4a6b,#1d2436);color:#fff}
+  .lock .clock{text-align:center;padding-top:30px}.lock .clock .d{font-size:17px;opacity:.85}.lock .clock .h{font-size:86px;font-weight:300;line-height:1}
+  .noti{margin:40px 12px 0;background:rgba(255,255,255,.75);backdrop-filter:blur(20px);color:#000;border-radius:20px;padding:12px 14px}
+  .noti .top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--l2);margin-bottom:4px}
+  .noti .top i{font-style:normal;width:20px;height:20px;border-radius:5px;background:var(--tint);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .noti b{font-size:15px}.noti p{font-size:15px;line-height:1.4}
+  .note{max-width:1260px;margin:30px auto 40px;color:#444;font-size:13px;padding:0 24px;line-height:1.8}
+</style>
+</head>
+<body>
+<h1 class="top">小禾 App · iOS 风格 · 方案 B 其余流程</h1>
+<div class="lead">接 <a href="app-ios.html">app-ios.html</a>（简报逐件过、下拉面板、我的、隐私）。流程和文案按 <code>docs/ITER1/ui/drafts/app-方案B-细化.html</code>；演示人物 p5 陆航。</div>
+
+<!-- 流程 2 第 1 天 -->
+<section class="flow">
+<h2>流程 2 · 第 1 天</h2>
+<p class="idea">不是空白页，也不问个人信息，只推荐一件马上能办的事；接好后告诉你下一次见面，第 2 天封面就有内容。</p>
+<div class="row3">
+  <div><div class="cap">① 第一次见面：只推荐一件事</div><div class="ph"><div class="island"></div><div class="sb"><span>9:00</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="kb"><i>禾</i>管家 ▾</span><span></span></div>
+    <div class="hi">你好，我是小禾</div>
+    <div class="lo">我每天替你把事情理好，<br>你只要花几分钟过一遍。</div>
+    <div class="card" style="margin-top:22px"><h3>先接入工作邮箱</h3><p>明早 8:00，你会收到第一份简报：收件箱分好了，下属周报挑出来了。</p><div class="ai">只读 · 随时可以断开</div></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="big p">接入邮箱</div><div class="minor">先不接，交一份文件试试</div></div>
+  </div><div class="home"></div></div></div>
+
+  <div><div class="cap">② 接好了：告诉你下一次见面</div><div class="ph"><div class="island"></div><div class="sb"><span>9:03</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="kb"><i>禾</i>管家 ▾</span><span></span></div>
+    <div class="done"><div class="ok">✓</div><h2>邮箱接好了</h2><p>明早 8:00 给你第一份简报。<br>今天不用再做什么了。</p></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="big g" style="color:var(--tint)">想现在就试一件？说一句</div></div>
+  </div><div class="tab"><a class="on">⌂<br>管家</a><a>◉<br>盯着</a><a>◯<br>我的</a></div><div class="home"></div></div></div>
+
+  <div><div class="cap">③ 第 2 天早上：第一份简报</div><div class="ph"><div class="island"></div><div class="sb"><span>8:00</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="kb"><i>禾</i>管家 ▾</span><span></span></div>
+    <div class="hi">早上好，陆航</div>
+    <div class="lo">第一份简报好了，<b>1 件</b>等你确认，<br>大约 1 分钟。</div>
+    <div class="grp" style="margin-top:16px"><div class="it"><span class="num">1</span><span class="x">3 封要回的邮件<small>回复已拟好</small></span></div></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="btns"><div class="big p">开始</div><div class="big o">说一句</div></div><div class="minor gray">另外 33 封不急，我先放着</div></div>
+  </div><div class="tab"><a class="on">⌂<br>管家</a><a>◉<br>盯着</a><a>◯<br>我的</a></div><div class="home"></div></div></div>
+</div>
+</section>
+
+<!-- 流程 3 改一改 -->
+<section class="flow">
+<h2>流程 3 · 改一改</h2>
+<p class="idea">在某一件里点“改一改”，直接说要怎么改；改完原地换成新版本，可以撤销。不开新的对话页。</p>
+<div class="row3">
+  <div><div class="cap">① 第 3 件：团队周报</div><div class="ph"><div class="island"></div><div class="sb"><span>16:04</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="b">‹ 简报</span><span class="t">3 / 3</span><span class="r">稍后</span></div>
+    <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <div class="card"><h3>团队周报写好了，18:00 前交王总</h3><p>本周完成 3 项，延期 1 项（支付对接，卡在第三方证书）。下周重点 2 项。</p>
+      <div class="sug"><b>建议直接发：</b>延期原因已写明，王总不用再追问。</div>
+      <div class="src">6 份下属周报合成 1 页 · 看全文 ›<span>内容由 AI 生成</span></div></div>
+    <div class="ex" style="text-align:center;font-size:12px;padding-top:14px">向右滑动可暂存至稍后处理</div>
+    <div class="grow"></div>
+    <div class="foot"><div class="big p">确认，发给王总…</div><div class="minor">改一改 · 复制</div></div>
+  </div><div class="home"></div></div></div>
+
+  <div><div class="cap">② 说一句怎么改（底部弹层）</div><div class="ph"><div class="island"></div><div class="sb"><span>16:04</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="b">‹ 简报</span><span class="t">3 / 3</span><span class="r">稍后</span></div>
+    <div class="card"><h3>团队周报写好了…</h3></div>
+  </div><div class="dim"></div>
+    <div class="sheet"><div class="bar"></div><h4>要怎么改？</h4>
+      <div class="chips"><span class="chip">改成三行</span><span class="chip">去掉下周计划</span><span class="chip">语气正式一点</span></div>
+      <div class="input"><span class="x">说一句或打一句…</span><span class="mic">●</span></div></div>
+  <div class="home"></div></div></div>
+
+  <div><div class="cap">③ 原地换成新版本，可以撤销</div><div class="ph"><div class="island"></div><div class="sb"><span>16:05</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="b">‹ 简报</span><span class="t">3 / 3</span><span class="r">稍后</span></div>
+    <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <div class="banner"><span class="ck">✓</span><span class="x">改好了：去掉了下周计划</span><a>撤销</a></div>
+    <div class="card"><h3>团队周报写好了，18:00 前交王总</h3><p>本周完成 3 项，延期 1 项（支付对接，卡在第三方证书）。</p>
+      <div class="src">看全文 ›<span>内容由 AI 生成</span></div></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="big p">确认，发给王总…</div><div class="minor">再改一改 · 复制</div></div>
+  </div><div class="home"></div></div></div>
+</div>
+</section>
+
+<!-- 流程 4 说一句 / 盯着 -->
+<section class="flow">
+<h2>流程 4 · 说一句 / 看全部</h2>
+<p class="idea">随时说一件事，小禾只回一句“交给我了，什么时候给你”，到时间放进简报；首页不开聊天。想看全部去“盯着”，按三种状态列出。</p>
+<div class="row3">
+  <div><div class="cap">① 说一句：跳过简报，直接说</div><div class="ph"><div class="island"></div><div class="sb"><span>16:10</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="b">取消</span><span class="t">说一句</span><span class="r" style="color:var(--l2);font-size:13px">简报稍后再过</span></div>
+    <div class="ex" style="padding-top:20px">比如：<br>“下周一前把会员系统的进度整理一下”<br>“提醒我明早给小李打电话”</div>
+    <div class="grow"></div>
+    <div class="grp" style="margin-bottom:10px"><div class="it"><span style="color:var(--tint);font-size:22px">＋</span><span class="x">交资料<small>拍照 / 相册 / 文件 / 链接</small></span><span class="chev">›</span></div></div>
+    <div class="foot" style="padding-top:0"><div class="input" style="background:#fff;color:#000"><span class="x">下周一前整理会员系统的进度</span><span class="mic">↑</span></div></div>
+  </div><div class="home"></div></div></div>
+
+  <div><div class="cap">② 只回一句：什么时候给你</div><div class="ph"><div class="island"></div><div class="sb"><span>16:10</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="kb"><i>禾</i>管家 ▾</span><span></span></div>
+    <div class="done"><div class="ok blue">✓</div><h2>交给我了</h2><p>下周一上午做好，<br>放进那天的简报里给你看。</p></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="minor">撤销　·　改时间</div></div>
+  </div><div class="tab"><a class="on">⌂<br>管家</a><a>◉<br>盯着</a><a>◯<br>我的</a></div><div class="home"></div></div></div>
+
+  <div><div class="cap">③ 盯着：全部事情，一件一行</div><div class="ph"><div class="island"></div><div class="sb"><span>16:12</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span></span><span></span></div>
+    <div class="large">盯着</div>
+    <div class="hdr">等你确认 · 1</div>
+    <div class="grp"><div class="it"><span class="x">客户问能否提前上线<small>回复已拟好 · 17:30 再提醒你</small></span><span class="chev">›</span></div></div>
+    <div class="hdr">我在办 · 7</div>
+    <div class="grp">
+      <div class="it"><span class="x">会员系统进度<small>下周一给你</small></span><span class="chev">›</span></div>
+      <div class="it"><span class="x">小李接口确认<small>明早 9:00 提醒你跟进</small></span><span class="chev">›</span></div>
+      <div class="it"><span class="x">下周二里程碑评审<small>议程已备好</small></span><span class="chev">›</span></div>
+      <div class="it"><span class="x" style="color:var(--l2)">还有 4 件</span><span class="chev">›</span></div>
+    </div>
+    <div class="grp" style="margin-top:22px"><div class="it"><span class="x">本周办完</span><span style="color:var(--l2);font-size:15px">12 件</span><span class="chev">›</span></div></div>
+  </div><div class="tab"><a>⌂<br>管家</a><a class="on">◉<br>盯着</a><a>◯<br>我的</a></div><div class="home"></div></div></div>
+</div>
+</section>
+
+<!-- 流程 5 通知 -->
+<section class="flow">
+<h2>流程 5 · 从通知进来</h2>
+<p class="idea">只有“错过就晚了”的事才发通知。点通知进来，就是一份只有这 1 件的简报，过完同样有结束页。</p>
+<div class="row3">
+  <div><div class="cap">① 锁屏通知</div><div class="ph lock"><div class="island"></div><div class="sb" style="color:#fff"><span></span><span class="bat"></span></div><div class="bd">
+    <div class="clock"><div class="d">11月6日 星期五</div><div class="h">17:30</div></div>
+    <div class="noti"><div class="top"><i>禾</i>小禾<span style="margin-left:auto">现在</span></div><b>团队周报还没交</b><p>已经写好了，确认一下就能发给王总（18:00 截止）。</p></div>
+  </div><div class="home" style="background:#fff"></div></div></div>
+
+  <div><div class="cap">② 直接是这 1 件</div><div class="ph"><div class="island"></div><div class="sb"><span>17:30</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="b">‹ 管家</span><span class="t">1 / 1</span><span class="r">稍后</span></div>
+    <div class="prog"><i class="on"></i></div>
+    <div class="card"><h3>团队周报写好了，18:00 前交王总</h3><p>本周完成 3 项，延期 1 项（支付对接，卡在第三方证书）。</p><div class="src">看全文 ›<span>内容由 AI 生成</span></div></div>
+    <div class="grow"></div>
+    <div class="foot"><div class="big p">确认，发给王总…</div><div class="minor">改一改 · 复制</div></div>
+  </div><div class="home"></div></div></div>
+
+  <div><div class="cap">③ 过完：可以关掉了</div><div class="ph"><div class="island"></div><div class="sb"><span>17:32</span><span class="bat"></span></div><div class="bd">
+    <div class="nav"><span class="kb"><i>禾</i>管家 ▾</span><span></span></div>
+    <div class="done"><div class="ok">✓</div><h2>今天的都过完了</h2><p>周末愉快，下周一 8:00 见。</p></div>
+  </div><div class="tab"><a class="on">⌂<br>管家</a><a>◉<br>盯着</a><a>◯<br>我的</a></div><div class="home"></div></div></div>
+</div>
+</section>
+
+<div class="note"><b>临时草图，只看结构和风格，不可点击。</b>外观对齐 Stitch A 套（#F2F2F7、主色 #3F6EE8、苹方 / SF Pro）；Tab 图标此处用字符占位，正式稿用 SF Symbols（管家 = 房子）。逐件过页面都支持右滑暂存。无外部依赖，断网可看。</div>
+</body>
+</html>

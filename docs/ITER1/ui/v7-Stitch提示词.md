@@ -38,6 +38,7 @@
 ```
 
 ### 0.2 mobile 端约束（mobile 项目每段加上）
+> **2026-11-05 修订**：mobile 改为方案 B + iOS 风格，本节和下面的 mobile 段落作废，改用 `v7-Stitch提示词-app.md` 第 0 段。
 
 ```
 手机 App 界面（iOS 和 Android 同一套设计），390×844，两端外观和功能一致。
