@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小禾 · App iOS 风格草图（v7 临时）</title>
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#fff; --sep:rgba(60,60,67,.18);
+    --label:#000; --label2:rgba(60,60,67,.6); --label3:rgba(60,60,67,.3);
+    --tint:#2f6b57; --tint-soft:#e6f0eb; --red:#ff3b30; --green:#34c759; --fill:rgba(118,118,128,.12);
+    --yellow-soft:#fff6db;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#d9d9de;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;color:var(--label);font-size:17px;line-height:1.35;-webkit-font-smoothing:antialiased}
+  .page{display:flex;gap:44px;justify-content:center;flex-wrap:wrap;padding:36px 20px 24px}
+  .cap{text-align:center;color:#555;font-size:13px;margin-bottom:12px}
+  .phone{width:390px;height:844px;background:var(--bg);border-radius:52px;box-shadow:0 0 0 11px #111,0 24px 60px rgba(0,0,0,.25);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:122px;height:35px;border-radius:20px;background:#000;z-index:5}
+  .status{height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 36px;font-size:16px;font-weight:600}
+  .status .r{font-size:12px;letter-spacing:1px}
+  .scroll{flex:1;overflow:hidden;padding-bottom:12px}
+
+  /* 导航栏 */
+  .navbar{display:flex;align-items:center;justify-content:space-between;height:44px;padding:0 16px}
+  .navbar .back{color:var(--tint);font-size:17px;display:flex;align-items:center;gap:2px}
+  .navbar .ttl{font-size:17px;font-weight:600}
+  .navbar .act{color:var(--tint);font-size:22px;width:60px;text-align:right}
+  .large{font-size:34px;font-weight:700;letter-spacing:.3px;padding:2px 16px 8px}
+  .sub{color:var(--label2);font-size:15px;padding:0 16px 10px}
+
+  /* 分组列表 */
+  .hdr{font-size:13px;color:var(--label2);padding:18px 32px 7px;text-transform:none}
+  .ftr{font-size:13px;color:var(--label2);padding:7px 32px 0;line-height:1.4}
+  .group{background:var(--card);margin:0 16px;border-radius:10px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 16px;position:relative}
+  .row + .row::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+  .row.ic + .row.ic::before{left:58px}
+  .row .t{flex:1;padding:11px 0}
+  .row .t small{display:block;font-size:13px;color:var(--label2);margin-top:2px}
+  .row .v{color:var(--label2)}
+  .chev{color:var(--label3);font-size:20px;font-weight:500;margin-left:-4px}
+  .icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex:none}
+  .row.danger .t{color:var(--red)}
+  .row.link .t{color:var(--tint)}
+  .check{color:var(--tint);font-weight:600}
+  /* 开关 */
+  .sw{width:51px;height:31px;border-radius:16px;background:#e9e9ea;position:relative;flex:none}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.16)}
+  .sw.on{background:var(--tint)}
+  .sw.on::after{left:22px}
+  /* 分段控件 */
+  .seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:8px 16px}
+  .seg span{flex:1;text-align:center;font-size:13px;font-weight:500;padding:6px 0;border-radius:7px}
+  .seg span.on{background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+
+  /* 首页卡片 */
+  .hello{padding:0 16px 4px;font-size:15px;color:var(--label2)}
+  .hello b{color:var(--label)}
+  .card{background:var(--card);margin:0 16px 12px;border-radius:14px;padding:14px 16px 12px}
+  .card .tag{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--tint);background:var(--tint-soft);border-radius:6px;padding:2px 7px}
+  .card .push{font-size:12px;color:var(--label2);margin-left:6px}
+  .card h3{font-size:17px;font-weight:600;margin:8px 0 4px}
+  .card p{font-size:15px;color:#333;line-height:1.45}
+  .because{display:flex;align-items:center;gap:8px;background:var(--yellow-soft);border-radius:9px;padding:8px 10px;margin-top:10px;font-size:13px;color:#5c4a12}
+  .because .t{flex:1}
+  .because .no{color:var(--tint);font-weight:500}
+  .acts{display:flex;gap:8px;margin-top:10px;align-items:center}
+  .pill{font-size:15px;font-weight:600;border-radius:16px;padding:6px 14px;background:var(--fill);color:var(--tint)}
+  .pill.pri{background:var(--tint);color:#fff}
+  .ai{font-size:11px;color:var(--label3);margin-left:auto}
+  .decide .row .t{font-size:15px}
+  .badge{min-width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+
+  /* 吩咐一声 + Tab 栏 */
+  .ask{flex:none;margin:0 12px 8px;height:44px;border-radius:22px;background:rgba(255,255,255,.95);box-shadow:0 1px 6px rgba(0,0,0,.08);display:flex;align-items:center;gap:10px;padding:0 6px 0 14px}
+  .ask .ph{flex:1;color:var(--label3)}
+  .ask .mic{width:32px;height:32px;border-radius:50%;background:var(--tint);display:flex;align-items:center;justify-content:center}
+  .tabbar{flex:none;height:83px;background:rgba(249,249,249,.94);border-top:.5px solid var(--sep);display:flex;padding-top:7px;backdrop-filter:blur(20px)}
+  .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:500;color:#999;text-decoration:none}
+  .tabbar a.on{color:var(--tint)}
+  .home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#000}
+
+  .note{max-width:1260px;margin:0 auto 40px;color:#444;font-size:13px;padding:0 24px;line-height:1.7}
+  .note b{color:#000}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="currentColor"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="#fff" stroke-width="1.9"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="clip" viewBox="0 0 24 24"><path d="M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+
+  <!-- ① 管家首页 -->
+  <div>
+    <div class="cap">① M-02 管家首页（陆航 · 第 30 天 · 周五 16:00）</div>
+    <div class="phone">
+      <div class="island"></div>
+      <div class="status"><span>16:00</span><span class="r">●●●● ▮</span></div>
+      <div class="scroll">
+        <div class="navbar"><span></span><span></span><span class="act">🔔</span></div>
+        <div class="large">管家</div>
+        <div class="hello">下午好，<b>陆航</b>。本周替你省下 <b>11.5 小时</b></div>
+
+        <div class="hdr">需要你决定 <span class="badge">2</span></div>
+        <div class="group decide">
+          <div class="row"><span class="t">小周的周报有 2 处和周三例会说的不一致<small>修改意见已按会议结论备好</small></span><span class="chev">›</span></div>
+          <div class="row"><span class="t">客户问上线能否提前到 11 月 20 日<small>回复草稿已备好，三种口径任选</small></span><span class="chev">›</span></div>
+        </div>
+
+        <div class="hdr">替你做好的</div>
+        <div class="card">
+          <span class="tag">💼 工作</span><span class="push">推送 · 18:00 前要交</span>
+          <h3>团队周报已汇总</h3>
+          <p>6 份下属周报合成 1 页，先写结论：本周 3 项完成、1 项延期（支付对接）、下周重点 2 项。</p>
+          <div class="because"><span>🎯</span><span class="t">因为你前 3 次交给王总的周报都是一页</span><span class="no">不对</span></div>
+          <div class="acts"><span class="pill pri">复制</span><span class="pill">发给…</span><span class="ai">内容由 AI 生成</span></div>
+        </div>
+      </div>
+      <div class="ask"><svg width="22" height="22"><use href="#clip"/></svg><span class="ph">吩咐一声…</span><span class="mic"><svg width="17" height="17"><use href="#mic"/></svg></span></div>
+      <div class="tabbar">
+        <a class="on"><svg width="26" height="26"><use href="#i-home"/></svg>管家</a>
+        <a><svg width="26" height="26"><use href="#i-eye"/></svg>盯着</a>
+        <a><svg width="26" height="26"><use href="#i-box"/></svg>资料</a>
+        <a><svg width="26" height="26"><use href="#i-gear"/></svg>设置</a>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+  <!-- ② 设置 -->
+  <div>
+    <div class="cap">② M-07 设置</div>
+    <div class="phone">
+      <div class="island"></div>
+      <div class="status"><span>16:02</span><span class="r">●●●● ▮</span></div>
+      <div class="scroll">
+        <div class="navbar"><span></span><span></span><span></span></div>
+        <div class="large">设置</div>
+
+        <div class="group">
+          <div class="row"><span class="icon" style="background:#2f6b57;border-radius:50%;width:52px;height:52px;font-size:22px">陆</span><span class="t" style="padding:12px 0"><b style="font-weight:500;font-size:19px">陆航</b><small>会员 · 本月剩 320 点</small></span><span class="chev">›</span></div>
+        </div>
+
+        <div class="hdr">主动服务</div>
+        <div class="seg"><span class="on">开</span><span>只准备不通知</span><span>关</span></div>
+        <div class="group">
+          <div class="row ic"><span class="icon" style="background:#5856d6">☰</span><span class="t">按领域设置</span><span class="v">工作 开 · 家里 只准备</span><span class="chev">›</span></div>
+          <div class="row ic"><span class="icon" style="background:#5e5ce6">☾</span><span class="t">免打扰</span><span class="v">22:00–7:30</span><span class="chev">›</span></div>
+        </div>
+        <div class="ftr">关了以后我只在你开口时做事；你让我提醒的事照常提醒。</div>
+
+        <div class="hdr">资料来源</div>
+        <div class="group">
+          <div class="row ic"><span class="icon" style="background:#007aff">✉</span><span class="t">工作邮箱<small>luhang@company.com · 只读</small></span><span class="chev">›</span></div>
+          <div class="row ic"><span class="icon" style="background:#34c759">⇩</span><span class="t">专属收件邮箱</span><span class="chev">›</span></div>
+        </div>
+
+        <div class="group" style="margin-top:22px">
+          <div class="row ic"><span class="icon" style="background:#ff3b30">🔔</span><span class="t">通知</span><span class="v">未开启推送</span><span class="chev">›</span></div>
+          <div class="row ic"><span class="icon" style="background:#8e8e93">✋</span><span class="t">隐私与个人信息</span><span class="chev">›</span></div>
+          <div class="row ic"><span class="icon" style="background:#ff9500">★</span><span class="t">会员与点数</span><span class="chev">›</span></div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <a><svg width="26" height="26"><use href="#i-home"/></svg>管家</a>
+        <a><svg width="26" height="26"><use href="#i-eye"/></svg>盯着</a>
+        <a><svg width="26" height="26"><use href="#i-box"/></svg>资料</a>
+        <a class="on"><svg width="26" height="26"><use href="#i-gear"/></svg>设置</a>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+  <!-- ③ 隐私与个人信息 -->
+  <div>
+    <div class="cap">③ M-06 隐私与个人信息（含“我了解的你”）</div>
+    <div class="phone">
+      <div class="island"></div>
+      <div class="status"><span>16:03</span><span class="r">●●●● ▮</span></div>
+      <div class="scroll">
+        <div class="navbar"><span class="back">‹ 设置</span><span class="ttl">隐私与个人信息</span><span style="width:60px"></span></div>
+
+        <div class="hdr" style="padding-top:8px">我了解的你 · 💼 工作</div>
+        <div class="group">
+          <div class="row"><span class="t">给王总的汇报：先说结论，一页以内<small>来自：你发出的周报</small></span><span class="v" style="font-size:15px;color:var(--tint)">不对</span></div>
+          <div class="row"><span class="t">每周五 18:00 前交团队周报<small>来自：周三例会纪要</small></span><span class="v" style="font-size:15px;color:var(--tint)">不对</span></div>
+        </div>
+        <div class="hdr">🩺 健康</div>
+        <div class="group">
+          <div class="row"><span class="t">每年 11 月做一次体检<small>来自：去年的体检预约短信截图</small></span><span class="v" style="font-size:15px;color:var(--tint)">不对</span></div>
+        </div>
+        <div class="ftr">这些是我为了把事办好而记下的。左滑可删掉。<span style="color:var(--tint)">查看全部（含还没确认的）</span></div>
+
+        <div class="hdr">不按你的情况定制</div>
+        <div class="group">
+          <div class="row"><span class="t">通用模式</span><span class="sw"></span></div>
+          <div class="row"><span class="t">健康、财务、孩子、位置、人脸</span><span class="v">4 项开</span><span class="chev">›</span></div>
+        </div>
+
+        <div class="hdr">客服查看记录</div>
+        <div class="group">
+          <div class="row"><span class="t">没有授权<small>除非你授权，我们的工作人员看不到你的记录</small></span></div>
+        </div>
+
+        <div class="group" style="margin-top:22px">
+          <div class="row link"><span class="t">导出全部数据</span></div>
+          <div class="row danger"><span class="t">忘掉我</span></div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <a><svg width="26" height="26"><use href="#i-home"/></svg>管家</a>
+        <a><svg width="26" height="26"><use href="#i-eye"/></svg>盯着</a>
+        <a><svg width="26" height="26"><use href="#i-box"/></svg>资料</a>
+        <a class="on"><svg width="26" height="26"><use href="#i-gear"/></svg>设置</a>
+      </div>
+      <div class="home-ind"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <b>临时草图，只看风格，不可点击。</b>iOS 风格：大标题导航栏、分组列表（Inset Grouped）、系统灰底 #F2F2F7、分段控件、开关、底部 Tab 栏；强调色保留品牌墨绿 #2F6B57。
+  结果卡片和“🎯 因为…”依据条是产品自有组件，圆角、字号按 iOS 规范统一。对照旧版：<code>app.html</code>（保留不动）。
+</div>
+
+</body>
+</html>
