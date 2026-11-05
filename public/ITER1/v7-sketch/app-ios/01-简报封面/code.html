@@ -1,279 +1,200 @@
-<!DOCTYPE html>
-
-<html class="h-full" lang="zh-CN"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<!DOCTYPE html><html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 <title>小禾 - 简报封面</title>
 <!-- Material Symbols Outlined -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
-          "colors": {
-            "on-tertiary-container": "#fffeff",
-            "on-tertiary-fixed": "#410001",
-            "on-primary": "#ffffff",
-            "surface-variant": "#e3e2e7",
-            "primary-fixed": "#dbe1ff",
-            "surface-dim": "#dad9df",
-            "on-secondary-fixed-variant": "#00531c",
-            "secondary-fixed-dim": "#53e16f",
-            "on-secondary-fixed": "#002107",
-            "outline-variant": "#c3c6d6",
-            "primary-fixed-dim": "#b4c5ff",
-            "surface-container-high": "#e9e7ed",
-            "inverse-on-surface": "#f1f0f5",
-            "on-error": "#ffffff",
-            "on-secondary": "#ffffff",
-            "on-primary-container": "#ffffff",
-            "primary": "#1c54ce",
-            "secondary-fixed": "#72fe88",
-            "on-surface-variant": "#434654",
-            "surface-container-lowest": "#ffffff",
-            "tertiary-container": "#e42620",
-            "on-error-container": "#93000a",
-            "surface-container-highest": "#e3e2e7",
-            "outline": "#737685",
-            "secondary-container": "#6ffb85",
-            "inverse-primary": "#b4c5ff",
-            "on-background": "#1a1b1f",
-            "primary-container": "#3f6ee8",
-            "on-surface": "#1a1b1f",
-            "on-primary-fixed": "#00174b",
-            "tertiary-fixed": "#ffdad5",
-            "on-tertiary-fixed-variant": "#930005",
-            "tertiary": "#be000a",
-            "on-tertiary": "#ffffff",
-            "surface-container-low": "#f4f3f8",
-            "background": "#faf9fe",
-            "surface-container": "#eeedf3",
-            "error": "#ba1a1a",
-            "on-secondary-container": "#00732a",
-            "surface-bright": "#faf9fe",
-            "inverse-surface": "#2f3034",
-            "on-primary-fixed-variant": "#003da9",
-            "surface-tint": "#1e55cf",
-            "tertiary-fixed-dim": "#ffb4aa",
-            "surface": "#faf9fe",
-            "error-container": "#ffdad6",
-            "secondary": "#006e28"
+          colors: {
+            primary: "#3F6EE8",
+            "primary-tint": "#E8F0FE",
+            surface: "#F2F2F7",
+            "ios-card": "#FFFFFF",
+            "ios-text": "#1C1C1E",
+            "ios-secondary": "#8E8E93"
           },
-          "borderRadius": {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          "spacing": {
-            "space-xs": "0.25rem",
-            "gutter": "1rem",
-            "margin": "1rem",
-            "space-md": "0.75rem",
-            "space-sm": "0.5rem",
-            "space-xl": "1.5rem",
-            "space-lg": "1rem"
-          },
-          "fontFamily": {
-            "title-1": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "headline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "footnote": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "callout": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-1": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "subheadline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "large-title": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-2": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-3": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-2": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"]
-          },
-          "fontSize": {
-            "title-1": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
-            "body": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
-            "headline": ["17px", { "lineHeight": "22px", "fontWeight": "600" }],
-            "footnote": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
-            "callout": ["16px", { "lineHeight": "21px", "fontWeight": "400" }],
-            "caption-1": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
-            "subheadline": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
-            "large-title": ["34px", { "lineHeight": "41px", "fontWeight": "700" }],
-            "title-2": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
-            "title-3": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
-            "caption-2": ["11px", { "lineHeight": "13px", "fontWeight": "500" }]
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"PingFang SC"', '"Hiragino Sans GB"', '"Helvetica Neue"', 'sans-serif']
           }
         }
       }
     };
-  </script>
+</script>
 <style>
-    body {
-      background-color: #F2F2F7;
+    * {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif !important;
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
+    body {
+      background-color: #F2F2F7;
+      margin: 0;
+      padding: 0;
+    }
     .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-family: 'Material Symbols Outlined' !important;
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
       display: inline-block;
       vertical-align: middle;
       line-height: 1;
     }
     .ios-cell:active {
-      background-color: #E5E5EA;
+      background-color: #F8F8FA;
     }
-    .hairline-b {
-      border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
-    }
-  </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  <style id="ios-fix">
+</style>
+<style id="ios-fix">
 body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
 </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-0 sm:p-4 text-on-surface">
-<!-- iPhone Container (390 x 844 frame standard) -->
-<div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] flex flex-col justify-between overflow-hidden sm:rounded-[50px] sm:shadow-2xl sm:border-[8px] sm:border-[#1E1E1E]">
+<body class="flex items-center justify-center min-h-screen bg-[#F2F2F7] text-[#1C1C1E]">
+<!-- 390 x 844 Native iOS Frame Viewport (No outer device mock border) -->
+<div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] flex flex-col justify-between overflow-hidden shadow-sm">
 <!-- 1. 顶部状态栏与灵动岛 (Dynamic Island) -->
 <header class="relative z-30 pt-3 px-7 flex items-center justify-between w-full shrink-0">
 <!-- 时间 -->
-<span class="font-subheadline text-subheadline font-semibold text-black tracking-tight pt-1">16:00</span>
+<span class="text-[15px] font-semibold text-[#1C1C1E] tracking-tight pt-1">16:00</span>
 <!-- 黑色灵动岛 -->
 <div class="absolute left-1/2 -translate-x-1/2 top-3 w-[122px] h-[34px] bg-black rounded-full flex items-center justify-end px-3">
-<!-- 摄像头与微光传感器示意 -->
-<div class="w-3 h-3 rounded-full bg-[#111111] flex items-center justify-center">
-<div class="w-1.5 h-1.5 rounded-full bg-[#1c2438]/80"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#1c2438]/80 flex items-center justify-center">
+<div class="w-1 h-1 rounded-full bg-[#0d162a]"></div>
 </div>
 </div>
-<!-- 信号、Wi-Fi、电池图标群 -->
-<div class="flex items-center gap-1.5 pt-1 text-black">
-<!-- 信号 (蜂窝网络) -->
-<svg class="w-4 h-3.5 fill-current" viewbox="0 0 17 12">
+<!-- 信号、Wi-Fi、电池 -->
+<div class="flex items-center gap-1.5 pt-1 text-[#1C1C1E]">
+<!-- 信号 -->
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 17 12">
 <rect height="3" rx="0.6" width="2.5" x="0" y="9"></rect>
 <rect height="6" rx="0.6" width="2.5" x="4" y="6"></rect>
 <rect height="9" rx="0.6" width="2.5" x="8" y="3"></rect>
 <rect height="12" rx="0.6" width="2.5" x="12" y="0"></rect>
 </svg>
 <!-- Wi-Fi -->
-<svg class="w-4 h-3.5 fill-current" viewbox="0 0 16 12">
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 16 12">
 <path d="M8 9.6a1.6 1.6 0 100 3.2 1.6 1.6 0 000-3.2zm-4.3-3.2a6.1 6.1 0 018.6 0 .8.8 0 001.1-1.1 7.7 7.7 0 00-10.8 0 .8.8 0 001.1 1.1zm-2.8-2.8a10.1 10.1 0 0114.2 0 .8.8 0 101.1-1.1 11.7 11.7 0 00-16.4 0 .8.8 0 001.1 1.1z"></path>
 </svg>
 <!-- 电池 -->
-<div class="w-6 h-3 border border-black/80 rounded-[4px] p-[1.5px] flex items-center relative ml-0.5">
-<div class="h-full bg-black rounded-[2px] w-[80%]"></div>
-<div class="absolute -right-[3px] top-[2.5px] w-[2px] h-[5px] bg-black/80 rounded-r-sm"></div>
+<div class="w-6 h-3 border border-[#1C1C1E] rounded-[4px] p-[1px] flex items-center relative ml-0.5">
+<div class="h-full bg-[#1C1C1E] rounded-[2px] w-[82%]"></div>
+<div class="absolute -right-[3px] top-[2.5px] w-[2px] h-[5px] bg-[#1C1C1E] rounded-r-sm"></div>
 </div>
 </div>
 </header>
-<!-- 主滚动/浏览区域 -->
+<!-- 主滚动与内容区域 -->
 <main class="flex-1 flex flex-col px-4 pt-4 overflow-y-auto no-scrollbar">
-<!-- 2. 顶部胶囊按钮 (管家选择器) -->
+<!-- 2. 顶部导航胶囊 (管家选择器) -->
 <div class="flex items-center mb-6">
-<button class="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full border border-black/5 shadow-sm active:scale-95 transition-transform duration-150">
-<div class="w-5 h-5 rounded-full bg-primary-container flex items-center justify-center text-white text-[11px] font-bold leading-none">
-            禾
-          </div>
-<span class="font-subheadline text-subheadline font-semibold text-black tracking-tight">管家</span>
-<span class="material-symbols-outlined text-[15px] text-black/60 -ml-0.5 pt-0.5">arrow_drop_down</span>
+<button class="inline-flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 bg-white rounded-full border border-black/5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] active:scale-95 transition-all">
+<div class="w-5 h-5 rounded-full bg-[#3F6EE8] flex items-center justify-center text-white text-[11px] font-bold leading-none">
+          禾
+        </div>
+<span class="text-[14px] font-semibold text-[#1C1C1E] tracking-tight">管家</span>
+<span class="material-symbols-outlined text-[15px] text-[#8E8E93] -ml-0.5">arrow_drop_down</span>
 </button>
 </div>
-<!-- 3. 页面大标题 & 4. 副标题说明 -->
-<section class="mb-6">
-<h1 class="font-large-title text-large-title tracking-tight text-on-surface mb-2">
-          下午好，陆航
-        </h1>
-<p class="font-subheadline text-subheadline text-on-surface-variant leading-relaxed">
-          有 <span class="text-primary-container font-semibold">3 件</span>我已经备好了办法，等你确认一下，大约 2 分钟。
-        </p>
+<!-- 3. 问候区大标题 & 4. 副标题说明 -->
+<section class="mb-6 px-0.5">
+<h1 class="text-[32px] leading-tight font-semibold tracking-tight text-[#1C1C1E] mb-2.5">下午好，陆航</h1>
+<p class="text-[15px] text-[#48484A] leading-relaxed tracking-normal">
+        有 <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-[#E8F0FE] text-[#3F6EE8] font-semibold text-[14px] leading-tight mx-0.5 border border-[#3F6EE8]/10">3 件</span> 我已经备好了办法，等你确认一下，大约 2 分钟。
+      </p>
 </section>
-<!-- 5. Inset Grouped 分组列表容器 -->
-<div class="bg-surface-container-lowest rounded-[10px] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)] border border-black/[0.03]">
-<!-- 第 1 行 -->
-<div class="ios-cell transition-colors duration-150 flex items-center py-3.5 px-4 cursor-pointer">
-<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center mr-3 shrink-0">
-<span class="font-subheadline text-subheadline font-semibold text-primary">1</span>
+<!-- 5. 纯白列表卡片 (带浅蓝底编号圆圈) -->
+<div class="bg-white rounded-[16px] overflow-hidden border border-black/5 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+<!-- 第 1 项 -->
+<div class="ios-cell transition-colors duration-150 flex items-start py-3.5 px-4 cursor-pointer">
+<div class="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center mr-3 shrink-0 mt-0.5">
+<span class="text-[13px] font-semibold text-[#3F6EE8] leading-none">1</span>
 </div>
 <div class="flex-1 min-w-0 pr-2">
-<div class="font-headline text-headline text-on-surface truncate">小周的周报</div>
-<div class="font-footnote text-footnote text-outline truncate mt-0.5">修改意见已写好</div>
+<div class="text-[16px] text-[#1C1C1E] font-semibold leading-tight truncate">小周的周报</div>
+<div class="text-[13px] text-[#8E8E93] truncate mt-1 leading-snug">修改意见已写好</div>
 </div>
-<span class="material-symbols-outlined text-outline-variant text-[20px] shrink-0">chevron_right</span>
+<span class="material-symbols-outlined text-[#C7C7CC] text-[19px] shrink-0 mt-1">chevron_right</span>
 </div>
-<!-- 0.5px 分隔线，左侧根据 iOS 规范内缩对齐文字 -->
-<div class="ml-[52px] hairline-b"></div>
-<!-- 第 2 行 -->
-<div class="ios-cell transition-colors duration-150 flex items-center py-3.5 px-4 cursor-pointer">
-<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center mr-3 shrink-0">
-<span class="font-subheadline text-subheadline font-semibold text-primary">2</span>
-</div>
-<div class="flex-1 min-w-0 pr-2">
-<div class="font-headline text-headline text-on-surface truncate">客户问能否提前上线</div>
-<div class="font-footnote text-footnote text-outline truncate mt-0.5">建议不整体提前，回复已拟好</div>
-</div>
-<span class="material-symbols-outlined text-outline-variant text-[20px] shrink-0">chevron_right</span>
-</div>
-<!-- 0.5px 分隔线 -->
-<div class="ml-[52px] hairline-b"></div>
-<!-- 第 3 行 -->
-<div class="ios-cell transition-colors duration-150 flex items-center py-3.5 px-4 cursor-pointer">
-<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center mr-3 shrink-0">
-<span class="font-subheadline text-subheadline font-semibold text-primary">3</span>
+<!-- iOS 分隔线 -->
+<div class="ml-[48px] border-b border-black/[0.06]"></div>
+<!-- 第 2 项 -->
+<div class="ios-cell transition-colors duration-150 flex items-start py-3.5 px-4 cursor-pointer">
+<div class="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center mr-3 shrink-0 mt-0.5">
+<span class="text-[13px] font-semibold text-[#3F6EE8] leading-none">2</span>
 </div>
 <div class="flex-1 min-w-0 pr-2">
-<div class="font-headline text-headline text-on-surface truncate">团队周报，18:00 前交</div>
-<div class="font-footnote text-footnote text-outline truncate mt-0.5">已写好，确认就发</div>
+<div class="text-[16px] text-[#1C1C1E] font-semibold leading-tight truncate">客户问能否提前上线</div>
+<div class="text-[13px] text-[#8E8E93] truncate mt-1 leading-snug">建议不整体提前，回复已拟好</div>
 </div>
-<span class="material-symbols-outlined text-outline-variant text-[20px] shrink-0">chevron_right</span>
+<span class="material-symbols-outlined text-[#C7C7CC] text-[19px] shrink-0 mt-1">chevron_right</span>
+</div>
+<!-- iOS 分隔线 -->
+<div class="ml-[48px] border-b border-black/[0.06]"></div>
+<!-- 第 3 项 -->
+<div class="ios-cell transition-colors duration-150 flex items-start py-3.5 px-4 cursor-pointer">
+<div class="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center mr-3 shrink-0 mt-0.5">
+<span class="text-[13px] font-semibold text-[#3F6EE8] leading-none">3</span>
+</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="text-[16px] text-[#1C1C1E] font-semibold leading-tight truncate flex items-center gap-1.5">
+<span class="">团队周报</span>
+<span class="text-[13px] font-normal text-[#8E8E93]">· 18:00 前交</span>
+</div>
+<div class="text-[13px] text-[#8E8E93] truncate mt-1 leading-snug">已写好，确认就发</div>
+</div>
+<span class="material-symbols-outlined text-[#C7C7CC] text-[19px] shrink-0 mt-1">chevron_right</span>
 </div>
 </div>
-<!-- 6. 底部操作区域 (放置于内容流下方，呼应单手操作体验) -->
+<!-- 6. 底部操作区域 -->
 <div class="mt-auto pt-6 pb-2">
 <div class="flex items-center gap-3 w-full">
-<!-- 主按钮：开始 (70% 宽度，50px 高度) -->
-<button class="flex-[7] h-[50px] bg-primary-container hover:bg-primary active:scale-[0.98] text-white rounded-[12px] font-headline text-headline flex items-center justify-center transition-all duration-150 shadow-sm">
-            开始
-          </button>
-<!-- 辅助按钮：说一句 (30% 宽度，50px 高度) -->
-<button class="flex-[3] h-[50px] bg-surface-variant hover:bg-surface-dim active:scale-[0.98] text-on-surface-variant rounded-[12px] font-headline text-headline flex items-center justify-center gap-1 transition-all duration-150">
-<span class="material-symbols-outlined text-[19px]">chat_bubble</span>
-<span>说一句</span>
+<!-- 主按钮：开始 (深蓝 #3F6EE8，圆角 14px，柔和蓝光微阴影) -->
+<button class="flex-[7] h-[50px] bg-[#3F6EE8] hover:bg-[#3561cf] active:scale-[0.98] text-white rounded-[14px] text-[17px] font-semibold flex items-center justify-center transition-all duration-150 shadow-[0_6px_20px_rgba(63,110,232,0.35)] tracking-wide">
+          开始
+        </button>
+<!-- 辅助按钮：说一句 (纯白微阴影，圆角 14px) -->
+<button class="flex-[3] h-[50px] bg-white/85 backdrop-blur-md hover:bg-[#fafafa] active:scale-[0.97] active:bg-black/[0.04] border border-black/[0.06] text-[#1C1C1E] rounded-[14px] text-[16px] font-medium flex items-center justify-center gap-1.5 transition-all duration-150 ease-out shadow-[0_2px_8px_rgba(0,0,0,0.04)] cursor-pointer">
+<span class="material-symbols-outlined text-[18px] text-[#636366]">chat_bubble</span>
+<span class="">说一句</span>
 </button>
 </div>
-<!-- 按钮下方安静文案 -->
-<p class="font-footnote text-footnote text-center text-[rgba(60,60,67,0.6)] mt-3">
-          其他 7 件我在办，不用你管
-        </p>
+<!-- 按钮下方状态胶囊 -->
+<div class="flex items-center justify-center mt-3">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/[0.04] text-[#8E8E93] text-[12px] tracking-tight">
+<span class="w-1.5 h-1.5 rounded-full bg-[#34C759] shrink-0"></span>
+<span class="">其他 7 件我在办，不用你管</span>
+</div>
+</div>
 </div>
 </main>
-<!-- 7. iOS 原生 BottomNavBar 与 8. 经典 Home 指示横条 -->
-<nav class="w-full bg-surface/85 backdrop-blur-2xl border-t border-outline-variant/30 flex flex-col shrink-0 select-none">
+<!-- 7. iOS 原生 BottomNavBar (毛玻璃悬浮，细线房子图标) -->
+<nav class="w-full bg-white/85 backdrop-blur-md border-t border-black/5 flex flex-col shrink-0 select-none">
 <div class="flex justify-around items-center px-4 pt-2 pb-1">
-<!-- Tab 1: 管家 (Active 选中激活) -->
-<button class="flex flex-col items-center justify-center text-primary-container active:opacity-70 transition-opacity duration-150 flex-1">
-<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
-<span class="font-caption-2 text-caption-2 mt-0.5 font-medium">管家</span>
+<!-- Tab 1: 管家 (Active 选中，主色 #3F6EE8，SF 细线房子图标) -->
+<button class="flex flex-col items-center justify-center text-[#3F6EE8] active:opacity-70 transition-opacity duration-150 flex-1">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="text-[11px] mt-0.5 font-semibold">管家</span>
 </button>
-<!-- Tab 2: 盯着 (Inactive) -->
-<button class="flex flex-col items-center justify-center text-on-surface-variant/70 active:opacity-70 transition-opacity duration-150 flex-1">
+<!-- Tab 2: 盯着 (Inactive，灰色 #8E8E93，细线眼睛图标) -->
+<button class="flex flex-col items-center justify-center text-[#8E8E93] active:opacity-70 transition-opacity duration-150 flex-1">
 <span class="material-symbols-outlined text-[24px]">visibility</span>
-<span class="font-caption-2 text-caption-2 mt-0.5">盯着</span>
+<span class="text-[11px] mt-0.5">盯着</span>
 </button>
-<!-- Tab 3: 我的 (Inactive) -->
-<button class="flex flex-col items-center justify-center text-on-surface-variant/70 active:opacity-70 transition-opacity duration-150 flex-1">
+<!-- Tab 3: 我的 (Inactive，灰色 #8E8E93，细线人像图标) -->
+<button class="flex flex-col items-center justify-center text-[#8E8E93] active:opacity-70 transition-opacity duration-150 flex-1">
 <span class="material-symbols-outlined text-[24px]">person</span>
-<span class="font-caption-2 text-caption-2 mt-0.5">我的</span>
+<span class="text-[11px] mt-0.5">我的</span>
 </button>
 </div>
-<!-- 8. iOS Home Indicator 交互指示条 (高度 34px 安全区空间内居中) -->
-<div class="w-full h-[28px] flex items-center justify-center pb-2">
-<div class="w-[134px] h-[5px] bg-black/80 rounded-full"></div>
+<!-- 8. iOS Home 指示条 -->
+<div class="w-full h-[24px] flex items-center justify-center pb-2">
+<div class="w-[134px] h-[5px] bg-[#1C1C1E]/30 rounded-full"></div>
 </div>
 </nav>
 </div>
+
+
 </body></html>

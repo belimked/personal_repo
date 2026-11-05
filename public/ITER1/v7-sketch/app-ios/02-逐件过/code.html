@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-
-<html class="h-full" lang="zh-CN"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<!DOCTYPE html><html class="h-full" lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 <title>逐件过 - 小禾</title>
-<!-- Material Symbols Outlined -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts & Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <!-- Tailwind CSS v3 -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <!-- Theme Configuration -->
@@ -16,53 +16,53 @@
       theme: {
         extend: {
           "colors": {
-            "on-tertiary-container": "#fffeff",
-            "on-tertiary-fixed": "#410001",
-            "on-primary": "#ffffff",
-            "surface-variant": "#e3e2e7",
-            "primary-fixed": "#dbe1ff",
-            "surface-dim": "#dad9df",
-            "on-secondary-fixed-variant": "#00531c",
-            "secondary-fixed-dim": "#53e16f",
-            "on-secondary-fixed": "#002107",
-            "outline-variant": "#c3c6d6",
-            "primary-fixed-dim": "#b4c5ff",
-            "surface-container-high": "#e9e7ed",
-            "inverse-on-surface": "#f1f0f5",
-            "on-error": "#ffffff",
-            "on-secondary": "#ffffff",
-            "on-primary-container": "#ffffff",
-            "primary": "#1c54ce",
-            "secondary-fixed": "#72fe88",
-            "on-surface-variant": "#434654",
-            "surface-container-lowest": "#ffffff",
-            "tertiary-container": "#e42620",
-            "on-error-container": "#93000a",
-            "surface-container-highest": "#e3e2e7",
-            "outline": "#737685",
-            "secondary-container": "#6ffb85",
-            "inverse-primary": "#b4c5ff",
-            "on-background": "#1a1b1f",
-            "primary-container": "#3f6ee8",
-            "on-surface": "#1a1b1f",
-            "on-primary-fixed": "#00174b",
-            "tertiary-fixed": "#ffdad5",
-            "on-tertiary-fixed-variant": "#930005",
-            "tertiary": "#be000a",
-            "on-tertiary": "#ffffff",
-            "surface-container-low": "#f4f3f8",
-            "background": "#faf9fe",
-            "surface-container": "#eeedf3",
+            "surface-container-low": "#f8f3ec",
+            "background": "#fef9f2",
+            "on-secondary-container": "#795938",
+            "on-secondary-fixed-variant": "#5e4122",
+            "on-background": "#1d1b18",
             "error": "#ba1a1a",
-            "on-secondary-container": "#00732a",
-            "surface-bright": "#faf9fe",
-            "inverse-surface": "#2f3034",
-            "on-primary-fixed-variant": "#003da9",
-            "surface-tint": "#1e55cf",
-            "tertiary-fixed-dim": "#ffb4aa",
-            "surface": "#faf9fe",
+            "on-tertiary-fixed-variant": "#294e36",
+            "on-primary": "#ffffff",
+            "secondary": "#785837",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed": "#ffdcbd",
+            "tertiary-container": "#41674d",
+            "surface-dim": "#ded9d3",
+            "on-surface-variant": "#444654",
+            "on-primary-fixed-variant": "#0037b8",
+            "on-tertiary": "#ffffff",
+            "primary": "#0038b9",
+            "secondary-container": "#fed2a9",
+            "surface-container": "#f2ede7",
+            "on-error": "#ffffff",
+            "primary-fixed-dim": "#b7c4ff",
+            "inverse-on-surface": "#f5f0ea",
+            "outline": "#747686",
+            "tertiary-fixed": "#c2edcb",
+            "inverse-primary": "#b7c4ff",
+            "on-primary-fixed": "#001453",
+            "on-surface": "#1d1b18",
+            "secondary-fixed-dim": "#e9bf97",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#e7e2db",
+            "surface-tint": "#2b52d4",
+            "on-error-container": "#93000a",
             "error-container": "#ffdad6",
-            "secondary": "#006e28"
+            "tertiary-fixed-dim": "#a7d0b0",
+            "outline-variant": "#c4c5d7",
+            "on-primary-container": "#d0d7ff",
+            "primary-container": "#2b52d4",
+            "surface-container-high": "#ece7e1",
+            "surface-bright": "#fef9f2",
+            "on-secondary-fixed": "#2c1600",
+            "on-tertiary-fixed": "#00210f",
+            "primary-fixed": "#dde1ff",
+            "inverse-surface": "#32302c",
+            "tertiary": "#2a4f36",
+            "surface-variant": "#e7e2db",
+            "on-tertiary-container": "#b9e3c2",
+            "surface": "#fef9f2"
           },
           "borderRadius": {
             "DEFAULT": "0.25rem",
@@ -71,39 +71,43 @@
             "full": "9999px"
           },
           "spacing": {
-            "space-xs": "0.25rem",
             "gutter": "1rem",
-            "margin": "1rem",
-            "space-md": "0.75rem",
+            "gutter-mobile": "0.75rem",
+            "gutter-desktop": "1.5rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "margin": "1.25rem",
             "space-sm": "0.5rem",
-            "space-xl": "1.5rem",
-            "space-lg": "1rem"
+            "space-xl": "2.25rem",
+            "margin-desktop": "2.5rem"
           },
           "fontFamily": {
-            "title-1": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "headline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "footnote": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "callout": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-1": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "subheadline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "large-title": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-2": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-3": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-2": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"]
+            "headline-md": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "label-md": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "body-md": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "label-lg": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "display-lg-mobile": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "body-lg": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "display-lg": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "body-sm": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
+            "label-sm": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"]
           },
           "fontSize": {
-            "title-1": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
-            "body": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
-            "headline": ["17px", { "lineHeight": "22px", "fontWeight": "600" }],
-            "footnote": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
-            "callout": ["16px", { "lineHeight": "21px", "fontWeight": "400" }],
-            "caption-1": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
-            "subheadline": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
-            "large-title": ["34px", { "lineHeight": "41px", "fontWeight": "700" }],
-            "title-2": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
-            "title-3": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
-            "caption-2": ["11px", { "lineHeight": "13px", "fontWeight": "500" }]
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-md": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-lg": ["14px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.03em", "fontWeight": "500" }]
           }
         },
       },
@@ -117,157 +121,89 @@
       line-height: 1;
     }
     body {
-      background-color: #e5e5ea;
+      background-color: #ebe5dd;
       -webkit-font-smoothing: -apple-system-font;
       font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      min-height: max(884px, 100dvh);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
     }
     .ios-shell {
       width: 100%;
       max-width: 390px;
       min-height: 844px;
       height: 844px;
-      background-color: #F2F2F7;
+      background-color: #fbf9f5;
     }
   </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  <style id="ios-fix">
+<style id="ios-fix">
 body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
 </style>
 </head>
-<body class="h-full flex items-center justify-center p-0 md:p-6 overflow-hidden select-none">
-<!-- iOS Device Frame Container (390 x 844) -->
-<main class="ios-shell relative flex flex-col justify-between overflow-hidden shadow-2xl md:rounded-[54px] border border-black/10">
-<!-- TOP SECTION: Status Bar & Navigation Bar -->
-<div class="w-full flex flex-col shrink-0 z-30 bg-[#F2F2F7]/90 backdrop-blur-xl">
-<!-- iOS Status Bar (47pt classic / 54pt dynamic notch) -->
+<body class="h-full flex items-center justify-center p-0 md:p-6 overflow-hidden select-none" style="background-color: rgb(229, 229, 234); font-family: -apple-system, &quot;SF Pro Text&quot;, &quot;PingFang SC&quot;, sans-serif;">
+<!-- iOS Device Frame Container (390 x 844) with warm linen background -->
+<main class="ios-shell relative flex flex-col justify-between overflow-hidden shadow-2xl md:rounded-[54px] border border-[#2c221e]/10" style="background-color: #F2F2F7; font-family: -apple-system, 'SF Pro Text', 'PingFang SC', sans-serif;">
+<!-- TOP SECTION: Status Bar & Navigation Bar (Warm blurred acrylic) -->
+<div class="w-full flex flex-col shrink-0 z-30 bg-[#fbf9f5]/90 backdrop-blur-xl border-b border-[#e7e2db]/50" style="background-color: rgba(242, 242, 247, 0.88); border-bottom-color: rgba(60, 60, 67, 0.12);">
+<!-- iOS Status Bar -->
 <div class="w-full h-11 pt-3 px-7 flex items-center justify-between text-on-surface">
 <!-- Time -->
-<span class="text-[15px] font-semibold tracking-tight text-black pl-1">16:00</span>
+<span class="text-[15px] font-semibold tracking-tight text-[#1d1b18] pl-1">16:00</span>
 <!-- Dynamic Island Placeholder -->
-<div class="h-7 w-[122px] bg-black rounded-full flex items-center justify-between px-3 -mt-1 ml-1.5 shadow-sm">
+<div class="h-7 w-[122px] bg-[#1d1b18] rounded-full flex items-center justify-between px-3 -mt-1 ml-1.5 shadow-sm">
 <div class="w-2.5 h-2.5 rounded-full bg-black/80 flex items-center justify-center">
-<div class="w-1.5 h-1.5 rounded-full bg-[#1c1c1e]"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-[#2c2a27]"></div>
 </div>
-<div class="w-2.5 h-2.5 rounded-full bg-[#0a0a0c]"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-[#141311]"></div>
 </div>
 <!-- System Status Icons (Signal, Wifi, Battery) -->
-<div class="flex items-center space-x-1.5 text-black pr-1">
+<div class="flex items-center space-x-1.5 text-[#1d1b18] pr-1">
 <span class="material-symbols-outlined text-[17px] leading-none" data-icon="signal_cellular_alt">signal_cellular_alt</span>
 <span class="material-symbols-outlined text-[16px] leading-none" data-icon="wifi">wifi</span>
-<div class="w-[24px] h-[11.5px] border-[1.5px] border-black rounded-[4px] p-[1px] flex items-center relative ml-0.5">
-<div class="h-full w-[80%] bg-black rounded-[2px]"></div>
-<div class="absolute -right-[3px] top-[2.5px] h-[4px] w-[1.5px] bg-black rounded-r-[1px]"></div>
+<div class="w-[24px] h-[11.5px] border-[1.5px] border-[#1d1b18] rounded-[4px] p-[1px] flex items-center relative ml-0.5">
+<div class="h-full w-[80%] bg-[#1d1b18] rounded-[2px]"></div>
+<div class="absolute -right-[3px] top-[2.5px] h-[4px] w-[1.5px] bg-[#1d1b18] rounded-r-[1px]"></div>
 </div>
 </div>
 </div>
 <!-- Navigation Bar (44pt) -->
 <header class="h-11 px-4 flex items-center justify-between relative">
 <!-- Leading: Back Action -->
-<button aria-label="返回简报" class="flex items-center text-primary-container active:opacity-60 transition-opacity -ml-1 text-[17px]" type="button">
-<span class="material-symbols-outlined text-[20px] font-bold" data-icon="arrow_back_ios_new">arrow_back_ios_new</span>
-<span class="font-normal -ml-0.5 tracking-tight font-body text-body">简报</span>
-</button>
-<!-- Center: Headline (1/3) -->
-<div class="absolute inset-x-0 flex justify-center pointer-events-none">
-<h1 class="font-headline text-headline text-on-surface tracking-tight font-semibold">1 / 3</h1>
+<button aria-label="返回简报" class="flex items-center text-primary-container active:opacity-60 transition-opacity -ml-1 text-[17px] group font-medium" type="button"><span class="material-symbols-outlined text-[20px] transition-transform group-active:-translate-x-0.5" style="font-variation-settings: 'wght' 300; color: #3F6EE8;">chevron_left</span><span class="-ml-0.5 tracking-tight text-[17px] font-normal" style="color: #3F6EE8;">简报</span></button>
+<!-- Center: Headline (1/3) with enhanced typographic hierarchy -->
+<div class="absolute inset-x-0 flex justify-center pointer-events-none items-center">
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">1 <span class="text-on-surface-variant/50 font-normal px-0.5">/</span> 3</h1>
 </div>
 <!-- Trailing: Defer Action Button -->
-<button class="text-primary-container font-body text-body active:opacity-60 transition-opacity tracking-tight -mr-1" type="button">
+<button class="text-primary-container font-medium text-[16px] active:opacity-60 transition-opacity tracking-tight -mr-1" style="color: #3F6EE8; font-size: 17px; font-weight: 400;" type="button">
           稍后
         </button>
 </header>
-<!-- Segmented Pill Progress Indicator -->
-<div class="px-4 pt-2 pb-3">
-<div class="flex items-center gap-1.5 w-full">
-<!-- Item 1 (Active) -->
-<div class="h-1 flex-1 rounded-full bg-primary-container transition-all"></div>
-<!-- Item 2 (Inactive) -->
-<div class="h-1 flex-1 rounded-full bg-[#E5E5EA] transition-all"></div>
-<!-- Item 3 (Inactive) -->
-<div class="h-1 flex-1 rounded-full bg-[#E5E5EA] transition-all"></div>
+<!-- Segmented Pill Progress Indicator (琉璃主蓝 + 柔和暖灰) -->
+<div class="px-5 pt-2 pb-3"><div class="flex items-center gap-2 w-full"><div class="h-[4px] flex-1 rounded-full transition-all" style="background-color: #3F6EE8;"></div><div class="h-[4px] flex-1 rounded-full transition-all" style="background-color: rgba(120, 120, 128, 0.2);"></div><div class="h-[4px] flex-1 rounded-full transition-all" style="background-color: rgba(120, 120, 128, 0.2);"></div></div></div>
 </div>
-</div>
-</div>
-<!-- MAIN SCROLLABLE CONTENT CANVAS (Single item review focus) -->
-<div class="flex-1 w-full px-4 pt-2 overflow-y-auto flex flex-col justify-start">
-<!-- Core Inset Grouped Card -->
-<section class="w-full bg-surface-container-lowest rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] border border-black/[0.04] flex flex-col gap-4">
-<!-- Card Main Title -->
-<div class="space-y-1">
-
-<h2 class="text-title-3 font-title-3 text-on-surface leading-snug tracking-tight">
-            小周的周报有 2 处和例会不一样
-          </h2>
-</div>
-<!-- Bullet List Points -->
-<div class="space-y-3 pt-1">
-<!-- Point 1 -->
-<div class="flex items-start gap-2.5">
-<div class="w-1.5 h-1.5 rounded-full bg-primary-container mt-2 shrink-0"></div>
-<p class="font-subheadline text-subheadline text-on-surface leading-relaxed">
-<span class="font-headline text-on-surface">支付对接：</span>他写“本周完成”，例会定的是下周三
-            </p>
-</div>
-<!-- Point 2 -->
-<div class="flex items-start gap-2.5">
-<div class="w-1.5 h-1.5 rounded-full bg-primary-container mt-2 shrink-0"></div>
-<p class="font-subheadline text-subheadline text-on-surface leading-relaxed">
-              漏了“压测报告”
-            </p>
-</div>
-</div>
-<!-- Recommended Reply Container (Light blue tint box) -->
-<div class="rounded-lg bg-[#EBF1FE] p-3.5 mt-1 border border-primary-container/10">
-<div class="flex items-start gap-2">
-
-<p class="font-subheadline text-subheadline text-[#1A45A0] leading-relaxed select-text">
-<span class="font-semibold text-primary-container">建议回复：</span>“支付对接按例会改成下周三完成；另外补上压测报告。”
-            </p>
-</div>
-</div>
-<!-- Hairline Divider -->
-<div class="w-full h-[0.5px] bg-[#3C3C43]/15 mt-1"></div>
-<!-- Metadata Row -->
-<div class="flex items-center justify-between pt-0.5 text-footnote font-footnote">
-<!-- Left: Source Citation (Tappable Link) -->
-<a class="inline-flex items-center text-primary-container active:opacity-60 transition-opacity gap-0.5 text-[14px]" href="#">
-<span>出处：周三例会纪要</span>
-<span class="material-symbols-outlined text-[15px]" data-icon="chevron_right">chevron_right</span>
-</a>
-<!-- Right: AI Watermark -->
-<span class="text-[12px] text-[#3C3C43]/50 font-caption-1 tracking-tight">
-            内容由 AI 生成
-          </span>
-</div>
-</section>
+<!-- MAIN SCROLLABLE CONTENT CANVAS (Warm linen canvas + Ambient shadow card) -->
+<div class="flex-1 w-full px-4 pt-3.5 overflow-y-auto flex flex-col justify-start">
+<!-- Core Inset Grouped Card (Warm ambient diffusion shadow + soft border) -->
+<section class="w-full bg-[#ffffff] p-5 border flex flex-col shadow-sm" style="background-color: rgb(255, 255, 255); border-radius: 20px; border: 0.5px solid rgba(60, 60, 67, 0.08); box-shadow: rgba(0, 0, 0, 0.04) 0px 2px 12px; gap: 18px;"><div class="space-y-1"><h2 class="text-[20px] font-semibold text-[#1c1c1e] tracking-tight leading-[1.35]" style="font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;">小周的周报有 2 处和例会不一样</h2></div><div class="flex flex-col gap-3 pt-0.5"><div class="flex items-start gap-2.5"><div class="w-2 h-2 rounded-full mt-2 shrink-0" style="background-color: #3F6EE8;"></div><p class="text-[15px] leading-[23px] text-[#1c1c1e]"><span class="font-medium text-[#1c1c1e]">支付对接：</span><span class="text-[#3a3a3c]">他写“本周完成”，例会定的是下周三</span></p></div><div class="flex items-start gap-2.5"><div class="w-2 h-2 rounded-full mt-2 shrink-0" style="background-color: #3F6EE8;"></div><p class="text-[15px] leading-[23px] text-[#3a3a3c]">漏了“压测报告”</p></div></div><div class="p-3.5 border" style="background-color: #F8F9FE; border-color: rgba(63, 110, 232, 0.15); border-radius: 14px;"><div class="flex items-start gap-2.5"><p class="text-[14px] leading-[22px] select-text" style="color: #2446A6;"><span class="font-medium" style="color: #3F6EE8;">建议回复：</span>“支付对接按例会改成下周三完成；另外补上压测报告。”</p></div></div><div class="w-full h-[0.5px] mt-0.5" style="background-color: rgba(60, 60, 67, 0.1);"></div><div class="flex items-center justify-between pt-0.5"><a class="inline-flex items-center font-normal active:opacity-60 transition-opacity gap-0.5 text-[13px] group" href="#" style="color: #3F6EE8;"><span class="group-hover:underline underline-offset-2">出处：周三例会纪要</span><span class="material-symbols-outlined text-[14px] transition-transform group-hover:translate-x-0.5" style="font-variation-settings: 'wght' 300;">chevron_right</span></a><span class="text-[12px] tracking-normal" style="color: rgba(60, 60, 67, 0.6);">内容由 AI 生成</span></div></section>
 <!-- Context Hint Box (Quiet helper to enrich single-task flow) -->
-<div class="px-3 pt-4 flex items-center justify-center gap-1.5 text-on-surface-variant/70 text-caption-1 font-caption-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="swipe">swipe</span>
-<span>向右滑动可暂存至稍后处理</span>
+<div class="px-3 pt-5 flex items-center justify-center gap-1.5 text-on-surface-variant/65 text-body-sm font-normal"><span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'wght' 300; color: rgba(60, 60, 67, 0.55);">swipe_right</span><span class="tracking-tight text-[13px]" style="color: rgba(60, 60, 67, 0.6); font-family: -apple-system, 'SF Pro Text', 'PingFang SC', sans-serif;">向右滑动可暂存至稍后处理</span></div>
 </div>
-</div>
-<!-- BOTTOM FIXED INTERACTION AREA (No Tab Bar, Dedicated Task Flow) -->
-<footer class="w-full shrink-0 bg-[#F2F2F7]/95 backdrop-blur-xl px-4 pt-3 pb-2 flex flex-col items-center">
-<!-- Primary Action Button (H: 50pt, Radius: 12pt, Color: #3F6EE8) -->
-<button class="w-full h-[50px] bg-primary-container active:scale-[0.98] active:opacity-90 transition-all rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(63,110,232,0.25)] text-on-primary" type="button">
-<span class="font-headline text-headline text-white tracking-normal font-semibold">
+<!-- BOTTOM FIXED INTERACTION AREA (Warm Linen Acrylic Base) -->
+<footer class="w-full shrink-0 bg-[#fbf9f5]/95 backdrop-blur-xl px-4 pt-3.5 pb-2 flex flex-col items-center border-t border-[#e7e2db]/40" style="background-color: rgba(242, 242, 247, 0.94); border-top-color: rgba(60, 60, 67, 0.12);">
+<!-- Primary Action Button with subtle skylight bevel, deep glass sheen & ambient drop shadow -->
+<button class="w-full h-[52px] active:scale-[0.97] active:brightness-95 transition-all duration-150 ease-out flex items-center justify-center text-white border border-white/20 select-none" style="background: linear-gradient(rgb(75, 123, 245) 0%, rgb(53, 102, 226) 100%); box-shadow: rgba(63, 110, 232, 0.36) 0px 8px 20px -4px, rgba(63, 110, 232, 0.18) 0px 2px 6px; border-radius: 14px;" type="button">
+<span class="font-headline-sm text-[16.5px] text-white tracking-wide font-semibold drop-shadow-sm">
           确认，发给小周…
         </span>
 </button>
 <!-- Secondary Plain Link Action -->
-<div class="pt-3 pb-2">
-<button class="text-primary-container font-subheadline text-[14px] tracking-wide active:opacity-50 transition-opacity" type="button">
-          改一改 · 这不算问题
-        </button>
+<div class="pt-3 pb-1.5">
+<button class="text-primary-container font-medium text-[14px] tracking-wide py-1 px-3 rounded-full active:scale-[0.96] active:opacity-60 active:brightness-95 transition-all duration-150 ease-out select-none inline-flex items-center justify-center" style="color: rgb(63, 110, 232); font-weight: 500; font-family: -apple-system, &quot;SF Pro Text&quot;, &quot;PingFang SC&quot;, sans-serif; background-color: rgba(63, 110, 232, 0.06); border: 0.5px solid rgba(63, 110, 232, 0.12);" type="button">改一改 · 这不算问题</button>
 </div>
 <!-- iOS Home Indicator -->
 <div class="w-full flex justify-center pt-2 pb-1">
-<div class="w-[134px] h-[5px] bg-black/85 rounded-full"></div>
+<div class="w-[134px] h-[5px] bg-[#1d1b18]/80 rounded-full"></div>
 </div>
 </footer>
 </main>
@@ -277,4 +213,6 @@ body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemF
       el.addEventListener('touchstart', () => {}, {passive: true});
     });
   </script>
+
+
 </body></html>

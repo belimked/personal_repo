@@ -1,117 +1,106 @@
-<!DOCTYPE html>
-
-<html class="h-full" lang="zh-CN"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<!DOCTYPE html><html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
 <title>小禾 - 今天的都过完了</title>
 <!-- Material Symbols Outlined -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          "colors": {
-            "on-tertiary-container": "#fffeff",
-            "on-tertiary-fixed": "#410001",
-            "on-primary": "#ffffff",
-            "surface-variant": "#e3e2e7",
-            "primary-fixed": "#dbe1ff",
-            "surface-dim": "#dad9df",
-            "on-secondary-fixed-variant": "#00531c",
-            "secondary-fixed-dim": "#53e16f",
-            "on-secondary-fixed": "#002107",
-            "outline-variant": "#c3c6d6",
-            "primary-fixed-dim": "#b4c5ff",
-            "surface-container-high": "#e9e7ed",
-            "inverse-on-surface": "#f1f0f5",
-            "on-error": "#ffffff",
-            "on-secondary": "#ffffff",
-            "on-primary-container": "#ffffff",
-            "primary": "#1c54ce",
-            "secondary-fixed": "#72fe88",
-            "on-surface-variant": "#434654",
-            "surface-container-lowest": "#ffffff",
-            "tertiary-container": "#e42620",
-            "on-error-container": "#93000a",
-            "surface-container-highest": "#e3e2e7",
-            "outline": "#737685",
-            "secondary-container": "#6ffb85",
-            "inverse-primary": "#b4c5ff",
-            "on-background": "#1a1b1f",
-            "primary-container": "#3f6ee8",
-            "on-surface": "#1a1b1f",
-            "on-primary-fixed": "#00174b",
-            "tertiary-fixed": "#ffdad5",
-            "on-tertiary-fixed-variant": "#930005",
-            "tertiary": "#be000a",
-            "on-tertiary": "#ffffff",
-            "surface-container-low": "#f4f3f8",
-            "background": "#faf9fe",
-            "surface-container": "#eeedf3",
-            "error": "#ba1a1a",
-            "on-secondary-container": "#00732a",
-            "surface-bright": "#faf9fe",
-            "inverse-surface": "#2f3034",
-            "on-primary-fixed-variant": "#003da9",
-            "surface-tint": "#1e55cf",
-            "tertiary-fixed-dim": "#ffb4aa",
-            "surface": "#faf9fe",
-            "error-container": "#ffdad6",
-            "secondary": "#006e28"
-          },
-          "borderRadius": {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "full": "9999px"
-          },
-          "spacing": {
-            "space-xs": "0.25rem",
-            "gutter": "1rem",
-            "margin": "1rem",
-            "space-md": "0.75rem",
-            "space-sm": "0.5rem",
-            "space-xl": "1.5rem",
-            "space-lg": "1rem"
-          },
-          "fontFamily": {
-            "title-1": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "headline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "footnote": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "callout": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-1": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "subheadline": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "large-title": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-2": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "title-3": ["Plus Jakarta Sans", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"],
-            "caption-2": ["Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", "sans-serif"]
-          },
-          "fontSize": {
-            "title-1": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
-            "body": ["17px", { "lineHeight": "22px", "fontWeight": "400" }],
-            "headline": ["17px", { "lineHeight": "22px", "fontWeight": "600" }],
-            "footnote": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
-            "callout": ["16px", { "lineHeight": "21px", "fontWeight": "400" }],
-            "caption-1": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
-            "subheadline": ["15px", { "lineHeight": "20px", "fontWeight": "400" }],
-            "large-title": ["34px", { "lineHeight": "41px", "fontWeight": "700" }],
-            "title-2": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
-            "title-3": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
-            "caption-2": ["11px", { "lineHeight": "13px", "fontWeight": "500" }]
-          }
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-container-low": "#f8f3ec",
+          "background": "#fef9f2",
+          "on-secondary-container": "#795938",
+          "on-secondary-fixed-variant": "#5e4122",
+          "on-background": "#1d1b18",
+          "error": "#ba1a1a",
+          "on-tertiary-fixed-variant": "#294e36",
+          "on-primary": "#ffffff",
+          "secondary": "#785837",
+          "surface-container-lowest": "#ffffff",
+          "secondary-fixed": "#ffdcbd",
+          "tertiary-container": "#41674d",
+          "surface-dim": "#ded9d3",
+          "on-surface-variant": "#444654",
+          "on-primary-fixed-variant": "#0037b8",
+          "on-tertiary": "#ffffff",
+          "primary": "#0038b9",
+          "secondary-container": "#fed2a9",
+          "surface-container": "#f2ede7",
+          "on-error": "#ffffff",
+          "primary-fixed-dim": "#b7c4ff",
+          "inverse-on-surface": "#f5f0ea",
+          "outline": "#747686",
+          "tertiary-fixed": "#c2edcb",
+          "inverse-primary": "#b7c4ff",
+          "on-primary-fixed": "#001453",
+          "on-surface": "#1d1b18",
+          "secondary-fixed-dim": "#e9bf97",
+          "on-secondary": "#ffffff",
+          "surface-container-highest": "#e7e2db",
+          "surface-tint": "#2b52d4",
+          "on-error-container": "#93000a",
+          "error-container": "#ffdad6",
+          "tertiary-fixed-dim": "#a7d0b0",
+          "outline-variant": "#c4c5d7",
+          "on-primary-container": "#d0d7ff",
+          "primary-container": "#2b52d4",
+          "surface-container-high": "#ece7e1",
+          "surface-bright": "#fef9f2",
+          "on-secondary-fixed": "#2c1600",
+          "on-tertiary-fixed": "#00210f",
+          "primary-fixed": "#dde1ff",
+          "inverse-surface": "#32302c",
+          "tertiary": "#2a4f36",
+          "surface-variant": "#e7e2db",
+          "on-tertiary-container": "#b9e3c2",
+          "surface": "#fef9f2"
         },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "gutter-mobile": "0.75rem",
+          "gutter-desktop": "1.5rem",
+          "margin-mobile": "1rem",
+          "space-lg": "1.5rem",
+          "space-md": "1rem",
+          "space-xs": "0.25rem",
+          "margin": "1.25rem",
+          "space-sm": "0.5rem",
+          "space-xl": "2.25rem",
+          "margin-desktop": "2.5rem"
+        },
+        "fontFamily": {
+          "headline-md": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "label-md": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "body-md": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "label-lg": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "display-lg-mobile": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "headline-lg": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "body-lg": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "display-lg": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "headline-sm": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "body-sm": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"],
+          "label-sm": ["Plus Jakarta Sans", "-apple-system", "PingFang SC", "sans-serif"]
+        }
       },
-    }
-  </script>
+    },
+  }
+</script>
 <style>
     body {
-      background-color: #F2F2F7;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
+      background-color: #ded9d3;
+      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       -webkit-tap-highlight-color: transparent;
@@ -139,20 +128,18 @@
       transform: scale(0.97);
       opacity: 0.85;
     }
-  </style>
-<style>
     body {
       min-height: max(884px, 100dvh);
     }
   </style>
-  <style id="ios-fix">
+<style id="ios-fix">
 body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif !important}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24 !important}
 </style>
 </head>
-<body class="flex justify-center items-center min-h-screen bg-surface-dim/40 antialiased p-0 sm:p-4">
-<!-- Mobile Viewport Container: 390 x 844 iPhone Canvas -->
-<div class="relative w-full max-w-[390px] h-[844px] bg-[#F2F2F7] overflow-hidden flex flex-col justify-between shadow-2xl sm:rounded-[50px] border border-black/5">
+<body class="flex justify-center items-center min-h-screen bg-surface-dim/50 antialiased p-0 sm:p-4" style="font-family: -apple-system, BlinkMacSystemFont, &quot;SF Pro Text&quot;, &quot;SF Pro Display&quot;, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, sans-serif;">
+<!-- Mobile Viewport Container: 390 x 844 iPhone Canvas with warm paper background #fef9f2 -->
+<div class="relative w-full max-w-[390px] h-[844px] bg-[#fef9f2] overflow-hidden flex flex-col justify-between shadow-2xl sm:rounded-[50px] border border-[#e7e2db]/70" style="background-color: #F2F2F7; border-color: #E5E5EA;">
 <!-- 1. Native iOS Status Bar with Dynamic Island -->
 <header class="relative z-50 w-full pt-3 px-7 flex justify-between items-center shrink-0">
 <!-- Time -->
@@ -166,13 +153,13 @@ body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemF
 </div>
 <!-- System Status Glyphs (Signal, Wi-Fi, Battery) -->
 <div class="flex items-center space-x-1.5 text-on-surface">
-<svg class="w-4 h-3.5 fill-current" viewbox="0 0 17 12">
+<svg class="w-4 h-3.5 fill-current" viewBox="0 0 17 12">
 <rect height="4" rx="0.5" width="3" x="0" y="8"></rect>
 <rect height="6.5" rx="0.5" width="3" x="4.5" y="5.5"></rect>
 <rect height="9" rx="0.5" width="3" x="9" y="3"></rect>
 <rect height="12" rx="0.5" width="3" x="13.5" y="0"></rect>
 </svg>
-<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 12">
+<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 16 12">
 <path d="M8 2.5C10.8 2.5 13.3 3.6 15.1 5.4L16 4.5C13.9 2.4 11.1 1 8 1C4.9 1 2.1 2.4 0 4.5L0.9 5.4C2.7 3.6 5.2 2.5 8 2.5ZM8 6.5C9.7 6.5 11.2 7.2 12.3 8.3L13.2 7.4C11.9 6.1 10 5.2 8 5.2C6 5.2 4.1 6.1 2.8 7.4L3.7 8.3C4.8 7.2 6.3 6.5 8 6.5ZM8 10.2C8.7 10.2 9.2 10.7 9.2 11.4C9.2 12.1 8.7 12.6 8 12.6C7.3 12.6 6.8 12.1 6.8 11.4C6.8 10.7 7.3 10.2 8 10.2Z"></path>
 </svg>
 <div class="flex items-center pl-0.5">
@@ -183,82 +170,80 @@ body *:not(.material-symbols-outlined){font-family:-apple-system,BlinkMacSystemF
 </div>
 </div>
 </header>
-<!-- Top App Bar / Capsule Row (Shared Component Navigation Anchor) -->
-<div class="px-4 pt-4 pb-2 shrink-0 flex items-center justify-between">
-<!-- Capsule Button: Blue avatar + "管家 ▾" -->
-<button class="tap-scale flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-surface-container-lowest/90 backdrop-blur-md rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-black/[0.04]">
-<div class="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-headline text-[12px] font-semibold leading-none shadow-inner">
+<!-- Top App Bar / Capsule Row -->
+<div class="px-5 pt-4 pb-2 shrink-0 flex items-center justify-between">
+<!-- Capsule Button: Warm Paper style + Deep Blue Avatar -->
+<button class="tap-scale flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-surface-container-lowest/90 backdrop-blur-md rounded-full shadow-[0_1px_4px_rgba(29,27,24,0.05)] border border-[#e7e2db]" style="background-color: #FFFFFF; border-color: #E5E5EA;">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-on-primary text-[12px] font-semibold leading-none shadow-sm" style="background-color: #3F6EE8;">
           禾
         </div>
-<span class="text-[14px] font-medium text-on-surface tracking-tight ml-0.5">管家</span>
+<span class="text-[14px] font-semibold text-on-surface tracking-tight ml-0.5">管家</span>
 <span class="material-symbols-outlined text-[16px] text-outline leading-none" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
 </button>
-
+<!-- Trailing Action -->
 </div>
-<!-- Main Content Canvas: High-end iOS Quiet Completion View -->
-<main class="flex-1 flex flex-col justify-center px-4 -mt-6">
+<!-- Main Content Canvas: Warm linen tone & elegant typography -->
+<main class="flex-1 flex flex-col justify-center px-5 -mt-6">
 <!-- 3. Mid-Upper Prominent Status Zone -->
 <section class="flex flex-col items-center text-center">
-<!-- Native iOS Green Circle Checkmark: 64x64 -->
-<div class="w-16 h-16 rounded-full bg-[#34C759] flex items-center justify-center shadow-[0_4px_16px_rgba(52,199,89,0.28)] mb-5">
-<span class="material-symbols-outlined text-white text-[38px] font-bold" data-icon="check" data-weight="fill">check</span>
+<!-- Warm Soft Green Circle Checkmark with subtle ambient glow -->
+<div class="relative mb-6">
+<div class="absolute inset-0 rounded-full bg-[#34C759]/20 blur-xl scale-125"></div>
+<div class="relative w-16 h-16 rounded-full bg-gradient-to-b from-[#34C759] to-[#2cb34f] flex items-center justify-center shadow-[0_6px_20px_rgba(52,199,89,0.22)] border border-white/30">
+<span class="material-symbols-outlined text-white text-[36px] font-bold" data-icon="check" data-weight="fill">check</span>
 </div>
-<!-- Large Title: 28pt Bold -->
-<h1 class="font-title-1 text-title-1 tracking-tight text-on-surface font-bold mb-2">
+</div>
+<!-- Large Title: 28px Semibold / Bold -->
+<h1 class="text-[26px] leading-[34px] font-bold tracking-tight text-on-surface mb-2.5">
           今天的都过完了
         </h1>
-<!-- Subtitle: 15pt Neutral Gray -->
-<p class="font-subheadline text-subheadline text-[rgba(60,60,67,0.7)] tracking-normal max-w-[280px]">
+<!-- Subtitle: Warm gray readable subhead -->
+<p class="text-[15px] leading-[22px] text-on-surface-variant font-normal tracking-normal max-w-[280px]">
           处理了 2 件，1 件 17:30 再提醒你
         </p>
 </section>
-<!-- 4. iOS Inset Grouped Card Section -->
+<!-- 4. Refined Warm Linen Card Section -->
 <div class="mt-9">
-<div class="bg-surface-container-lowest rounded-[12px] overflow-hidden border border-black/[0.04] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+<div class="bg-surface-container-lowest rounded-[16px] border border-[#e7e2db] shadow-[0_2px_8px_rgba(29,27,24,0.04)] overflow-hidden transition-all" style="background-color: #FFFFFF; border-color: #E5E5EA; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
 <button class="w-full flex items-center justify-between px-4 py-3.5 tap-scale text-left">
 <div class="flex items-center space-x-3 min-w-0">
-<!-- Small Badge Icon (Shield/Security) -->
-<div class="w-7 h-7 rounded-lg bg-[#F2F2F7] flex items-center justify-center shrink-0 text-outline">
+<!-- Small Badge Icon (Shield/Security) with soft warm background -->
+<div class="w-8 h-8 rounded-xl bg-surface-container-low border border-[#ece7e1] flex items-center justify-center shrink-0 text-on-surface-variant" style="background-color: #F2F2F7; border-color: #E5E5EA;">
 <span class="material-symbols-outlined text-[18px] text-on-surface-variant" data-icon="shield" data-weight="fill">shield</span>
 </div>
 <!-- Text -->
-<span class="font-body text-[15px] font-normal text-on-surface tracking-tight truncate">
+<span class="text-[15px] font-medium text-on-surface tracking-tight truncate">
                 其他 7 件我在办，不用你管
               </span>
 </div>
-<!-- Standard iOS Chevron Right -->
-<span class="material-symbols-outlined text-[19px] text-outline-variant shrink-0 ml-2" data-icon="chevron_right">chevron_right</span>
+<!-- Subtle Chevron Right -->
+<span class="material-symbols-outlined text-[20px] text-outline/60 shrink-0 ml-2" data-icon="chevron_right">chevron_right</span>
 </button>
 </div>
 </div>
-<!-- 5. Native Quiet Action Area -->
-<div class="mt-4">
-<!-- Full-width 50px pill button, light-gray system style #E5E5EA -->
-<button class="w-full h-[50px] bg-[#E5E5EA] hover:bg-[#DDDDE2] text-[#1C1C1E] rounded-[12px] font-headline text-[16px] font-medium flex items-center justify-center gap-2 tap-scale shadow-none active:bg-[#D1D1D6] transition-colors">
-<span class="material-symbols-outlined text-[19px] text-[#1C1C1E]/80" data-icon="chat_bubble">chat_bubble</span>
-<span>有别的事，说一句</span>
+<!-- 5. Quiet Action Button: Frosted warm surface with subtle border -->
+<div class="mt-3.5">
+<button class="w-full h-[50px] flex items-center justify-center gap-2 rounded-[16px] text-[15px] font-semibold text-on-surface backdrop-blur-md tap-scale transition-all duration-150 ease-out active:scale-[0.97]" style="background-color: rgba(255, 255, 255, 0.85); border: 1px solid rgba(0, 0, 0, 0.04); box-shadow: rgba(0, 0, 0, 0.04) 0px 1px 4px;">
+<span class="material-symbols-outlined text-[19px] text-on-surface-variant" data-icon="chat_bubble">chat_bubble</span>
+<span class="">有别的事，说一句</span>
 </button>
 </div>
 </main>
-<!-- 6. iOS Native Bottom Tab Bar (Shared Component strictly mapped to JSON) -->
-<nav class="shrink-0 relative w-full bg-surface/85 backdrop-blur-2xl px-4 pt-2 pb-7 flex justify-around items-center z-50">
-<!-- Tab 1: 管家 (Active) -->
-<button aria-label="管家" class="flex flex-col items-center justify-center text-primary tap-scale w-16">
-<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="home" data-weight="fill">home</span>
-<span class="font-caption-2 text-caption-2 font-medium tracking-tight">管家</span>
-</button>
+<!-- 6. iOS Native Bottom Tab Bar: Frosted warm linen & deep warm blue active tab -->
+<nav class="shrink-0 relative w-full bg-[#fef9f2]/90 backdrop-blur-xl border-t border-[#e7e2db] px-4 pt-2.5 pb-7 flex justify-around items-center z-50" style="background-color: rgba(249, 249, 251, 0.94); border-color: #E5E5EA;">
+<!-- Tab 1: 管家 (Active - Deep Warm Blue #0038b9) -->
+<button aria-label="管家" class="flex flex-col items-center justify-center text-primary tap-scale w-16"><span class="material-symbols-outlined text-[24px] mb-0.5" style="font-variation-settings: 'FILL' 0, 'wght' 300; color: #3F6EE8;">home</span>
+<span class="text-[11px] font-medium tracking-tight" style="color: #3F6EE8;">管家</span></button>
 <!-- Tab 2: 盯着 (Inactive) -->
-<button aria-label="盯着" class="flex flex-col items-center justify-center text-on-surface-variant/70 tap-scale w-16">
-<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="visibility">visibility</span>
-<span class="font-caption-2 text-caption-2 font-medium tracking-tight">盯着</span>
-</button>
+<button aria-label="盯着" class="flex flex-col items-center justify-center text-outline/80 hover:text-on-surface tap-scale w-16 transition-colors"><span class="material-symbols-outlined text-[24px] mb-0.5 text-[#8E8E93]" style="font-variation-settings: 'FILL' 0, 'wght' 300;">visibility</span>
+<span class="text-[11px] font-medium tracking-tight text-[#8E8E93]">盯着</span></button>
 <!-- Tab 3: 我的 (Inactive) -->
-<button aria-label="我的" class="flex flex-col items-center justify-center text-on-surface-variant/70 tap-scale w-16">
-<span class="material-symbols-outlined text-[23px] mb-0.5" data-icon="person">person</span>
-<span class="font-caption-2 text-caption-2 font-medium tracking-tight">我的</span>
-</button>
+<button aria-label="我的" class="flex flex-col items-center justify-center text-outline/80 hover:text-on-surface tap-scale w-16 transition-colors"><span class="material-symbols-outlined text-[24px] mb-0.5 text-[#8E8E93]" style="font-variation-settings: 'FILL' 0, 'wght' 300;">person</span>
+<span class="text-[11px] font-medium tracking-tight text-[#8E8E93]">我的</span></button>
 <!-- 7. iOS Home Indicator -->
-<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-[134px] h-[5px] bg-[#000000] rounded-full opacity-80 pointer-events-none"></div>
+<div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-[134px] h-[5px] bg-on-surface/80 rounded-full pointer-events-none"></div>
 </nav>
 </div>
+
+
 </body></html>
