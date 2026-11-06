@@ -17,7 +17,7 @@ a{color:#2F5BD3}
 @media (max-width:1200px){.pair{grid-template-columns:1fr}}
 </style></head><body>
 <h1>小禾 · Web 用户端打磨版（unslop，业务逻辑按 v6）</h1>
-<p class="lead">左边是 v6 原型的实际页面（苏晴 · 第 1 / 7 / 30 天），右边按 1440 宽重画。业务逻辑不变：左侧 5 个菜单（管家、我盯着的事、交给我的资料、我了解的你、设置），管家首页分第 1 / 7 / 30 天三个阶段，核心是结果卡（骨架或一步到位、因为…、还可以帮你、这个别记、出处）。样式跟 iOS 打磨版统一：主色 #3F6EE8、冷灰底、线框图标，不用 emoji。标志细节是卡片里的“因为…”行，左边一道蓝线。静态草图，按钮和链接大多不能点。</p>
+<p class="lead">左边是 v6 原型的实际页面（苏晴 · 第 1 / 7 / 30 天），右边按 1440 宽重画。业务逻辑不变：左侧 4 个菜单（管家、我盯着的事、交给我的资料、设置），管家首页分第 1 / 7 / 30 天三个阶段，核心是结果卡（骨架或一步到位、因为…、还可以帮你、这个别记、出处）。样式跟 iOS 打磨版统一：主色 #3F6EE8、冷灰底、线框图标，不用 emoji。标志细节是卡片里的“因为…”行，左边一道蓝线。静态草图，按钮和链接大多不能点。</p>
 <div class="pair">
   <figure><figcaption>v6 原稿 · 第1天</figcaption><div class="shot"><img src="原稿-第1天.png" alt=""></div></figure>
   <figure><figcaption>打磨版 · ① 第 1 天 · 问第一件事 · <a href="01-第1天-问第一件事.html">打开</a></figcaption><div class="shot"><img src="01-第1天-问第一件事.png" alt=""></div></figure>
@@ -41,7 +41,12 @@ a{color:#2F5BD3}
 <div class="pair">
   <figure><figcaption>v6 原稿 · 第30天</figcaption><div class="shot"><img src="原稿-第30天.png" alt=""></div></figure>
   <figure><figcaption>打磨版 · ⑤ 第 30 天 · 管家汇报 · <a href="05-第30天-管家汇报.html">打开</a></figcaption><div class="shot"><img src="05-第30天-管家汇报.png" alt=""></div></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>标题“管家汇报”，右上“本周替你省下 6.5 小时”</li><li>按 v6 分三块：替你做好的 / 替你盯着的 / 需要你决定的；待确认的画像（工作变动、老大的学校）放在最后</li><li>47 天前的想法卡加“开始做”主按钮</li></ul></div>
+  <div class="notes"><h2>改了什么</h2><ul><li>标题“管家汇报”，去掉“本周替你省下几小时”</li><li>今天要出手的只有 47 天前的想法卡，完整展示；其余收进一张汇报卡，分三组：替你做好的 / 替你盯着的 / 需要你决定的，每件一行，点开才看完整结果卡</li><li>默认只展开“需要你决定的”；待确认的画像（工作变动、老大的学校）在行内直接点 对 / 不对</li><li>开始对话后，汇报收成顶栏下的一条摘要（做好 2 · 盯着 7 · 等你定 5），点“展开”再看，对话从下面接着走</li></ul></div>
+</div>
+<div class="pair">
+  <figure><figcaption>v6 原稿 · 第30天</figcaption><div class="shot"><img src="原稿-第30天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑤ 第 30 天 · 开始对话后 · <a href="05-第30天-管家汇报.html#chat">打开</a></figcaption><div class="shot"><img src="05-第30天-管家汇报-对话中.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>发出第一句后，汇报收成一条摘要钉在顶栏下，不会被对话挤走</li><li>页面自动滚到最新一条，输入框保持焦点</li></ul></div>
 </div>
 <div class="pair">
   <figure><figcaption>v6 原稿 · 第30天</figcaption><div class="shot"><img src="原稿-第30天.png" alt=""></div></figure>
@@ -59,15 +64,10 @@ a{color:#2F5BD3}
   <div class="notes"><h2>改了什么</h2><ul><li>上传区改成可拖入的虚线框，拍照换成截图（Web 无相机）</li><li>按意思搜索、标签筛选、文件列表都保留；文件类型用线框图标代替彩色 PDF/JPG 方块</li><li>存储空间缩成底部一行</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>v6 原稿 · 我了解的你</figcaption><div class="shot"><img src="原稿-我了解的你.png" alt=""></div></figure>
-  <figure><figcaption>打磨版 · ⑨ 我了解的你 · <a href="09-我了解的你.html">打开</a></figcaption><div class="shot"><img src="09-我了解的你.png" alt=""></div></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>五层画像：已确认的可改 / 删，“我猜的”和“待你确认”一键 对 / 不对</li><li>角色、偏好两层默认收起；敏感类别做成开关；通用模式、导出、忘掉我放在最后</li><li>上次界面调整 + 撤回保留</li></ul></div>
-</div>
-<div class="pair">
   <figure><figcaption>v6 原稿 · 设置</figcaption><div class="shot"><img src="原稿-设置.png" alt=""></div></figure>
   <figure><figcaption>打磨版 · ⑩ 设置 · <a href="10-设置.html">打开</a></figcaption><div class="shot"><img src="10-设置.png" alt=""></div></figure>
   <div class="notes"><h2>改了什么</h2><ul><li>沿用 v6 的五块：基本信息、邮件提醒、我的身份、助手名字、修改密码</li><li>每块各自保存；说明文字放在标签下面</li></ul></div>
 </div>
-<p class="lead">全局：字号 13 / 15 / 17 / 20 / 28，字重 400 / 500，间距取 4 的倍数；10 屏共用一套菜单（<code>shell.js</code>）和样式（<code>web.css</code>）。v6 顶部的黄色演示条换成顶栏右侧一行小字（人物 · 第几天 · 时刻）。</p>
+<p class="lead">全局：字号 13 / 15 / 17 / 20 / 28，字重 400 / 500，间距取 4 的倍数；9 屏共用一套菜单（<code>shell.js</code>）和样式（<code>web.css</code>）。v6 顶部的黄色演示条换成顶栏右侧一行小字（人物 · 第几天 · 时刻）。</p>
 <p class="lead" style="font-size:12px;color:#8A8A8E">按 unslop by @heydamir（CC BY 4.0）流程完成</p>
 </body></html>

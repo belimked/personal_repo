@@ -30,7 +30,7 @@ const I = {
   shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',
 };
 const icon = (n, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${I[n]}</svg>`;
-const NAV = [['管家','chat','01-第1天-问第一件事.html'],['我盯着的事','eye','07-我盯着的事.html'],['交给我的资料','folder','08-交给我的资料.html'],['我了解的你','user','09-我了解的你.html'],['设置','gear','10-设置.html']];
+const NAV = [['管家','chat','01-第1天-问第一件事.html'],['我盯着的事','eye','07-我盯着的事.html'],['交给我的资料','folder','08-交给我的资料.html'],['设置','gear','10-设置.html']];
 document.querySelectorAll('[data-side]').forEach(el => el.outerHTML = `<aside class="side">
   <div class="brand"><span class="mark">禾</span>小禾</div>
   <nav class="nav">${NAV.map(([t, i, h]) => `<a href="${h}" class="${t === el.dataset.side ? 'on' : ''}">${icon(i)}${t}</a>`).join('')}</nav>
