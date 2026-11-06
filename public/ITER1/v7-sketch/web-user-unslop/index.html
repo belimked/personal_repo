@@ -4,59 +4,70 @@
 <style>
 body{margin:0;background:#EDEDF0;color:#1C1C1E;font:14px/22px -apple-system,"PingFang SC","Noto Sans SC",sans-serif;padding:32px 24px 64px}
 h1{font-size:22px;font-weight:500;margin:0 0 8px}
-.lead{color:#56565C;max-width:1040px;margin:0 0 32px}
-.pair{display:grid;grid-template-columns:minmax(0,480px) minmax(0,640px) 320px;gap:24px;align-items:start;margin-bottom:48px}
+.lead{color:#56565C;max-width:1100px;margin:0 0 32px}
+.pair{display:grid;grid-template-columns:minmax(0,520px) minmax(0,640px) 300px;gap:24px;align-items:start;margin-bottom:48px}
 figure{margin:0}
 figcaption{font-size:13px;color:#56565C;margin-bottom:8px}
-img{width:100%;border-radius:12px;display:block;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.shot{max-height:900px;overflow:auto;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.06);background:#fff}
+img{width:100%;display:block}
 .notes{font-size:13px;line-height:20px;color:#56565C}
 .notes h2{font-size:15px;font-weight:500;color:#1C1C1E;margin:28px 0 8px}
 .notes ul{margin:0;padding-left:18px}
 a{color:#2F5BD3}
 @media (max-width:1200px){.pair{grid-template-columns:1fr}}
 </style></head><body>
-<h1>小禾 · Web 用户端打磨版（unslop）</h1>
-<p class="lead">左边是 11-04 的 Web 方案 B 原稿（W1 居中一列，8 个小窗），右边按 1440 × 900 重画。Web 用户端和 App 用同一套逻辑和样式（iOS 打磨版的主色 #3F6EE8、冷灰底、字号、简报卡、出处行），只多两样 Web 才有的：看原文在右侧展开、键盘快捷键（Enter 开始、→ 下一件、L 稍后、Ctrl K 搜索）。内容一列 600 宽，顶栏左边“管家”按钮、中间三个标签、右边头像。演示人物陆航，周五 16:00。</p>
+<h1>小禾 · Web 用户端打磨版（unslop，业务逻辑按 v6）</h1>
+<p class="lead">左边是 v6 原型的实际页面（苏晴 · 第 1 / 7 / 30 天），右边按 1440 宽重画。业务逻辑不变：左侧 5 个菜单（管家、我盯着的事、交给我的资料、我了解的你、设置），管家首页分第 1 / 7 / 30 天三个阶段，核心是结果卡（骨架或一步到位、因为…、还可以帮你、这个别记、出处）。样式跟 iOS 打磨版统一：主色 #3F6EE8、冷灰底、线框图标，不用 emoji。标志细节是卡片里的“因为…”行，左边一道蓝线。静态草图，按钮和链接大多不能点。</p>
 <div class="pair">
-  <figure><figcaption>原稿 · ① 简报封面</figcaption><img src="原稿-01-简报封面.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="01-简报封面.html">打开</a></figcaption><img src="01-简报封面.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>问候“下午好，陆航”换成“3 件事等你定”，和 App 打磨版同一句</li><li>三件事做成“周五简报”卡：等宽件号 01–03，截止时间放右侧</li><li>开始 / 说一句仍是 7 : 3，Enter 键帽改成按钮内的浅色描边</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第1天</figcaption><div class="shot"><img src="原稿-第1天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ① 第 1 天 · 问第一件事 · <a href="01-第1天-问第一件事.html">打开</a></figcaption><div class="shot"><img src="01-第1天-问第一件事.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>只问一句“这周最想搞定的一件事是什么？”，4 个例子做成同款选项按钮</li><li>第 1 天不显示开场问候和快捷句，输入框用来回答这一件</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ② 一件一件过</figcaption><img src="原稿-02-逐件过.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="02-逐件过.html">打开</a></figcaption><img src="02-逐件过.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>差异项改成“标签 + 内容”两列，补上“建议回复”，和 App 一致</li><li>“出处”行加文件图标，“看小周原文”在旁边</li><li>“改一改 · 复制 · 这不算问题 · 下一件”拆成独立文字按钮，快捷键用键帽</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第1天</figcaption><div class="shot"><img src="原稿-第1天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ② 第 1 天 · 当场做出来 + 追问 · <a href="02-第1天-当场做出来.html">打开</a></figcaption><div class="shot"><img src="02-第1天-当场做出来.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>v6 的结果卡（骨架 → 展开完整版、因为…、还可以帮你、这个别记）原样保留</li><li>追问“打算玩几天？”放在卡片里，回答后改写结果并记进画像</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ③ 看原文：右侧展开</figcaption><img src="原稿-03-看原文.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="03-看原文.html">打开</a></figcaption><img src="03-看原文.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>左边保持当前这一件，右侧 480 宽面板，不离开这件</li><li>不一致的地方用浅琥珀底标出，底部说明对照的是哪份纪要</li><li>“✕”换成线框图标按钮</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第1天</figcaption><div class="shot"><img src="原稿-第1天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ③ 第 1 天 · 孩子信息先问 · <a href="03-第1天-孩子信息先问.html">打开</a></figcaption><div class="shot"><img src="03-第1天-孩子信息先问.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>选了年级后先弹同意说明（不满 14 岁需监护人单独同意）</li><li>“不同意”写成“不同意，结果照样给我”，说清拒绝的后果</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ④ 发了吗</figcaption><img src="原稿-04-发了吗.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="04-发了吗.html">打开</a></figcaption><img src="04-发了吗.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>对话框 400 宽、居中，标题 20、说明一行</li><li>说明补上“邮件已在新窗口打开”，让用户知道为什么被问</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第7天</figcaption><div class="shot"><img src="原稿-第7天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ④ 第 7 天 · 开始盯事、主动出手 · <a href="04-第7天-主动出手.html">打开</a></figcaption><div class="shot"><img src="04-第7天-主动出手.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>顶部两个数“替你盯着的 / 需要你决定的”做成两块统计卡，可展开</li><li>“周日 20:00，我先替你出手了”+“安静出现在首页，不推送”标签；主动提醒原因放在卡片顶行</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ⑤ 管家面板</figcaption><img src="原稿-05-管家面板.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="05-管家面板.html">打开</a></figcaption><img src="05-管家面板.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>“日 / 历 / 资 / ＋ / 设”汉字方块换成线框图标，和 App 下拉面板同一套</li><li>搜索框“⌕ 搜…”改成图标 + 文字，Ctrl K 用键帽</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第30天</figcaption><div class="shot"><img src="原稿-第30天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑤ 第 30 天 · 管家汇报 · <a href="05-第30天-管家汇报.html">打开</a></figcaption><div class="shot"><img src="05-第30天-管家汇报.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>标题“管家汇报”，右上“本周替你省下 6.5 小时”</li><li>按 v6 分三块：替你做好的 / 替你盯着的 / 需要你决定的；待确认的画像（工作变动、老大的学校）放在最后</li><li>47 天前的想法卡加“开始做”主按钮</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ⑥ 盯着</figcaption><img src="原稿-06-盯着.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="06-盯着.html">打开</a></figcaption><img src="06-盯着.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>加页面标题和一句说明</li><li>分组标题移到卡片外，按 要你看 / 我在办 / 本周办完 分卡</li><li>时间用等宽数字；“我在办 · 7”补一行“另外 4 件”，数字对得上</li></ul></div>
+  <figure><figcaption>v6 原稿 · 第30天</figcaption><div class="shot"><img src="原稿-第30天.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑥ 周报看出处（Web 才有右侧面板） · <a href="06-看出处.html">打开</a></figcaption><div class="shot"><img src="06-看出处.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>每句后面的“出处”点开，右侧展开那条笔记或待办，原句高亮</li><li>列出整份周报的其他出处；只引用用户自己记的事和笔记</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ⑦ 过完</figcaption><img src="原稿-07-都过完了.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="07-都过完了.html">打开</a></figcaption><img src="07-都过完了.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>居中的浅蓝底大勾，换成和 App 结束页同款的 44px 描边勾，靠左</li><li>加一张同款简报卡，逐件写结果：已发给小周、已回复客户、17:30 提醒</li></ul></div>
+  <figure><figcaption>v6 原稿 · 我盯着的事</figcaption><div class="shot"><img src="原稿-我盯着的事.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑦ 我盯着的事 · <a href="07-我盯着的事.html">打开</a></figcaption><div class="shot"><img src="07-我盯着的事.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>按领域分组，两列卡片；每件写“我在做什么 + 下次找你”</li><li>领域 emoji 去掉，“全部待办 / 想做的事”入口放到标题右侧</li></ul></div>
 </div>
 <div class="pair">
-  <figure><figcaption>原稿 · ⑧ 第 1 天</figcaption><img src="原稿-08-第1天.png" alt=""></figure>
-  <figure><figcaption>打磨版 · <a href="08-第1天.html">打开</a></figcaption><img src="08-第1天.png" alt=""></figure>
-  <div class="notes"><h2>改了什么</h2><ul><li>标题从“你好，我是小禾”改成用户能得到什么：“明早 8:00 给你第一份简报”</li><li>“只读 · 随时可以断开”加盾牌图标，做成出处行同款</li><li>“先不接”后面的动作做成链接</li></ul></div>
+  <figure><figcaption>v6 原稿 · 交给我的资料</figcaption><div class="shot"><img src="原稿-交给我的资料.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑧ 交给我的资料 · <a href="08-交给我的资料.html">打开</a></figcaption><div class="shot"><img src="08-交给我的资料.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>上传区改成可拖入的虚线框，拍照换成截图（Web 无相机）</li><li>按意思搜索、标签筛选、文件列表都保留；文件类型用线框图标代替彩色 PDF/JPG 方块</li><li>存储空间缩成底部一行</li></ul></div>
 </div>
-<p class="lead">全局：字号 13 / 15 / 17 / 20 / 28，字重 400 / 500；间距 4 的倍数；8 屏共用一套顶栏（<code>shell.js</code>）和样式（<code>web.css</code>），图标为 1.5 描边线框图标；不用 emoji、渐变和彩色阴影。静态草图，不能点击。原稿里的 W2 两栏方案是备选，没有画。</p>
+<div class="pair">
+  <figure><figcaption>v6 原稿 · 我了解的你</figcaption><div class="shot"><img src="原稿-我了解的你.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑨ 我了解的你 · <a href="09-我了解的你.html">打开</a></figcaption><div class="shot"><img src="09-我了解的你.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>五层画像：已确认的可改 / 删，“我猜的”和“待你确认”一键 对 / 不对</li><li>角色、偏好两层默认收起；敏感类别做成开关；通用模式、导出、忘掉我放在最后</li><li>上次界面调整 + 撤回保留</li></ul></div>
+</div>
+<div class="pair">
+  <figure><figcaption>v6 原稿 · 设置</figcaption><div class="shot"><img src="原稿-设置.png" alt=""></div></figure>
+  <figure><figcaption>打磨版 · ⑩ 设置 · <a href="10-设置.html">打开</a></figcaption><div class="shot"><img src="10-设置.png" alt=""></div></figure>
+  <div class="notes"><h2>改了什么</h2><ul><li>沿用 v6 的五块：基本信息、邮件提醒、我的身份、助手名字、修改密码</li><li>每块各自保存；说明文字放在标签下面</li></ul></div>
+</div>
+<p class="lead">全局：字号 13 / 15 / 17 / 20 / 28，字重 400 / 500，间距取 4 的倍数；10 屏共用一套菜单（<code>shell.js</code>）和样式（<code>web.css</code>）。v6 顶部的黄色演示条换成顶栏右侧一行小字（人物 · 第几天 · 时刻）。</p>
 <p class="lead" style="font-size:12px;color:#8A8A8E">按 unslop by @heydamir（CC BY 4.0）流程完成</p>
 </body></html>

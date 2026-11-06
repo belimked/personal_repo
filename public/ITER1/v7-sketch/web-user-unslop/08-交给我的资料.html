@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 交给我的资料</title><link rel="stylesheet" href="web.css">
+<style>
+.drop{display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:center;padding:20px 24px;border:1.5px dashed var(--line2);border-radius:16px;background:var(--card)}
+.drop h2{font-size:17px;line-height:24px;font-weight:500;margin-bottom:4px}
+.drop .acts{display:flex;gap:8px}
+.lib{display:grid;grid-template-columns:200px 1fr;gap:16px;margin-top:16px;align-items:start}
+.tags{padding:8px}
+.tags a{height:36px;display:flex;align-items:center;padding:0 12px;border-radius:8px;color:var(--t2)}
+.tags a span{margin-left:auto;font-size:13px;color:var(--t3)}
+.tags a:hover{background:var(--bg)}
+.tags a.on{background:var(--acc-tint);color:var(--acc-ink);font-weight:500}
+.tags a.on span{color:var(--acc-ink)}
+.fi{width:40px;height:40px;border-radius:10px;background:var(--bg);color:var(--t2);display:grid;place-items:center;flex:none}
+.tg2{display:inline-block;padding:0 6px;border-radius:4px;background:var(--bg);color:var(--t2);margin-right:4px}
+.row{align-items:center}
+.store{display:flex;align-items:center;gap:12px;margin-top:16px;font-size:13px;color:var(--t2)}
+.meter{flex:0 0 240px;height:6px;border-radius:3px;background:var(--raised);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--acc)}
+</style>
+</head>
+<body>
+<div class="app">
+<div data-side="交给我的资料"></div>
+<div class="main">
+  <header class="bar"><h1>交给我的资料</h1><div class="ctx"><span class="tag">演示</span>苏晴 · 第 30 天</div></header>
+  <main class="wrap wide">
+    <section class="drop"><div><h2>把资料交给我</h2><p class="muted">课表、通知、票据、录音都行；我读完后替你记事、提醒，以后按意思就能找到</p></div>
+      <div class="acts"><button class="btn btn-primary"><i data-i="upload"></i>上传文件</button><button class="btn btn-line"><i data-i="img"></i>截图</button><button class="btn btn-line"><i data-i="link"></i>分享链接</button></div>
+      <p class="small faint" style="grid-column:1/-1">也可以直接拖进这个框；单次最多 300 个文件，合计不超过 300 MB，单个不超过 100 MB</p></section>
+    <section class="card" style="margin-top:16px"><div class="card-b">
+      <div style="display:flex;align-items:baseline;gap:12px"><h2 style="font-size:17px;font-weight:500">按意思搜索</h2><span class="small faint">不用记文件名，像跟人说话一样描述</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><div class="input ph" style="flex:1"><i data-i="search"></i>比如：去年在湖边拍的视频</div><button class="btn btn-line"><i data-i="user"></i>附人物照片</button><button class="btn btn-primary">搜索</button></div>
+      <p class="small faint" style="margin-top:10px">能搜：说过的话、画面里的字、场景和人物。试试 <a class="link" href="#">去年去新疆在纳木错拍的视频</a>、<a class="link" href="#">今年一个 30 岁左右女博主讲 AI 泡沫的视频</a></p>
+    </div></section>
+    <div class="lib">
+      <nav class="tags card"><a class="on" href="#">全部文件<span class="num">5</span></a><a href="#">出行<span class="num">1</span></a><a href="#">工作<span class="num">1</span></a><a href="#">孩子<span class="num">1</span></a><a href="#">会议<span class="num">1</span></a><a href="#">历史<span class="num">1</span></a><a href="#">学校<span class="num">1</span></a><a href="#">长沙<span class="num">1</span></a><a href="#">证件<span class="num">1</span></a><a href="#" class="faint">未打标签<span class="num">0</span></a>
+        <p class="small faint" style="padding:12px 12px 4px;border-top:1px solid var(--line);margin-top:8px">标签由文件管理模型自动生成，可随时修改</p></nav>
+      <section class="card" style="margin-top:0">
+        <div class="card-h"><h2>全部文件</h2><span class="n num">5</span><div class="r"><div class="input ph" style="height:36px;width:220px;font-size:14px">按文件名或标签筛选</div><button class="btn btn-line" style="height:36px;font-size:14px;font-weight:400">全部类型<i data-i="down"></i></button></div></div>
+        <div class="row"><span class="fi"><i data-i="doc"></i></span><div class="main1"><div class="t">马王堆汉墓的十个细节.pdf</div><div class="s small">转发的历史文章（不是在说你本人）</div><div class="m">PDF · <span class="num">1.2 MB</span> · <span class="tg2">历史</span> · 第 8 天 21:00</div></div><div class="side1"><span class="st">可检索</span><button class="ib" title="下载"><i data-i="download"></i></button><button class="tbtn quiet">关联待办</button></div></div><div class="row"><span class="fi"><i data-i="img"></i></span><div class="main1"><div class="t">家长会通知.jpg</div><div class="s small">四年级 2 班家长会：周四 15:00，带成绩单签字页</div><div class="m">图片 · <span class="num">2.4 MB</span> · <span class="tg2">孩子</span><span class="tg2">学校</span> · 第 6 天 19:38</div></div><div class="side1"><span class="st">可检索</span><button class="ib" title="下载"><i data-i="download"></i></button><button class="tbtn quiet">关联待办</button></div></div><div class="row"><span class="fi"><i data-i="audio"></i></span><div class="main1"><div class="t">周会录音.m4a</div><div class="s small">客户管理系统二期上线安排，42 分钟</div><div class="m">音频 · <span class="num">38.0 MB</span> · <span class="tg2">工作</span><span class="tg2">会议</span> · 第 28 天 17:30</div></div><div class="side1"><span class="st">可检索</span><button class="ib" title="下载"><i data-i="download"></i></button><button class="tbtn quiet">关联待办</button></div></div><div class="row"><span class="fi"><i data-i="video"></i></span><div class="main1"><div class="t">去年长沙.mp4</div><div class="s small">去年在长沙博物馆拍的视频，3 分 20 秒</div><div class="m">视频 · <span class="num">60.0 MB</span> · <span class="tg2">出行</span><span class="tg2">长沙</span> · 第 24 天 21:00</div></div><div class="side1"><span class="st">可检索</span><button class="ib" title="下载"><i data-i="download"></i></button><button class="tbtn quiet">关联待办</button></div></div><div class="row"><span class="fi"><i data-i="img"></i></span><div class="main1"><div class="t">护照首页.jpg</div><div class="s small">苏晴护照，有效期剩 60 天</div><div class="m">图片 · <span class="num">2.4 MB</span> · <span class="tg2">证件</span> · 第 20 天 19:00</div></div><div class="side1"><span class="st">可检索</span><button class="ib" title="下载"><i data-i="download"></i></button><button class="tbtn quiet">关联待办</button></div></div>
+      </section>
+    </div>
+    <div class="store"><span>存储空间</span><div class="meter"><span style="width:36.8%"></span></div><span class="num">184 MB / 500 MB</span><a class="tbtn" href="#">上传记录</a></div>
+  </main>
+</div>
+</div>
+<script src="shell.js"></script>
+</body></html>
