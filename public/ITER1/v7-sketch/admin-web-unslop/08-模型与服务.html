@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾后台 · 模型与服务</title><link rel="stylesheet" href="admin.css">
+<style>
+.note{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px;color:var(--t2);margin:-8px 0 24px}
+.note svg{width:16px;height:16px;margin-top:2px;color:var(--t3)}
+.svc{display:grid;grid-template-columns:160px 1fr auto;align-items:center;gap:16px;padding:0 20px;min-height:72px;border-top:1px solid var(--line)}
+.svc:first-child{border-top:0}
+.svc b{font-weight:500;font-size:15px}
+.svc .v{color:var(--t1)}
+.svc .v .state{display:flex;margin-top:4px}
+.svc .v.muted{color:var(--t2)}
+.svc .btn{min-width:80px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-side="模型与服务"></div>
+  <main class="main"><div class="wrap">
+    <header class="page-head"><h1>模型与服务</h1></header>
+    <p class="note"><i data-i="info"></i>主 Key 调用失败（超时、5xx、429、Key 失效）会自动切到备用，并在首页提醒你</p>
+    <section class="card">
+      <div class="svc"><b>LLM 主模型</b><div class="v">DeepSeek · <span class="mono">deepseek-flash</span><span class="state bad"><span class="dot bad"></span>用备用中，主 Key 429 限流</span></div><button class="btn pri">换 Key</button></div>
+      <div class="svc"><b>意图识别</b><div class="v muted">没单独配，用 LLM 主模型</div><button class="btn">配置</button></div>
+      <div class="svc"><b>语音转文字</b><div class="v">讯飞<span class="state"><span class="dot ok"></span>正常</span></div><button class="btn">修改</button></div>
+      <div class="svc"><b>天气与地图</b><div class="v">和风天气、高德<span class="state"><span class="dot ok"></span>正常</span></div><button class="btn">修改</button></div>
+    </section>
+  </div></main>
+</div>
+<script src="shell.js"></script>
+</body></html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾后台 · 首页</title><link rel="stylesheet" href="admin.css">
+<style>
+.todo{display:flex;align-items:center;gap:16px;padding:20px}
+.todo+.todo{border-top:1px solid var(--line)}
+.todo .dot{margin-top:2px}
+.todo .m{flex:1;min-width:0}
+.todo b{display:block;font-weight:500;font-size:15px;line-height:22px}
+.todo .sub{display:block;font-size:13px;color:var(--t2);margin-top:4px}
+.todo .btn{min-width:96px;justify-content:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-side="首页" data-count="3"></div>
+  <main class="main"><div class="wrap">
+    <header class="page-head"><h1>要你处理</h1><span class="meta">3 件</span></header>
+    <section class="card">
+      <div class="todo"><span class="dot bad"></span><div class="m"><b>LLM 主 Key 今天失败 12 次，已切到备用</b><span class="sub">最近一次 <span class="num">15:42</span>，原因：429 限流</span></div><button class="btn pri">去换 Key</button></div>
+      <div class="todo"><span class="dot warn"></span><div class="m"><b>张伟的存储用了 61%，本周涨得最快</b><span class="sub"><span class="num">612 / 1000 MB</span>，比上周 +180 MB</span></div><button class="btn">看看</button></div>
+      <div class="todo"><span class="dot warn"></span><div class="m"><b>邮件发送还没配</b><span class="sub">配好后，添加用户时可以直接发邮件通知</span></div><button class="btn">去配置</button></div>
+    </section>
+    <section class="card status">
+        <div><span>用户</span><b>5 人，1 禁用</b></div>
+        <div><span>今天调用</span><b>1,284 次</b></div>
+        <div><span>存储</span><b>1.3 / 5 GB</b></div>
+        <div><span>模型</span><b class="bad"><span class="dot bad"></span>用备用中</b></div>
+      </section>
+  </div></main>
+</div>
+<script src="shell.js"></script>
+</body></html>

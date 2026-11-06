@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾后台 · 开始设置</title><link rel="stylesheet" href="admin.css">
+<style>
+.wiz{max-width:640px}
+.wiz .card{padding:24px}
+.wiz .card>*+*{margin-top:20px}
+.test{display:flex;align-items:center;gap:12px}
+.okline{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ok)}
+.okline svg{width:16px;height:16px}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-side data-setup></div>
+  <main class="main">
+    <div class="wiz">
+      <header class="page-head"><h1>3 步配好，用户就能用</h1></header>
+      <div class="steps">
+        <div class="on"><span class="n">1</span>配模型，必填</div>
+        <div><span class="n">2</span>邮件发送</div>
+        <div><span class="n">3</span>添加用户</div>
+      </div>
+      <section class="card">
+        <div class="grid2">
+          <div class="field"><label>服务商</label><div class="input">DeepSeek<i data-i="down" class="end"></i></div></div>
+          <div class="field"><label>模型名称</label><div class="input">deepseek-flash</div></div>
+        </div>
+        <div class="field"><label>API Key</label><div class="input"><span class="mono">sk-3f8a••••••••9c21</span></div></div>
+        <div class="test">
+          <button class="btn sm">测试连接</button>
+          <span class="okline"><i data-i="check"></i>连接正常，用时 <span class="num">0.8</span> 秒</span>
+        </div>
+        <p class="hint">备用 Key 和服务地址可以以后在“模型与服务”里补</p>
+      </section>
+      <div class="foot"><span></span><button class="btn pri">保存，下一步</button></div>
+    </div>
+  </main>
+</div>
+<script src="shell.js"></script>
+</body></html>

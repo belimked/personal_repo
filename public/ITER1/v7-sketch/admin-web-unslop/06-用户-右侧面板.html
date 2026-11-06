@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾后台 · 用户 · 张伟</title><link rel="stylesheet" href="admin.css">
+<style>
+.scrim{position:fixed;inset:0;background:rgba(28,28,30,.16)}
+tr.sel td{background:var(--acc-tint)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:400px;background:var(--card);border-left:1px solid var(--line);
+  box-shadow:0 8px 24px rgba(0,0,0,.06);display:flex;flex-direction:column}
+.drawer header{display:flex;align-items:center;gap:12px;height:72px;padding:0 24px;border-bottom:1px solid var(--line)}
+.drawer header h2{font-size:16px;line-height:24px;font-weight:500}
+.drawer header .state{margin-left:4px}
+.drawer header .btn{margin-left:auto;width:36px;padding:0;justify-content:center}
+.drawer .body{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px;overflow:auto}
+.drawer .acts{display:flex;gap:8px}
+.drawer .zone{padding:20px 24px 24px;border-top:1px solid var(--line)}
+.drawer .zone p{font-size:13px;line-height:20px;color:var(--t2);margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-side="用户"></div>
+  <main class="main"><div class="wrap">
+    <header class="page-head"><h1>用户</h1><span class="meta">5</span>
+      <div class="right"><div class="input" style="width:240px;height:36px"><i data-i="search"></i><span class="ph">搜索邮箱、姓名</span></div><button class="btn pri"><i data-i="plus"></i>添加用户</button></div>
+    </header>
+    <section class="card">
+      <table>
+        <thead><tr><th style="width:36%">姓名</th><th>状态</th><th>存储</th><th style="text-align:right">最近登录</th></tr></thead>
+        <tbody>
+          <tr><td>管理员<span class="sub">admin@demo.com</span></td><td><span class="state"><span class="dot ok"></span>正常</span></td><td><span class="num">126 / 500 MB</span><span class="bar"><i style="width:25%"></i></span></td><td class="num" style="text-align:right">刚刚</td></tr>
+          <tr><td>Lily<span class="sub">lily@demo.com</span></td><td><span class="state"><span class="dot ok"></span>正常</span></td><td><span class="num">284 / 500 MB</span><span class="bar"><i style="width:57%"></i></span></td><td class="num" style="text-align:right">今天 09:12</td></tr>
+          <tr class="sel"><td>张伟<span class="sub">zhang.wei@demo.com</span></td><td><span class="state"><span class="dot ok"></span>正常</span></td><td><span class="num">612 / 1000 MB</span><span class="bar warn"><i style="width:61%"></i></span></td><td class="num" style="text-align:right">昨天</td></tr>
+          <tr><td>陈晨<span class="sub">chen@demo.com</span></td><td><span class="state"><span class="dot off"></span>已禁用</span></td><td><span class="num">45 / 500 MB</span><span class="bar"><i style="width:9%"></i></span></td><td class="num" style="text-align:right">10 月 2 日</td></tr>
+          <tr><td>老用户<span class="sub">old.user@demo.com</span></td><td><span class="state"><span class="dot warn"></span>待清除，还剩 25 天</span></td><td><span class="num">210 / 500 MB</span><span class="bar"><i style="width:42%"></i></span></td><td class="num" style="text-align:right">9 月 28 日</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div></main>
+</div>
+<div class="scrim"></div>
+<aside class="drawer">
+  <header><h2>张伟</h2><span class="state"><span class="dot ok"></span>正常</span><button class="btn quiet" aria-label="关闭"><i data-i="x"></i></button></header>
+  <div class="body">
+    <div class="field"><label>登录邮箱</label><div class="input">zhang.wei@demo.com</div></div>
+    <div class="grid2">
+      <div class="field"><label>存储配额</label><div class="input"><span class="num">1000</span><span class="end">MB</span></div></div>
+      <div class="field"><label>时区</label><div class="input">UTC+8<i data-i="down" class="end"></i></div></div>
+    </div>
+    <div class="field"><label>可上传类型</label><div class="input">自定义，18 种<i data-i="right" class="end"></i></div></div>
+    <div class="field"><label>本月用量</label><div class="hint"><span class="num">612 MB</span> 存储，比上周 +180 MB；调用 <span class="num">342</span> 次</div></div>
+    <div class="acts"><button class="btn pri">保存</button><button class="btn">重置密码</button><button class="btn">禁用</button></div>
+  </div>
+  <div class="zone">
+    <p>删除后 30 天内可撤销，之后清除这个人的全部资料。</p>
+    <button class="btn danger">删除这个用户</button>
+  </div>
+</aside>
+<script src="shell.js"></script>
+</body></html>

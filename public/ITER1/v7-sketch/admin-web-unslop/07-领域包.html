@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾后台 · 领域包</title><link rel="stylesheet" href="admin.css">
+<style>
+.dom{display:grid;grid-template-columns:96px 1fr 96px 96px 36px;align-items:center;gap:16px;padding:0 20px;height:64px;border-top:1px solid var(--line)}
+.dom:first-of-type{border-top:0}
+.dom.th{height:44px;font-size:12px;line-height:16px;color:var(--t3);border-bottom:1px solid var(--line)}
+.dom.th+.dom{border-top:0}
+.dom b{font-weight:500;font-size:15px}
+.dom .d{color:var(--t2);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dom .d em{font-style:normal;font-size:12px;color:var(--acc-ink);margin-left:8px}
+.dom .n{font-variant-numeric:tabular-nums;font-size:14px;color:var(--t2);text-align:right}
+.switch{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-side="领域包"></div>
+  <main class="main"><div class="wrap">
+    <header class="page-head"><h1>领域包</h1><span class="meta">8</span>
+      <div class="right"><label class="switch">显示规则编号<span class="toggle off"></span></label></div>
+    </header>
+    <section class="card">
+      <div class="dom th"><span>领域</span><span>替用户做什么</span><span style="text-align:right">帮助</span><span style="text-align:right">评测样例</span><span>启用</span></div>
+      <div class="dom"><b>工作</b><span class="d">审下属报告、周报、会议纪要、邮件分拣<em>首发主力</em></span><span class="n">9 类</span><span class="n">11 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>出行</b><span class="d">出发前 3 天排交通和行程，天气变了提醒</span><span class="n">6 类</span><span class="n">12 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>孩子</b><span class="d">拍课表或通知即可，前一晚提醒带什么</span><span class="n">3 类</span><span class="n">10 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>家务</b><span class="d">证件、保险、缴费到期前提醒</span><span class="n">5 类</span><span class="n">8 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>健康</b><span class="d">体检、复诊、用药提醒，只做安排不做诊断</span><span class="n">5 类</span><span class="n">9 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>学习</b><span class="d">考试倒计时、作业截止前提醒，每周排学习计划</span><span class="n">3 类</span><span class="n">10 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>人情</b><span class="d">生日、纪念日、节日前 3～7 天提醒，备好祝福文案</span><span class="n">4 类</span><span class="n">8 条</span><span class="toggle"></span></div>
+      <div class="dom"><b>小店</b><span class="d">节日促销、接龙订单整理、老客户回访</span><span class="n">3 类</span><span class="n">9 条</span><span class="toggle"></span></div>
+    </section>
+  </div></main>
+</div>
+<script src="shell.js"></script>
+</body></html>
