@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 发了吗</title><link rel="stylesheet" href="web.css">
+<style>
+.scrim{position:fixed;inset:0;background:rgba(28,28,30,.24);z-index:6}
+.dlg{position:fixed;left:50%;top:50%;width:400px;transform:translate(-50%,-50%);z-index:7;background:var(--card);border-radius:16px;padding:24px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.dlg h3{font-size:20px;line-height:28px;font-weight:500}
+.dlg p{color:var(--t2);margin-top:8px}
+.dlg .actions{flex-direction:column;gap:8px}
+.dlg .btn-text{justify-content:center;height:44px}
+</style>
+</head>
+<body>
+<div data-top="管家"></div>
+<main><div class="col">
+    <div class="prog"><span class="num">1 / 3</span><span class="seg"><span class="on"></span><span></span><span></span></span>
+      <button class="later">稍后<span class="kbd">L</span></button></div>
+    <article class="card task">
+      <h2>小周的周报有 2 处和例会不一样</h2>
+      <ul class="diff">
+        <li><span class="k">支付对接</span><span>他写“本周完成”，例会定的是<b>下周三</b></span></li>
+        <li><span class="k">漏项</span><span>没写“压测报告”</span></li>
+      </ul>
+      <div class="reply"><div class="k">建议回复</div><p>支付对接按例会改成下周三完成；另外补上压测报告。</p></div>
+      <div class="foot"><a class="src" href="#"><i data-i="doc"></i>出处：周三例会纪要</a><a class="src" href="03-看原文.html">看小周原文</a><span class="ai">内容由 AI 生成</span></div>
+    </article>
+    <div class="actions"><a class="btn btn-primary" style="flex:1" href="04-发了吗.html">确认并发给小周…</a></div>
+    <div class="secondary"><button class="btn-text">改一改</button><button class="btn-text">复制</button><button class="btn-text">这不算问题</button><button class="btn-text">下一件<span class="kbd">→</span></button></div>
+</div></main>
+<div class="scrim"></div>
+<section class="dlg" role="dialog" aria-label="发给小周了吗">
+  <h3>发给小周了吗？</h3>
+  <p>邮件已在新窗口打开。点“发了”，这件就算处理完</p>
+  <div class="actions"><button class="btn btn-primary">发了，下一件</button><button class="btn-text">还没，稍后再说</button></div>
+</section>
+<script src="shell.js"></script>
+</body></html>
