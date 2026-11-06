@@ -6,7 +6,7 @@
     "not_found_handling": "404-page"
   },
   "routes": [
-    { "pattern": "daily-assistant-proto.accrepo.com", "custom_domain": true }
+    { "pattern": "personal-repo.saulxj.ggff.net", "custom_domain": true }
   ],
   "workers_dev": true
 }
