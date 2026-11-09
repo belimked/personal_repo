@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><script>try{if(JSON.parse(localStorage.getItem("v7proto.session"))?.role!=="user")location.replace("../index.html")}catch(_){location.replace("../index.html")}</script><link rel="icon" href="data:,"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 我盯着的事</title><link rel="stylesheet" href="web.css"><link rel="stylesheet" href="proto.css">
+<style>
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;align-items:start}
+.grid .card + .card{margin-top:0}
+.wrap{width:960px}
+</style>
+</head>
+<body>
+<div class="app">
+<div data-side="我盯着的事"></div>
+<div class="main">
+  <header class="bar"><h1>我盯着的事</h1><div class="ctx"><span class="tag">演示</span>苏晴 · 第 30 天</div></header>
+  <main class="wrap">
+    <div style="display:flex;align-items:flex-end;gap:16px"><div><h2 class="title">我盯着的事</h2><p class="lede">按领域分好了，共 <span class="num">7</span> 件；每件写着我正在做什么、下次什么时候找你</p></div>
+      <div style="margin-left:auto;display:flex;gap:4px"><a class="tbtn" href="#">全部待办<i data-i="right"></i></a><a class="tbtn" href="#">想做的事<i data-i="right"></i></a></div></div>
+    <div class="grid">
+    <section class="card"><div class="card-h"><h2>工作</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">每周五周报</div><div class="s">周五 16:00 备好初稿</div><div class="m">下次找你 <span class="mono">周五 16:00</span></div></div><a class="tbtn" href="#">看待办<i data-i="right"></i></a></div></section>
+    <section class="card"><div class="card-h"><h2>孩子</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">老二秋假作业</div><div class="s">每周日晚汇总作业</div><div class="m">下次找你 <span class="mono">周日 20:00</span></div></div><a class="tbtn" href="#">看待办<i data-i="right"></i></a></div></section>
+    <section class="card"><div class="card-h"><h2>家里</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">护照续办</div><div class="s">到期前 60 天提醒，列好材料</div><div class="m">下次找你 <span class="mono">周二 09:00</span></div></div><a class="tbtn" href="#">看待办<i data-i="right"></i></a></div></section>
+    <section class="card"><div class="card-h"><h2>健康</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">年度体检</div><div class="s">前一天提醒空腹和带证件</div><div class="m">下次找你 <span class="mono">周一 20:00</span></div></div><a class="tbtn" href="#">看待办<i data-i="right"></i></a></div></section>
+    <section class="card"><div class="card-h"><h2>人情</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">妈妈生日</div><div class="s">生日前 5 天给礼物思路和祝福卡草稿</div><div class="m">下次找你 <span class="mono">周四 19:00</span></div></div></div></section>
+    <section class="card"><div class="card-h"><h2>出行</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">秋假长沙 4 天</div><div class="s">盯天气和高铁改签</div><div class="m">下次找你 <span class="mono">出发前 1 天 20:00</span></div></div></div></section>
+    <section class="card"><div class="card-h"><h2>想做的事</h2><span class="n num">1</span></div>
+      <div class="row"><div class="main1"><div class="t">做个家庭记账的小程序</div><div class="s">47 天前记下，这周一重提并做个轻量成品</div><div class="m">下次找你 <span class="mono">周一 08:30</span></div></div><a class="tbtn" href="#">看想做的事<i data-i="right"></i></a></div></section>
+    </div>
+  </main>
+</div>
+</div>
+<script src="shell.js"></script>
+<script src="proto.js"></script></body></html>

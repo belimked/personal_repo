@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN"><head><script>try{if(JSON.parse(localStorage.getItem("v7proto.session"))?.role!=="user")location.replace("../index.html")}catch(_){location.replace("../index.html")}</script><link rel="icon" href="data:,"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 管家</title><link rel="stylesheet" href="web.css"><link rel="stylesheet" href="proto.css">
+<style>
+.drawer{position:fixed;top:56px;right:0;bottom:0;width:440px;background:var(--card);border-left:1px solid var(--line);z-index:6;display:flex;flex-direction:column}
+.drawer header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--line)}
+.drawer h3{font-size:17px;line-height:24px;font-weight:500}
+.drawer .x{margin-left:auto;width:36px;height:36px;border-radius:8px;display:grid;place-items:center;color:var(--t2)}
+.drawer .x:hover{background:var(--raised)}
+.db{padding:20px 24px}
+.srcbox{display:block;position:relative;padding:12px 16px;border-radius:12px;border:1px solid var(--line)}
+.srcbox + .srcbox{margin-top:8px}
+.srcbox.on{border-color:var(--acc);background:var(--acc-tint)}
+.srcbox .k{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--t2)}
+.srcbox .k svg{width:14px;height:14px}
+.srcbox p{margin-top:4px}
+.srcbox mark{background:var(--hl);border-radius:4px;padding:1px 4px;color:var(--t1)}
+.srcbox .for{position:absolute;top:12px;right:16px;font-size:12px;color:var(--t3)}
+.db .lbl{font-size:13px;color:var(--t3);margin:24px 0 8px}
+.dock-in{width:640px;margin-left:48px}
+</style>
+</head>
+<body>
+<div class="app">
+<div data-side="管家"></div>
+<div class="main">
+  <header class="bar"><h1>管家</h1><div class="ctx"><span class="tag">演示</span>苏晴 · 第 30 天 · 周五 16:00</div></header>
+  <main class="wrap" style="width:640px;margin-left:48px">
+    <div class="sec-h" style="margin-top:0">周五 16:00，我先替你出手了</div>
+    <article class="pc">
+      <div class="pc-lead"><i data-i="bell"></i>主动提醒：周五下班前要交，错过就晚了</div>
+      <div class="pc-meta">工作 <span class="depth full">一步到位</span></div>
+      <h3>本周周报初稿</h3>
+      
+      <div class="body"><span class="sent">1. 客户管理系统二期已上线。<a class="src" href="06-看出处.html">出处</a></span><span class="sent hl">2. 数据导出模块性能提升。<a class="src on" href="06-看出处.html">出处</a></span><span class="sent">3. 下周：收集上线反馈。<a class="src" href="06-看出处.html">出处</a></span></div>
+      
+      
+      <div class="because">因为你每周五都要交周报</div>
+      
+      
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">改成给老板看的简版</button></div>
+      <div class="pc-foot"><span>每句都能点回出处，只引用你自己记的事和笔记</span><button class="forget r">这个别记</button></div>
+    </article>
+  </main>
+  <aside class="drawer">
+    <header><div><div class="small faint">第 2 句的出处</div><h3>数据导出模块性能提升</h3></div><button class="x" aria-label="关闭"><i data-i="x"></i></button></header>
+    <div class="db">
+      <div class="srcbox on"><div class="k"><i data-i="pen"></i>笔记 · 周三</div><p>导出接口改成<mark>分批处理，速度快了 3 倍</mark>。</p></div>
+      <div class="lbl">这份周报的其他出处</div>
+      <a class="srcbox" href="#"><div class="k"><i data-i="check"></i>待办 · 已完成</div><p>周四完成客户管理系统二期上线</p><span class="for">第 1 句</span></a>
+      <a class="srcbox" href="#"><div class="k"><i data-i="cal"></i>待办</div><p>下周一起收集二期上线反馈</p><span class="for">第 3 句</span></a>
+    </div>
+  </aside>
+  <div class="dock"><div class="dock-in">
+    <div class="chips"><span class="chip lead"><i data-i="cal"></i>最近安排 · <span class="num">2</span></span><span class="chip">帮我记：周五下午 3 点去仁济医院体检</span><span class="chip">租房合同什么时候到期？</span><span class="chip">跟保险有关的事有哪些？</span><span class="chip">把明天的事都推迟一天</span></div>
+    <div class="composer"><button class="ib" title="带上文件（同时存进资料）"><i data-i="clip"></i></button><span class="ph">吩咐一声…</span><button class="ib" disabled title="按住说话（App 版）"><i data-i="mic"></i></button><button class="ib send" title="发送"><i data-i="send"></i></button></div>
+    <p class="tip">Enter 发送，Shift + Enter 换行；带上的文件会同时存进“交给我的资料”</p>
+  </div></div>
+</div>
+</div>
+<script src="shell.js"></script>
+<script src="proto.js"></script></body></html>

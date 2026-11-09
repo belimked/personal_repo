@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="zh-CN"><head><script>try{if(JSON.parse(localStorage.getItem("v7proto.session"))?.role!=="user")location.replace("../index.html")}catch(_){location.replace("../index.html")}</script><link rel="icon" href="data:,"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 管家</title><link rel="stylesheet" href="web.css"><link rel="stylesheet" href="proto.css">
+</head>
+<body>
+<div class="app">
+<div data-side="管家"></div>
+<div class="main">
+  <header class="bar"><h1>管家</h1><div class="ctx"><span class="tag">演示</span>苏晴 · 第 30 天 · 周一 8:30</div></header>
+  <!-- 开始对话后才出现：汇报收成一条摘要，钉在顶栏下 -->
+  <div class="digest" id="digest"><div class="digest-in">
+    <span class="t">管家汇报</span><span class="muted">做好 <span class="num">2</span> · 盯着 <span class="num">7</span> · 等你定 <span class="num">5</span></span>
+    <button class="tbtn" id="digestToggle">展开<i data-i="down"></i></button>
+  </div></div>
+  <main class="wrap">
+    <div id="stage1" class="stage"><div id="step1">
+    <h2 class="title">这周最想搞定的一件事是什么？</h2>
+    <p class="lede">说一件就行，我当场先帮你做出来。点个例子，或者直接在下面输入。</p>
+    <div class="more" style="margin-top:24px">
+      <a class="cb" href="02-第1天-当场做出来.html" style="height:40px;padding:0 16px;font-size:15px">秋假带孩子出去玩</a>
+      <a class="cb" href="03-第1天-孩子信息先问.html" style="height:40px;padding:0 16px;font-size:15px">下周家长会要准备什么</a>
+      <button class="cb" style="height:40px;padding:0 16px;font-size:15px">把这周的周报写了</button>
+      <button class="cb" style="height:40px;padding:0 16px;font-size:15px">妈妈生日送什么</button>
+    </div>
+  </div><div id="step2" hidden>
+    <div class="msg me"><div class="bub">秋假带孩子出去玩</div></div>
+    <div style="margin-top:24px">
+    <article class="pc">
+      <div class="pc-lead">你说“秋假带孩子出去玩”，我先做好了这个</div>
+      <div class="pc-meta">出行 <span class="depth">骨架</span></div>
+      <h3>秋假去哪：三个短途去处</h3>
+      <p class="hint">先给你个大概，展开看完整版</p>
+      <div class="body">从深圳出发 3～4 天：长沙（高铁 3 小时，历史博物馆）、潮汕（美食、古城）、桂林阳朔（山水、骑行）。</div>
+      <div class="expand"><button class="cb">展开看完整版<i data-i="down"></i></button></div>
+      
+      <div class="because">因为你说想秋假带孩子出去玩，从深圳出发</div>
+      
+      <div class="ask"><div class="q"><i data-i="msg"></i>打算玩几天？</div><div class="opts"><button class="cb">两三天</button><button class="cb">四五天</button><button class="cb">一周左右</button></div></div>
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">交通怎么走</button><button class="cb">按孩子年龄挑景点</button></div>
+      <div class="pc-foot"><button class="forget r">这个别记</button></div>
+    </article>
+    </div>
+  </div><div id="step3" hidden>
+    <div class="msg me"><div class="bub">下周家长会要准备什么</div></div>
+    <div style="margin-top:24px">
+    <article class="pc">
+      <div class="pc-lead">你说“下周家长会要准备什么”，我先做好了这个</div>
+      <div class="pc-meta">孩子 <span class="depth full">一步到位</span></div>
+      <h3>家长会准备：要带的、要问的</h3>
+      
+      <div class="body">要带：签字页、错题本。<br>要问：数学错题多的原因、小升初的安排、课后托管时间。</div>
+      
+      
+      <div class="because">因为你说下周要开家长会</div>
+      
+      <div class="ask"><div class="q"><i data-i="msg"></i>孩子上几年级？</div><div class="opts"><button class="cb" disabled>小学低年级</button><button class="cb on"><i data-i="check"></i>小学高年级</button><button class="cb" disabled>初中</button></div>
+        <div class="consent"><div class="q"><i data-i="lock"></i>要记下孩子的信息，先问你一声</div>
+          <p>孩子的年级这类信息，只用来帮你准备学校的事，不给别人看，也不用来训练模型。不满 14 岁孩子的信息需要你作为监护人单独同意，你随时可以在“设置”里撤回。</p>
+          <div class="acts"><button class="btn btn-primary">同意</button><button class="btn btn-line">不同意，结果照样给我</button></div></div></div>
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">设个提醒</button><button class="cb">整理要问老师的问题</button></div>
+      <div class="pc-foot"><button class="forget r">这个别记</button></div>
+    </article>
+    </div>
+  </div></div><div id="stage7" class="stage" hidden>
+    <div class="stats">
+      <div class="stat"><div class="k">替你盯着的<i data-i="down" class="chev"></i></div><div class="n num">3<small>件事</small></div><p class="small faint" style="margin-top:4px">出行、孩子、工作各 1 件，点开看每件在做什么</p></div>
+      <div class="stat"><div class="k">需要你决定的<i data-i="down" class="chev"></i></div><div class="n num">0<small>件事</small></div><p class="small faint" style="margin-top:4px">暂时没有，都替你办着</p></div>
+    </div>
+    <div class="sec-h">周日 20:00，我先替你出手了<span class="pill"><i data-i="moon"></i>安静出现在首页，不推送</span></div>
+    <article class="pc">
+      
+      <div class="pc-meta">出行 <span class="depth">骨架</span></div>
+      <h3>长沙 4 天：交通先排好了</h3>
+      <p class="hint">先给你个大概，展开看完整版</p>
+      <div class="body">高铁深圳北—长沙南 3 小时，周六早班还有票；4 天行程初稿：博物馆、橘子洲、岳麓山。</div>
+      <div class="expand"><button class="cb">展开看完整版<i data-i="down"></i></button></div>
+      
+      <div class="because">因为你上次在秋假卡片里先看了交通</div>
+      
+      
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">按孩子年龄挑景点</button><button class="cb">预算估算</button></div>
+      <div class="pc-foot"><button class="forget r">这个别记</button></div>
+    </article>
+    <div class="sec-h">最近替你做的</div>
+    <article class="pc">
+      <div class="pc-lead"><i data-i="bell"></i>主动提醒：家长会就在明天，错过今晚就来不及准备</div>
+      <div class="pc-meta">孩子 <span class="depth full">一步到位</span></div>
+      <h3>明天家长会：要带的、要问的</h3>
+      
+      <div class="body">要带：成绩单签字页、笔。<br>要问：数学错题多的原因、课后托管时间、秋假作业量。</div>
+      
+      
+      <div class="because">因为你拍过家长会通知，明天 15:00 开</div>
+      
+      
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">设个提醒</button></div>
+      <div class="pc-foot"><button class="forget r">这个别记</button></div>
+    </article>
+    <div class="msg"><span class="mark">禾</span><div class="bub">晚上好，苏晴。明天有点降温，出门加件外套。今天没有别的要你做的，想到什么随时跟我说。</div></div>
+  </div><div id="report" class="stage" hidden>
+    <h2 class="title">管家汇报</h2>
+    <p class="lede">上周一到今天，替你做好 <span class="num">2</span> 件，盯着 <span class="num">7</span> 件，有 <span class="num">5</span> 件等你定</p>
+
+    <div class="sec-h">周一 8:30，我先替你出手了<span class="pill"><i data-i="moon"></i>安静出现在首页，不推送</span></div>
+    <article class="pc">
+      <div class="pc-meta">想做的事 <span class="depth full">一步到位</span></div>
+      <h3>47 天前你想做的家庭记账，要不要现在开始？</h3>
+      <div class="body">早上好。你 47 天前记下“做个家庭记账的小程序”。点“开始做”，我先做个轻量版：按月汇总，股票记账单独一栏，只记不给建议。</div>
+      <div class="expand"><button class="btn btn-primary">开始做</button></div>
+      <div class="because">因为你最近几次都在对话里记开销</div>
+      <div class="more"><span class="lbl">还可以帮你</span><button class="cb">导入上个月的记录</button><button class="cb">先放着，30 天内不再提</button></div>
+      <div class="pc-foot"><button class="forget r">这个别记</button></div>
+    </article>
+
+    <!-- 其余收进一张汇报卡：每件一行，点开才看完整结果卡 -->
+    <section class="rep">
+      <details class="grp">
+        <summary>替你做好的<span class="n num">2</span><span class="peek">本周周报初稿、秋假长沙 4 天</span><i data-i="down" class="chev"></i></summary>
+        <details class="it">
+          <summary><span class="d">工作</span><span class="tt">本周周报初稿</span><span class="at">周五前要交</span><i data-i="right" class="chev"></i></summary>
+          <article class="pc in">
+            <div class="pc-lead"><i data-i="bell"></i>主动提醒：周五下班前要交，错过就晚了</div>
+            <div class="body"><span class="sent">1. 客户管理系统二期已上线。<a class="src" href="06-看出处.html">出处</a></span><span class="sent">2. 数据导出模块性能提升。<a class="src" href="06-看出处.html">出处</a></span><span class="sent">3. 下周：收集上线反馈。<a class="src" href="06-看出处.html">出处</a></span></div>
+            <div class="because">因为你每周五都要交周报</div>
+            <div class="more"><span class="lbl">还可以帮你</span><button class="cb">改成给老板看的简版</button></div>
+            <div class="pc-foot"><button class="forget r">这个别记</button></div>
+          </article>
+        </details>
+        <details class="it">
+          <summary><span class="d">出行</span><span class="tt">秋假长沙 4 天：交通和行程已排好</span><span class="at">出发前 3 天</span><i data-i="right" class="chev"></i></summary>
+          <article class="pc in">
+            <div class="pc-lead"><i data-i="bell"></i>主动提醒：出发前 3 天，票价和余票变化快</div>
+            <div class="body">周六 <span class="mono">08:05</span> 深圳北—长沙南 G6012，四张二等座已锁位。第 1 天湖南博物院，第 2 天岳麓山和书院，第 3 天橘子洲，第 4 天下午返程。预算约 6200 元。</div>
+            <div class="because">因为家里出行一直是你订票，这次先把交通排好了</div>
+            <div class="more"><span class="lbl">还可以帮你</span><button class="cb">行李清单</button><button class="cb">天气</button></div>
+            <div class="pc-foot"><button class="forget r">这个别记</button></div>
+          </article>
+        </details>
+      </details>
+
+      <details class="grp">
+        <summary>替你盯着的<span class="n num">7</span><span class="peek">周报、秋假作业、护照续办…</span><i data-i="down" class="chev"></i></summary>
+        <ul class="wl"><li><span class="d">工作</span><span>每周五周报<span class="doing">，周五 16:00 备好初稿</span></span><span class="at">下次 <span class="mono">周五 16:00</span></span></li><li><span class="d">孩子</span><span>老二秋假作业<span class="doing">，每周日晚汇总作业</span></span><span class="at">下次 <span class="mono">周日 20:00</span></span></li><li><span class="d">家里</span><span>护照续办<span class="doing">，到期前 60 天提醒，列好材料</span></span><span class="at">下次 <span class="mono">周二 09:00</span></span></li><li><span class="d">健康</span><span>年度体检<span class="doing">，前一天提醒空腹和带证件</span></span><span class="at">下次 <span class="mono">周一 20:00</span></span></li><li><span class="d">人情</span><span>妈妈生日<span class="doing">，生日前 5 天给礼物思路和祝福卡草稿</span></span><span class="at">下次 <span class="mono">周四 19:00</span></span></li><li><span class="d">出行</span><span>秋假长沙 4 天<span class="doing">，盯天气和高铁改签</span></span><span class="at">下次 <span class="mono">出发前 1 天 20:00</span></span></li><li><span class="d">想做的事</span><span>做个家庭记账的小程序<span class="doing">，47 天前记下，这周一重提</span></span><span class="at">下次 <span class="mono">周一 08:30</span></span></li></ul>
+        <a class="all link" href="07-我盯着的事.html">去“我盯着的事”看全部</a>
+      </details>
+
+      <details class="grp" open>
+        <summary>需要你决定的<span class="n num">5</span><i data-i="down" class="chev"></i></summary>
+        <details class="it">
+          <summary><span class="d">健康</span><span class="tt">明天体检：今晚 22:00 后禁食，带身份证</span><span class="at">明早 8:00</span><i data-i="right" class="chev"></i></summary>
+          <article class="pc in">
+            <div class="pc-meta"><span class="depth">骨架</span></div>
+            <div class="body">明早 8:00 体检：今晚 22:00 后禁食，带身份证。</div>
+            <div class="expand"><button class="cb">展开看完整版<i data-i="down"></i></button></div>
+            <div class="because">因为你待办里有明天上午的体检</div>
+            <div class="notice"><i data-i="info"></i><span>只做安排和提醒，不做诊断；身体不适或看报告请找专业医生。</span></div>
+            <div class="more"><span class="lbl">还可以帮你</span><button class="cb">设个出门提醒</button></div>
+            <div class="pc-foot"><button class="forget r">这个别记</button></div>
+          </article>
+        </details>
+        <details class="it">
+          <summary><span class="d">家里</span><span class="tt">你的护照 60 天后到期</span><span class="at">可在线预约</span><i data-i="right" class="chev"></i></summary>
+          <article class="pc in">
+            <div class="pc-meta"><span class="depth">骨架</span></div>
+            <div class="body">续办要：身份证、旧护照、近期照片；可以在线预约出入境窗口。</div>
+            <div class="expand"><button class="cb">展开看完整版<i data-i="down"></i></button></div>
+            <div class="because">因为你上传过护照首页</div>
+            <div class="more"><span class="lbl">还可以帮你</span><button class="cb">预约窗口</button></div>
+            <div class="pc-foot"><button class="forget r">这个别记</button></div>
+          </article>
+        </details>
+        <details class="it">
+          <summary><span class="d">人情</span><span class="tt">妈妈生日还有 5 天，礼物思路和祝福卡草稿已备好</span><span class="at">周六</span><i data-i="right" class="chev"></i></summary>
+          <article class="pc in">
+            <div class="pc-meta"><span class="depth">骨架</span></div>
+            <div class="body">礼物思路：按摩靠垫、相册、一起视频吃蛋糕；祝福卡草稿已备好。</div>
+            <div class="expand"><button class="cb">展开看完整版<i data-i="down"></i></button></div>
+            <div class="because">因为你说过想给妈妈送点东西</div>
+            <div class="notice"><i data-i="info"></i><span>祝福卡只出草稿，不扣点；正式生成要你确认，确认后扣 10 点。送礼只给思路，不做导购。</span></div>
+            <div class="more"><span class="lbl">还可以帮你</span><button class="cb">看祝福卡草稿（不扣点）</button></div>
+            <div class="pc-foot"><button class="forget r">这个别记</button></div>
+          </article>
+        </details>
+        <div class="it q"><span class="d">待确认</span><span class="tt">工作变动？<span class="doing">录音里同事说“你去了新部门以后……”</span></span><span class="yn"><button class="cb">对</button><button class="cb">不对</button></span></div>
+        <div class="it q"><span class="d">待确认</span><span class="tt">老大的学校<span class="doing">升学后学校信息可能变了</span></span><span class="yn"><button class="cb">对</button><button class="cb">不对</button></span></div>
+      </details>
+    </section>
+    </div><div id="thread"></div>
+  </main>
+  <div class="dock"><div class="dock-in">
+    <div class="chips"><span class="chip lead"><i data-i="cal"></i>最近安排 · <span class="num">2</span></span><button class="chip">帮我记：周五下午 3 点去仁济医院体检</button><button class="chip">租房合同什么时候到期？</button><button class="chip">跟保险有关的事有哪些？</button><button class="chip">把明天的事都推迟一天</button></div>
+    <div class="composer"><button class="ib" title="带上文件（同时存进资料）"><i data-i="clip"></i></button><textarea class="in" id="in" rows="1" placeholder="吩咐一声…"></textarea><button class="ib" disabled title="按住说话（App 版）"><i data-i="mic"></i></button><button class="ib send" id="send" title="发送"><i data-i="send"></i></button></div>
+    <p class="tip">Enter 发送，Shift + Enter 换行；带上的文件会同时存进“交给我的资料”</p>
+  </div></div>
+</div>
+</div>
+<script src="shell.js"></script>
+<script src="proto.js"></script>
+</body></html>

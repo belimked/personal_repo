@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN"><head><script>try{if(JSON.parse(localStorage.getItem("v7proto.session"))?.role!=="user")location.replace("../index.html")}catch(_){location.replace("../index.html")}</script><link rel="icon" href="data:,"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小禾 · 设置</title><link rel="stylesheet" href="web.css"><link rel="stylesheet" href="proto.css">
+</head>
+<body>
+<div class="app">
+<div data-side="设置"></div>
+<div class="main">
+  <header class="bar"><h1>设置</h1><div class="ctx"><span class="tag">演示</span>苏晴</div></header>
+  <main class="wrap">
+    <h2 class="title">设置</h2>
+    <section class="card" style="margin-top:24px"><div class="card-h"><h2>基本信息</h2></div>
+      <div class="field"><span class="l">姓名</span><span class="input">苏晴</span></div>
+      <div class="field"><span class="l">登录邮箱<small>修改请联系管理员</small></span><span class="input ro">lily@demo.com</span></div>
+      <div class="field"><span class="l">手机号<small>可选，添加后也可用手机号登录</small></span><span class="input ph">未添加</span></div>
+      <div class="field"><span class="l">时区<small>用来理解“明天”“下周三”和发提醒</small></span><span class="input">（UTC+8）中国标准时间<i data-i="down" style="margin-left:auto;color:var(--t3)"></i></span></div>
+      <div class="card-f"><button class="btn btn-primary">保存</button></div></section>
+    <section class="card"><div class="card-h"><h2>邮件提醒</h2></div>
+      <div class="field"><span class="l">每天发邮件提醒<small>已逾期、今天到后天的待办、快到期的事</small></span><span class="tg on"></span></div>
+      <div class="field"><span class="l">发送时间<small>按你的时区</small></span><span class="input mono" style="width:120px">07:30</span></div>
+      <div class="field"><span class="l">收件邮箱</span><span class="input ro">lily@demo.com（固定用账号邮箱）</span></div>
+      <div class="field"><span class="l">每周一附加“待安排”<small>列出还没定日期的事，问要不要排进这周</small></span><span class="tg on"></span></div>
+      <div class="card-f"><button class="btn btn-line">预览邮件</button><button class="btn btn-primary">保存</button></div></section>
+    <section class="card"><div class="card-h"><h2>我的身份</h2><span class="small faint" style="margin-left:8px">可选，只用来优先用相关的预设标签，不影响任何功能</span></div>
+      <div class="card-b" style="display:flex;flex-wrap:wrap;gap:8px"><button class="cb on"><i data-i="check"></i>家长</button><button class="cb on"><i data-i="check"></i>上班族</button><button class="cb">学生</button><button class="cb">小店店主</button><button class="cb">自由职业</button><button class="cb">退休</button></div>
+      <div class="card-f"><button class="btn btn-primary">保存</button></div></section>
+    <section class="card"><div class="card-h"><h2>助手名字</h2></div>
+      <div class="field"><span class="l">叫它什么</span><div style="display:flex;gap:12px;align-items:center"><span class="mark" style="width:40px;height:40px;border-radius:20px;font-size:17px">禾</span><span class="input" style="flex:1">小禾</span></div></div>
+      <div class="card-f"><button class="btn btn-primary">保存</button></div></section>
+    <section class="card"><div class="card-h"><h2>修改密码</h2></div>
+      <div class="field"><span class="l">当前密码</span><span class="input ph">输入当前密码</span></div>
+      <div class="field"><span class="l">新密码<small>8～16 位</small></span><span class="input ph">输入新密码</span></div>
+      <div class="field"><span class="l">确认新密码</span><span class="input ph">再输入一次</span></div>
+      <div class="card-f"><button class="btn btn-primary">修改密码</button></div></section>
+    <div style="display:flex;margin-top:24px"><button class="btn btn-line">退出登录</button></div>
+  </main>
+</div>
+</div>
+<script src="shell.js"></script>
+<script src="proto.js"></script></body></html>
