@@ -10,3 +10,5 @@ test-results
 
 # Stitch 设计素材（本地使用，不同步到 GitHub）
 Stitch/
+
+.dev.vars

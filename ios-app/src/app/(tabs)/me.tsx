@@ -7,7 +7,7 @@ import { c } from '@/lib/theme'
 
 /** 05 我的 */
 export default function Me() {
-  const { reset } = useStore()
+  const { reset, logout, user, demo } = useStore()
   const soon = (t: string) => Alert.alert(t, '原型里这一页还没做。')
   const general = () => Alert.alert('通用', undefined, [
     { text: '重置演示数据', style: 'destructive', onPress: () => { reset(); router.navigate('/') } },
@@ -19,10 +19,10 @@ export default function Me() {
         <View style={{ paddingHorizontal: 4, paddingTop: 12, paddingBottom: 16 }}><Text style={ui.title}>我的</Text></View>
 
         <Pressable onPress={() => soon('个人资料')} style={({ pressed }) => [ui.card, s.me, pressed && { backgroundColor: c.raised }]}>
-          <View style={s.avatar}><Text style={s.avatarText}>陆</Text></View>
+          <View style={s.avatar}><Text style={s.avatarText}>{user?.name?.slice(0, 1) ?? '陆'}</Text></View>
           <View style={{ flex: 1 }}>
-            <Text style={s.n}>陆航</Text>
-            <Text style={s.e}>luhang@company.com</Text>
+            <Text style={s.n}>{user?.name ?? '陆航'}</Text>
+            <Text style={s.e}>{user?.email ?? 'luhang@company.com'}</Text>
           </View>
           <Chev />
         </Pressable>
@@ -41,6 +41,9 @@ export default function Me() {
 
         <Card style={{ marginTop: 24 }}>
           <Row first label="隐私与个人信息" onPress={() => router.push('/privacy')} />
+        </Card>
+        <Card style={{ marginTop: 24 }}>
+          <Row first label={demo ? '退出演示' : '退出登录'} labelColor={c.bad} chevron={false} onPress={() => { void logout() }} />
         </Card>
       </ScrollView>
     </SafeAreaView>

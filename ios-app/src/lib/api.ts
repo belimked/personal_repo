@@ -1,0 +1,50 @@
+import Constants from 'expo-constants'
+import * as SecureStore from 'expo-secure-store'
+
+export const API_BASE = (Constants.expoConfig?.extra?.apiBase as string | undefined ?? 'https://personal-repo.saulxj.ggff.net/api').replace(/\/$/, '')
+const TOKEN_KEY = 'daily-assistant-token'
+
+export type User = { id: string; email: string; name: string; role: 'user' | 'admin' }
+export type Kind = 'todo' | 'stash' | 'watch' | 'idea' | 'file' | 'fact' | 'setting'
+export type ApiItem = { id: string; kind: Kind; data: Record<string, unknown>; created_at: string; updated_at: string; deleted: number }
+export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string }
+
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); this.name = 'ApiError' }
+}
+
+export const tokenStorage = {
+  get: () => SecureStore.getItemAsync(TOKEN_KEY),
+  set: (token: string) => SecureStore.setItemAsync(TOKEN_KEY, token),
+  clear: () => SecureStore.deleteItemAsync(TOKEN_KEY),
+}
+
+export async function request<T>(path: string, token?: string, method = 'GET', body?: unknown): Promise<T> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 15000)
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method, signal: controller.signal,
+      headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    })
+    const json = await response.json() as T & { message?: string }
+    if (!response.ok) throw new ApiError(response.status, json.message ?? '请求失败，请稍后再试')
+    return json
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(0, controller.signal.aborted ? '请求超时' : '网络不可用')
+  } finally { clearTimeout(timer) }
+}
+
+export const api = {
+  login: (email: string, password: string) => request<{ token: string; user: User }>('/auth/login', undefined, 'POST', { email, password }),
+  logout: (token: string) => request<{ ok: boolean }>('/auth/logout', token, 'POST'),
+  me: (token: string) => request<{ user: User }>('/me', token),
+  items: (token: string, kind?: Kind) => request<{ items: ApiItem[] }>(kind ? `/items?kind=${kind}` : '/items', token),
+  putItem: (token: string, id: string, kind: Kind, data: Record<string, unknown>) => request<{ item: ApiItem }>('/items', token, 'POST', { id, kind, data }),
+  patchItem: (token: string, id: string, data: Record<string, unknown>) => request<{ item: ApiItem }>(`/items/${encodeURIComponent(id)}`, token, 'PATCH', { data }),
+  deleteItem: (token: string, id: string) => request<{ ok: boolean }>(`/items/${encodeURIComponent(id)}`, token, 'DELETE'),
+  chat: (token: string, message: string) => request<{ reply: string; model: string; thread: string; fallback: boolean }>('/chat', token, 'POST', { message, thread: 'home', mode: 'chat' }),
+  messages: (token: string) => request<{ messages: Message[] }>('/messages?thread=home&limit=50', token),
+}
