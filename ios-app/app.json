@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "DailyAssistant",
+    "slug": "daily-assistant",
+    "scheme": "dailyassistant",
+    "version": "0.7.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.blk.dailyassistant",
+      "buildNumber": "1",
+      "supportsTablet": false,
+      "infoPlist": {
+        "CFBundleDisplayName": "小禾",
+        "CFBundleDevelopmentRegion": "zh_CN",
+        "CFBundleLocalizations": ["zh_Hans"],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      ["expo-splash-screen", { "image": "./assets/splash-icon.png", "imageWidth": 96, "resizeMode": "contain", "backgroundColor": "#F2F2F7" }]
+    ]
+  }
+}

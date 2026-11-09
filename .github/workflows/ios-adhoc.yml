@@ -1,0 +1,160 @@
+name: iOS Ad Hoc
+
+# v7 iOS App（ios-app/）：签名出包，发布到 GitHub Pages 安装页
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-app/**'
+      - '.github/workflows/ios-adhoc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ios-adhoc
+  cancel-in-progress: true
+
+env:
+  TEAM_ID: 8J42Q87M5P
+  BUNDLE_ID: com.blk.dailyassistant
+  APP: DailyAssistant
+  CI: 1
+  EXPO_NO_TELEMETRY: 1
+
+defaults:
+  run:
+    working-directory: ios-app
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ios-app/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck and lint
+        run: |
+          npx tsc --noEmit
+          npx expo lint
+
+      - name: Install signing certificate and profile
+        env:
+          P12_BASE64: ${{ secrets.IOS_DIST_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_ADHOC_PROFILE_BASE64 }}
+        run: |
+          for v in P12_BASE64 P12_PASSWORD PROFILE_BASE64; do
+            [ -n "${!v}" ] || { echo "::error::Missing signing secret ($v)"; exit 1; }
+          done
+          P12="$RUNNER_TEMP/dist.p12"
+          PROFILE="$RUNNER_TEMP/adhoc.mobileprovision"
+          echo "$P12_BASE64" | base64 --decode > "$P12"
+          echo "$PROFILE_BASE64" | base64 --decode > "$PROFILE"
+
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PW="$(uuidgen)"
+          security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+          security import "$P12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PW" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
+          security cms -D -i "$PROFILE" > "$RUNNER_TEMP/profile.plist"
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$RUNNER_TEMP/profile.plist")
+          EXPIRES=$(/usr/libexec/PlistBuddy -c 'Print ExpirationDate' "$RUNNER_TEMP/profile.plist")
+          echo "Profile $UUID · expires $EXPIRES"
+          for d in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$d" && cp "$PROFILE" "$d/$UUID.mobileprovision"
+          done
+          rm -f "$P12"
+          echo "PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
+          echo "KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
+      - name: Generate native project
+        run: npx expo prebuild -p ios --clean
+
+      - name: Configure version, display name and signing
+        run: |
+          PLIST=ios/$APP/Info.plist
+          plutil -replace CFBundleVersion -string "${{ github.run_number }}" $PLIST
+          plutil -replace CFBundleDisplayName -string "小禾" $PLIST
+          echo "APP_VERSION=$(plutil -extract CFBundleShortVersionString raw $PLIST)" >> "$GITHUB_ENV"
+          ruby -e "require 'xcodeproj'" 2>/dev/null || gem install xcodeproj --no-document
+          ruby ci/set-signing.rb ios/$APP.xcodeproj "$TEAM_ID" "$PROFILE_UUID"
+
+      - name: Archive
+        run: |
+          xcodebuild -workspace ios/$APP.xcworkspace -scheme $APP -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/$APP.xcarchive" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN" -quiet archive
+
+      - name: Export IPA
+        run: |
+          sed -e "s/__TEAM_ID__/$TEAM_ID/" -e "s/__BUNDLE_ID__/$BUNDLE_ID/" -e "s/__PROFILE_UUID__/$PROFILE_UUID/" \
+            ci/ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/$APP.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"
+          mv "$RUNNER_TEMP"/export/*.ipa "$RUNNER_TEMP/$APP.ipa"
+          ls -lh "$RUNNER_TEMP/$APP.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP }}-${{ env.APP_VERSION }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/${{ env.APP }}.ipa
+          retention-days: 30
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build install page
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          SITE="$RUNNER_TEMP/site"
+          mkdir -p "$SITE"
+          cp "$RUNNER_TEMP/$APP.ipa" "$SITE/"
+          sips -z 57 57 assets/icon.png --out "$SITE/icon-57.png" > /dev/null
+          sips -z 512 512 assets/icon.png --out "$SITE/icon-512.png" > /dev/null
+          DATE=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')
+          for f in index.html manifest.plist; do
+            sed -e "s#__BASE_URL__#$BASE_URL#g" -e "s#__VERSION__#$APP_VERSION#g" -e "s#__BUILD__#${{ github.run_number }}#g" \
+              -e "s#__BUNDLE_ID__#$BUNDLE_ID#g" -e "s#__DATE__#$DATE#g" -e "s#__APP__#$APP#g" "ci/install/$f" > "$SITE/$f"
+          done
+          echo "Install page: $BASE_URL/" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
+      - name: Remove keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN" 2>/dev/null || true
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

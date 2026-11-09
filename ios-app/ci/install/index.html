@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>安装小禾（测试版）</title>
+<link rel="apple-touch-icon" href="icon-512.png">
+<style>
+  :root{--bg:#F2F2F7;--card:#fff;--line:rgba(60,60,67,.12);--t1:#1C1C1E;--t2:#56565C;--t3:#8A8A8E;--acc:#3F6EE8}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/22px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:var(--t1);background:var(--bg)}
+  main{max-width:480px;margin:0 auto;padding:48px 16px 40px}
+  header{display:flex;align-items:center;gap:16px;padding:0 4px 24px}
+  header img{width:64px;height:64px;border-radius:14px}
+  h1{font-size:22px;line-height:30px;font-weight:600;margin:0}
+  header p{margin:2px 0 0;color:var(--t2)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+  .btn{display:flex;align-items:center;justify-content:center;height:50px;border-radius:12px;background:var(--acc);color:#fff;font-size:17px;font-weight:500;text-decoration:none}
+  .btn:active{opacity:.85}
+  .meta{display:flex;justify-content:space-between;color:var(--t3);font-size:13px;margin-top:12px;font-variant-numeric:tabular-nums}
+  h2{font-size:13px;line-height:18px;font-weight:400;color:var(--t3);margin:24px 16px 8px}
+  ol{margin:0;padding-left:20px}
+  li+li{margin-top:8px}
+  .warn{display:none;background:#FDF1E3;color:#8A4B0F;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon-512.png" alt="">
+    <div><h1>小禾</h1><p>个人日常助手 · v7 原型测试版</p></div>
+  </header>
+  <div class="warn" id="warn">请用 iPhone 的 Safari 打开本页安装。</div>
+  <div class="card">
+    <a class="btn" href="itms-services://?action=download-manifest&amp;url=__BASE_URL__/manifest.plist">安装小禾</a>
+    <div class="meta"><span>版本 __VERSION__（__BUILD__）</span><span>__DATE__</span></div>
+  </div>
+
+  <h2>首次安装</h2>
+  <div class="card"><ol>
+    <li>点“安装小禾”，弹窗里点“安装”，回到主屏幕等图标下载完。</li>
+    <li>点一次小禾图标，系统提示需要开发者模式，点“好”。</li>
+    <li>打开“设置 → 隐私与安全性 → 开发者模式”，开启后重启手机，重启后点“打开”。</li>
+  </ol></div>
+
+  <h2>更新</h2>
+  <div class="card">再打开本页点“安装小禾”即可覆盖更新。</div>
+
+  <h2>装不上？</h2>
+  <div class="card">只有登记过 UDID 的 iPhone（iOS 16.4 及以上）能装。提示“无法安装”时，把手机 UDID 发给项目组登记。</div>
+</main>
+<script>
+  var ua=navigator.userAgent;
+  if(!(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document)))document.getElementById('warn').style.display='block';
+</script>
+</body>
+</html>
