@@ -1,0 +1,49 @@
+name: Deploy API (65)
+
+# SECURITY: this repo is public and job "deploy" runs on a self-hosted runner in the LAN.
+# Never add pull_request / pull_request_target triggers to this file.
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/deploy-api.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - run: go vet ./...
+      - run: go test ./...
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.repository == 'belimked/personal_repo'
+    runs-on: [xiaohe-65]
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        working-directory: server
+        env:
+          CGO_ENABLED: '0'
+          GOFLAGS: -trimpath
+        run: |
+          /usr/local/go/bin/go build -ldflags "-s -w -X main.version=go-${GITHUB_SHA::7}" -o "$RUNNER_TEMP/xiaohe" ./cmd/xiaohe
+      - name: Release
+        run: sudo /opt/xiaohe/bin/release.sh "${GITHUB_SHA}" "$RUNNER_TEMP/xiaohe"

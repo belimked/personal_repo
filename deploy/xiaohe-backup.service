@@ -1,0 +1,9 @@
+[Unit]
+Description=Xiaohe daily DB backup
+
+[Service]
+Type=oneshot
+User=xiaohe
+Group=xiaohe
+EnvironmentFile=/etc/xiaohe/env
+ExecStart=/opt/xiaohe/bin/xiaohe-backup.sh

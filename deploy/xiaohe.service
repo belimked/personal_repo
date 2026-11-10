@@ -1,0 +1,20 @@
+[Unit]
+Description=Xiaohe backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=xiaohe
+Group=xiaohe
+EnvironmentFile=/etc/xiaohe/env
+ExecStart=/opt/xiaohe/current/xiaohe serve
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/data/db /data/audio /data/backup
+
+[Install]
+WantedBy=multi-user.target

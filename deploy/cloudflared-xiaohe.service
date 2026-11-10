@@ -1,0 +1,16 @@
+[Unit]
+Description=Cloudflare Tunnel xiaohe-65 (personal-repo-api)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# TUNNEL_TOKEN=... 只放在这个文件里（root 600）
+EnvironmentFile=/etc/xiaohe/tunnel.env
+# 166 网关的 Clash 对 UDP 不可靠，固定 http2，不用 QUIC
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --protocol http2 --metrics 127.0.0.1:20241 run
+Restart=always
+RestartSec=5
+DynamicUser=true
+
+[Install]
+WantedBy=multi-user.target

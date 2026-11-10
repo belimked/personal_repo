@@ -1,0 +1,3 @@
+# /etc/sudoers.d/xiaohe-runner  (0440 root:root)
+# The GitHub runner may only call the release script, nothing else.
+runner ALL=(root) NOPASSWD: /opt/xiaohe/bin/release.sh
