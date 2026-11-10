@@ -16,7 +16,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"xiaohe/server/internal/llm"
 )
+
+// Minutes generation reads long transcripts with thinking enabled; it needs
+// far more time and output room than interactive chat.
+var minutesLLM = llm.Options{Timeout: 3 * time.Minute, MaxTokens: 8000}
 
 func (a *API) Start(ctx context.Context) error {
 	result, e := a.DB.Exec("UPDATE recordings SET status=CASE WHEN status='transcribing' THEN 'queued' ELSE 'summarizing' END,updated_at=? WHERE status IN ('transcribing','summarizing')", Now())
@@ -290,7 +296,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			if end > len(runes) {
 				end = len(runes)
 			}
-			piece, err := a.LLM.Call("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}})
+			piece, err := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}}, minutesLLM)
 			if err != nil {
 				a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", err))
 				return
@@ -299,7 +305,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		}
 		input = "以下是各段整理结果，请合并去重并输出同样格式的最终 JSON：\n" + strings.Join(partial, "\n")
 	}
-	content, e := a.LLM.Call("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}})
+	content, e := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}}, minutesLLM)
 	if e != nil {
 		a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", e))
 		return

@@ -16,7 +16,18 @@ type Client struct {
 	HTTP      *http.Client
 }
 
+// Options overrides per-call limits. Zero values keep the chat defaults
+// (25s timeout; 800 tokens for flash, 3000 for pro).
+type Options struct {
+	Timeout   time.Duration
+	MaxTokens int
+}
+
 func (c Client) Call(model string, messages []map[string]string) (string, error) {
+	return c.CallWith(model, messages, Options{})
+}
+
+func (c Client) CallWith(model string, messages []map[string]string, o Options) (string, error) {
 	if c.Key == "" {
 		return "", errors.New("missing key")
 	}
@@ -28,8 +39,15 @@ func (c Client) Call(model string, messages []map[string]string) (string, error)
 	if model == "deepseek-v4-pro" {
 		tokens, thinking = 3000, "enabled"
 	}
+	if o.MaxTokens > 0 {
+		tokens = o.MaxTokens
+	}
+	timeout := 25 * time.Second
+	if o.Timeout > 0 {
+		timeout = o.Timeout
+	}
 	b, _ := json.Marshal(map[string]any{"model": model, "messages": messages, "max_tokens": tokens, "thinking": map[string]string{"type": thinking}})
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req, e := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(base, "/")+"/chat/completions", bytes.NewReader(b))
 	if e != nil {
