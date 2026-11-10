@@ -16,6 +16,10 @@ func decodeData(v map[string]any) {
 func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) {
 	p, m := r.URL.Path, r.Method
 	uid := u["id"]
+	if p == "/api/recordings" || strings.HasPrefix(p, "/api/recordings/") || p == "/api/devices" || strings.HasPrefix(p, "/api/devices/") {
+		a.recordingRoutes(w, r, b, u)
+		return
+	}
 	if p == "/api/items" && m == "GET" {
 		kind, since := r.URL.Query().Get("kind"), r.URL.Query().Get("since")
 		if kind != "" && !kinds[kind] {

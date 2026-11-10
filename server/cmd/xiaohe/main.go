@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -77,7 +78,24 @@ func run(args []string) error {
 		if !strings.HasPrefix(v, "go-") {
 			v = "go-" + v
 		}
-		a := &api.API{DB: d, Version: v, Origins: strings.Split(os.Getenv("CORS_ORIGINS"), ","), LLM: llm.Client{Key: os.Getenv("LLM_API_KEY"), Base: os.Getenv("LLM_BASE_URL")}}
+		push, e := api.LoadPush()
+		if e != nil {
+			log.Print("push disabled reason=invalid_configuration")
+			return e
+		}
+		if push == nil {
+			log.Print("push disabled reason=APNS_KEY_FILE not configured")
+		} else {
+			env := os.Getenv("APNS_ENV")
+			if env == "" {
+				env = "production"
+			}
+			log.Printf("push enabled team=%s key_id=%s env=%s", push.Team, push.KeyID, env)
+		}
+		a := &api.API{DB: d, Version: v, Origins: strings.Split(os.Getenv("CORS_ORIGINS"), ","), LLM: llm.Client{Key: os.Getenv("LLM_API_KEY"), Base: os.Getenv("LLM_BASE_URL")}, AudioDir: os.Getenv("XIAOHE_AUDIO_DIR"), ASRURL: os.Getenv("ASR_URL"), ASRToken: os.Getenv("ASR_TOKEN"), Push: push}
+		if e = a.Start(context.Background()); e != nil {
+			return e
+		}
 		log.Printf("listening on %s", addr)
 		return http.ListenAndServe(addr, a.Handler())
 	default:

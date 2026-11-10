@@ -21,10 +21,13 @@ import (
 )
 
 type API struct {
-	DB      *store.DB
-	LLM     llm.Client
-	Version string
-	Origins []string
+	DB               *store.DB
+	LLM              llm.Client
+	Version          string
+	Origins          []string
+	AudioDir         string
+	ASRURL, ASRToken string
+	Push             *Push
 }
 
 func Now() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z") }
@@ -87,6 +90,12 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
+func safeLogPath(path string) string {
+	if strings.HasPrefix(path, "/api/devices/") {
+		return "/api/devices/{token}"
+	}
+	return path
+}
 func (a *API) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/", a.handle)
@@ -95,7 +104,7 @@ func (a *API) Handler() http.Handler {
 		logged := &statusWriter{ResponseWriter: w}
 		defer func() {
 			if recover() != nil {
-				log.Printf("request panic method=%s path=%s", r.Method, r.URL.Path)
+				log.Printf("request panic method=%s path=%s", r.Method, safeLogPath(r.URL.Path))
 				if logged.status == 0 {
 					fail(logged, 500, "internal_error", "服务暂时不可用")
 				}
@@ -103,7 +112,7 @@ func (a *API) Handler() http.Handler {
 			if logged.status == 0 {
 				logged.WriteHeader(200)
 			}
-			log.Printf("request method=%s path=%s status=%d duration=%s", r.Method, r.URL.Path, logged.status, time.Since(start))
+			log.Printf("request method=%s path=%s status=%d duration=%s", r.Method, safeLogPath(r.URL.Path), logged.status, time.Since(start))
 		}()
 		w = logged
 		origin := r.Header.Get("Origin")
@@ -154,11 +163,17 @@ func (a *API) handle(w http.ResponseWriter, r *http.Request) {
 			fail(w, 500, "internal_error", "服务暂时不可用")
 			return
 		}
-		send(w, 200, map[string]any{"ok": true, "version": a.Version, "db": "ok"})
+		var queue int
+		a.DB.QueryRow("SELECT count(*) FROM recordings WHERE status IN ('queued','transcribing','summarizing')").Scan(&queue)
+		asr := "down"
+		if a.asrOnline() {
+			asr = "ok"
+		}
+		send(w, 200, map[string]any{"ok": true, "version": a.Version, "db": "ok", "asr": asr, "queue": queue})
 		return
 	}
 	body := map[string]any{}
-	if method == "POST" || method == "PUT" || method == "PATCH" {
+	if (method == "POST" || method == "PUT" || method == "PATCH") && !(path == "/api/recordings" && method == "POST") {
 		if e := json.NewDecoder(r.Body).Decode(&body); e != nil || body == nil {
 			fail(w, 400, "invalid_body", "请求内容不是有效 JSON")
 			return
@@ -218,6 +233,10 @@ func (a *API) handle(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(path, "/api/admin/") {
 		if u["role"] != "admin" {
 			fail(w, 403, "forbidden", "仅管理员可操作")
+			return
+		}
+		if path == "/api/admin/asr" && method == "GET" {
+			a.adminASR(w)
 			return
 		}
 		a.admin(w, r, body, u)

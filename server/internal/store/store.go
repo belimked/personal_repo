@@ -34,25 +34,31 @@ func (d *DB) Migrate() error {
 	if _, e := d.Exec("CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TEXT NOT NULL)"); e != nil {
 		return e
 	}
-	var n int
-	if e := d.QueryRow("SELECT count(*) FROM schema_migrations WHERE version='0001_init'").Scan(&n); e != nil {
-		return e
+	for _, migration := range []struct{ name, sql string }{{"0001_init", migrations.Init}, {"0002_recordings", migrations.Recordings}} {
+		var n int
+		if e := d.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=?", migration.name).Scan(&n); e != nil {
+			return e
+		}
+		if n != 0 {
+			continue
+		}
+		tx, e := d.Begin()
+		if e != nil {
+			return e
+		}
+		if _, e = tx.Exec(migration.sql); e != nil {
+			tx.Rollback()
+			return e
+		}
+		if _, e = tx.Exec("INSERT INTO schema_migrations VALUES(?,?)", migration.name, time.Now().UTC().Format("2006-01-02T15:04:05.000Z")); e != nil {
+			tx.Rollback()
+			return e
+		}
+		if e = tx.Commit(); e != nil {
+			return e
+		}
 	}
-	if n != 0 {
-		return nil
-	}
-	tx, e := d.Begin()
-	if e != nil {
-		return e
-	}
-	defer tx.Rollback()
-	if _, e = tx.Exec(migrations.Init); e != nil {
-		return e
-	}
-	if _, e = tx.Exec("INSERT INTO schema_migrations VALUES(?,?)", "0001_init", time.Now().UTC().Format("2006-01-02T15:04:05.000Z")); e != nil {
-		return e
-	}
-	return tx.Commit()
+	return nil
 }
 func (d *DB) Rows(q string, args ...any) ([]map[string]any, error) {
 	rs, e := d.Query(q, args...)

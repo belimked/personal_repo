@@ -70,7 +70,7 @@ line with ''quote''"');`
 	}
 	var n int
 	d.QueryRow("SELECT count(*) FROM schema_migrations").Scan(&n)
-	if n != 1 {
+	if n != 2 {
 		t.Fatal(n)
 	}
 }
