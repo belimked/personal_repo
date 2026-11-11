@@ -44,11 +44,16 @@ export function TalkOverlay() {
 }
 
 /** 首页里一条语音消息，点开看转写和整理结果 */
-export function VoiceNote({ id, ms }: { id: string; ms: number }) {
+const NOTE: Record<string, string> = {
+  queued: '正在转成文字…', transcribing: '正在转成文字…', summarizing: '听清了，正在想怎么回你…', done: '已回复', failed: '没能处理，点开重试',
+}
+
+export function VoiceNote({ id, ms, status = 'queued' }: { id: string; ms: number; status?: string }) {
+  const failed = status === 'failed'
   return (
     <Pressable onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id } }) }} style={({ pressed }) => [s.note, pressed && { opacity: 0.6 }]}>
-      <Icon name="waveform" size={16} color={c.accInk} />
-      <Text style={s.noteText}>语音 {clock(ms)} · 正在转成文字，整理好会通知你</Text>
+      <Icon name={failed ? 'exclamationmark.circle' : 'waveform'} size={16} color={failed ? c.bad : c.accInk} />
+      <Text style={[s.noteText, failed && { color: c.bad }]}>语音 {clock(ms)} · {NOTE[status] ?? NOTE.queued}</Text>
     </Pressable>
   )
 }

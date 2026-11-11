@@ -33,6 +33,7 @@ function Routes() {
       <Stack.Screen name="review" options={{ gestureEnabled: true }} />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="minutes" />
+      <Stack.Screen name="records" />
     </Stack.Protected>
     <Stack.Protected guard={!token && !demo}>
       <Stack.Screen name="login" />

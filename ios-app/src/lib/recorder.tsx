@@ -43,14 +43,15 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const [uploading, setUploading] = useState(0)
   const starting = useRef<Promise<boolean> | null>(null)
   const startedAt = useRef<Date>(new Date())
+  const modeRef = useRef<Mode | null>(null)
 
-  const send = useCallback(async (file: AudioFile, recordedAt: Date, ms: number, title?: string): Promise<Sent | null> => {
+  const send = useCallback(async (file: AudioFile, recordedAt: Date, ms: number, title?: string, kind: 'meeting' | 'voice' = 'meeting'): Promise<Sent | null> => {
     if (!token) { Alert.alert('请先登录', '登录后录音才能转成文字和纪要。'); return null }
     setUploading((n) => n + 1)
     try {
       for (;;) {
         try {
-          const { recording } = await api.upload(token, file, recordedAt.toISOString(), title)
+          const { recording } = await api.upload(token, file, recordedAt.toISOString(), title, kind)
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
           return { recording, ms }
         } catch (e) {
@@ -77,6 +78,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       await recorder.prepareToRecordAsync()
       recorder.record()
       startedAt.current = new Date()
+      modeRef.current = next
       setMode(next)
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       return true
@@ -98,11 +100,12 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   }, [recorder])
 
   const finish = useCallback(async () => {
+    const kind = modeRef.current === 'hold' ? 'voice' : 'meeting'
     const clip = await stop()
     if (!clip) return null
     if (clip.ms < MIN_MS) { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); return null }
     const stamp = startedAt.current.toISOString().replace(/[-:]/g, '').slice(0, 15)
-    return send({ uri: clip.uri, name: `rec-${stamp}.m4a`, type: 'audio/mp4' }, startedAt.current, clip.ms)
+    return send({ uri: clip.uri, name: `rec-${stamp}.m4a`, type: 'audio/mp4' }, startedAt.current, clip.ms, undefined, kind)
   }, [send, stop])
 
   const cancel = useCallback(async () => { await stop() }, [stop])
