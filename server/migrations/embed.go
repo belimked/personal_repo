@@ -7,3 +7,6 @@ var Init string
 
 //go:embed 0002_recordings.sql
 var Recordings string
+
+//go:embed 0003_recording_scene.sql
+var RecordingScene string

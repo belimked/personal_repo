@@ -92,7 +92,10 @@ func run(args []string) error {
 			}
 			log.Printf("push enabled team=%s key_id=%s env=%s", push.Team, push.KeyID, env)
 		}
-		a := &api.API{DB: d, Version: v, Origins: strings.Split(os.Getenv("CORS_ORIGINS"), ","), LLM: llm.Client{Key: os.Getenv("LLM_API_KEY"), Base: os.Getenv("LLM_BASE_URL")}, AudioDir: os.Getenv("XIAOHE_AUDIO_DIR"), ASRURL: os.Getenv("ASR_URL"), ASRToken: os.Getenv("ASR_TOKEN"), Push: push}
+		a := &api.API{DB: d, Version: v, Origins: strings.Split(os.Getenv("CORS_ORIGINS"), ","), LLM: llm.Client{Key: os.Getenv("LLM_API_KEY"), Base: os.Getenv("LLM_BASE_URL")}, AudioDir: os.Getenv("XIAOHE_AUDIO_DIR"), ASRURL: os.Getenv("ASR_URL"), ASRToken: os.Getenv("ASR_TOKEN"), Push: push, Jev: api.Jev{Key: os.Getenv("TYPESAFE_API_KEY"), Base: os.Getenv("TYPESAFE_BASE_URL")}}
+		if os.Getenv("TYPESAFE_API_KEY") == "" {
+			log.Print("scene classification disabled reason=TYPESAFE_API_KEY not configured")
+		}
 		if e = a.Start(context.Background()); e != nil {
 			return e
 		}

@@ -286,8 +286,14 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	if user != nil {
 		name = str(user["name"])
 	}
-	prompt := "将会议逐句转写整理为 JSON：title 标题、summary 三到五句摘要、points 要点数组、decisions 已定事项数组、action_items 数组（text 内容、owner 负责人、due YYYY-MM-DD 日期、is_self 是否为用户本人）。未提到的字段留空，勿编造。" + recordingDateHint(row) + "用户显示名：" + name
 	input := strings.Join(lines, "\n")
+	scene, se := a.Jev.Classify(ctx, input)
+	if se != nil {
+		log.Printf("recording=%s stage=scene fallback=mixed reason=%q", id, se.Error())
+	} else {
+		log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
+	}
+	prompt := minutesPrompt(scene, recordingDateHint(row), name)
 	if len([]rune(input)) > 40000 {
 		runes := []rune(input)
 		var partial []string
@@ -395,7 +401,11 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		_, e = tx.Exec(query, args...)
 	}
 	if e == nil {
-		_, e = tx.Exec("UPDATE recordings SET status='done',error=NULL,attempts=0,next_try_at=NULL,finished_at=?,updated_at=?,title=? WHERE id=? AND status='summarizing'", now, now, min.Title, id)
+		var sceneModel any
+		if scene.Model != "" {
+			sceneModel = scene.Model
+		}
+		_, e = tx.Exec("UPDATE recordings SET status='done',error=NULL,attempts=0,next_try_at=NULL,finished_at=?,updated_at=?,title=?,scene=?,scene_p=?,work_actions_p=?,life_actions_p=?,scene_model=? WHERE id=? AND status='summarizing'", now, now, min.Title, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, sceneModel, id)
 	}
 	if e == nil {
 		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", fmt.Sprintf("会议纪要整理好了，新增 %d 件事：%s", count, strings.Join(labels, "、")), "deepseek-v4-pro", now)
