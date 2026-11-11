@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -88,6 +89,10 @@ func TestFileUploadAndExtract(t *testing.T) {
 		}
 		var msg string
 		f.a.DB.QueryRow("SELECT content FROM messages WHERE user_id=(SELECT user_id FROM recordings WHERE id=?) AND role='assistant' ORDER BY created_at DESC LIMIT 1", id).Scan(&msg)
+		_, sr := f.call("GET", "/api/search?q="+url.QueryEscape("报销单"), "", f.user)
+		if fs := sr["files"].([]any); len(fs) != 1 || fs[0].(map[string]any)["recording_id"] != id || len(sr["said"].([]any)) != 0 {
+			t.Fatal("search", sr)
+		}
 		if !strings.HasPrefix(msg, "资料“") {
 			t.Fatal(msg)
 		}

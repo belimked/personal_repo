@@ -59,7 +59,8 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, uid string) {
 			at = str(row["created_at"])
 		}
 		title := str(row["title"])
-		if text := str(row["text"]); has(text, q) {
+		isFile := str(row["kind"]) == "file"
+		if text := str(row["text"]); has(text, q) && !isFile {
 			hit := map[string]any{"type": "recording", "recording_id": row["id"], "title": title, "at": at, "snippet": snippet(text, q)}
 			var segs []struct {
 				StartMs *int64 `json:"start_ms"`
@@ -80,6 +81,9 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, uid string) {
 		var min minutes
 		json.Unmarshal([]byte(str(row["minutes"])), &min)
 		body := strings.Join(append(append([]string{min.Summary}, min.Points...), min.Decisions...), " ")
+		if isFile {
+			body = strings.TrimSpace(body + " " + str(row["text"]))
+		}
 		if has(title, q) || has(body, q) {
 			file := map[string]any{"recording_id": row["id"], "title": title, "kind": row["kind"], "at": at, "duration_s": row["duration_s"]}
 			if has(body, q) {
