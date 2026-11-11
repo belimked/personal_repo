@@ -149,3 +149,41 @@ func TestRegeneratePushBody(t *testing.T) {
 		t.Fatal(f.payloads)
 	}
 }
+
+func TestUserChangesScene(t *testing.T) {
+	f := newRecordingFixture(t)
+	f.device(t, strings.Repeat("ab", 32))
+	id := f.completed(t)
+	code, _ := f.call("POST", "/api/recordings/"+id+"/scene", `{"scene":"bogus"}`, f.user)
+	expect(t, code, 400)
+	var before int
+	f.a.DB.QueryRow("SELECT count(*) FROM messages WHERE thread='home'").Scan(&before)
+	pushes := f.pushes.Load()
+	code, _ = f.call("POST", "/api/recordings/"+id+"/scene", `{"scene":"life"}`, f.user)
+	expect(t, code, 200)
+	f.a.ProcessOne(context.Background())
+	var status, scene, model string
+	f.a.DB.QueryRow("SELECT status,scene,scene_model FROM recordings WHERE id=?", id).Scan(&status, &scene, &model)
+	if status != "done" || scene != "life" || model != "user" {
+		t.Fatal(status, scene, model)
+	}
+	// 按用户选的场合出提示词：生活录音、只提取生活事项
+	if p, _ := f.lastPrompt.Load().(string); !strings.Contains(p, "日常生活的录音") || !strings.Contains(p, "不要提取工作事项") {
+		t.Fatal(p)
+	}
+	var tagged, after int
+	f.a.DB.QueryRow("SELECT count(*) FROM items WHERE id LIKE ? AND deleted=0 AND json_extract(data,'$.scene')='life'", id+"-%").Scan(&tagged)
+	if tagged == 0 {
+		t.Fatal("items not tagged")
+	}
+	f.a.DB.QueryRow("SELECT count(*) FROM messages WHERE thread='home'").Scan(&after)
+	if after != before || f.pushes.Load() != pushes {
+		t.Fatal("relabel should be quiet", before, after)
+	}
+	// 之后重新生成仍然沿用用户选的标签
+	f.regenerate(t, id)
+	f.a.DB.QueryRow("SELECT scene,scene_model FROM recordings WHERE id=?", id).Scan(&scene, &model)
+	if scene != "life" || model != "user" {
+		t.Fatal(scene, model)
+	}
+}

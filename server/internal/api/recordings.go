@@ -125,6 +125,24 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 		send(w, 200, map[string]any{"text": tr["text"], "segments": segments, "speakers": tr["speakers"]})
 		return
 	}
+	// 用户改标签（工作 / 生活 / 工作和生活）：记为用户指定，并按新标签重新整理事项。
+	if len(parts) == 2 && m == "POST" && parts[1] == "scene" {
+		scene := str(b["scene"])
+		if scene != "work" && scene != "life" && scene != "mixed" {
+			fail(w, 400, "invalid_scene", "标签无效")
+			return
+		}
+		if row["status"] != "done" {
+			fail(w, 409, "invalid_status", "整理完成后才能改标签")
+			return
+		}
+		if _, e := a.DB.Exec("UPDATE recordings SET scene=?,scene_model='user',scene_p=1,status='summarizing',attempts=0,next_try_at=NULL,error=NULL,updated_at=?,finished_at=NULL WHERE id=?", scene, Now(), id); e != nil {
+			a.internal(w)
+			return
+		}
+		send(w, 200, map[string]any{"ok": true, "status": "summarizing", "scene": scene})
+		return
+	}
 	if len(parts) == 2 && m == "POST" && (parts[1] == "retry" || parts[1] == "regenerate") {
 		if parts[1] == "retry" && row["status"] != "failed" || parts[1] == "regenerate" && row["status"] != "done" {
 			fail(w, 409, "invalid_status", "当前状态不能重试")

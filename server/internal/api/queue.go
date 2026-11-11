@@ -318,12 +318,22 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		name = str(user["name"])
 	}
 	input := strings.Join(lines, "\n")
-	scene, se := a.Jev.Classify(ctx, input)
-	if se != nil {
-		log.Printf("recording=%s stage=scene fallback=mixed reason=%q", id, se.Error())
+	var scene Scene
+	if manual := str(row["scene"]); str(row["scene_model"]) == "user" && (manual == "work" || manual == "life" || manual == "mixed") {
+		// 用户手动改过标签：不再让模型判断，按用户选的场合提取事项。
+		scene = Scene{Scene: manual, P: 1, Model: "user", ExtractWork: manual != "life", ExtractLife: manual != "work"}
+		log.Printf("recording=%s stage=scene scene=%s source=user", id, manual)
 	} else {
-		log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
+		var se error
+		scene, se = a.Jev.Classify(ctx, input)
+		if se != nil {
+			log.Printf("recording=%s stage=scene fallback=mixed reason=%q", id, se.Error())
+		} else {
+			log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
+		}
 	}
+	// 用户自己改标签触发的重新整理：人就在页面上看着，不再发首页消息和推送。
+	quiet := scene.Model == "user" && str(tr["minutes"]) != ""
 	prompt := minutesPrompt(scene, speakerHint(len(speakers))+recordingDateHint(row), name)
 	file := str(row["kind"]) == "file"
 	if file {
@@ -426,6 +436,9 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			kind = "todo"
 		}
 		data := map[string]any{"text": item.Text, "title": item.Text, "source": map[string]any{"type": "recording", "recording_id": id, "index": i}}
+		if scene.Scene == "work" || scene.Scene == "life" {
+			data["scene"] = scene.Scene
+		}
 		if item.Due != "" {
 			data["date"] = item.Due
 			data["due"] = item.Due
@@ -476,7 +489,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			later, _ := time.Parse(time.RFC3339Nano, now)
 			_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
 		}
-	} else if e == nil {
+	} else if e == nil && !quiet {
 		msg := minutesMessage(count, total, labels)
 		if file {
 			msg = strings.Replace(msg, "会议纪要整理好了", "资料“"+clip(min.Title, 20)+"”整理好了", 1)
@@ -496,7 +509,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	log.Printf("recording=%s stage=summarizing completed elapsed=%s duration_s=%.3f items=%d", id, time.Since(started), audioSeconds(row), count)
 	if chat {
 		a.notify(uid, id, true, "小禾回复了", clip(reply, 120))
-	} else {
+	} else if !quiet {
 		doneTitle := "会议纪要整理好了"
 		if file {
 			doneTitle = "资料整理好了"
