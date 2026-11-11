@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { api, type Recording } from '@/lib/api'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Brief } from '@/components/Brief'
 import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
 import { Panel } from '@/components/Panel'
 import type { Sent } from '@/lib/recorder'
@@ -81,8 +82,9 @@ export default function Home() {
     if (!message || thinking) return
     follow.current = true
     setDraft(''); setMessages((p) => [...p, { role: 'user', content: message }]); setThinking(true)
+    // 演示模式用预设回复；登录后连不上就照实说，不拿演示内容充数
     let reply = BRIEF_ITEMS[0].reply
-    if (token) try { reply = (await api.chat(token, message)).reply || reply } catch { /* 离线用现有预设回复 */ }
+    if (token) try { reply = (await api.chat(token, message)).reply || '我没想出怎么回，换个说法再试一次。' } catch { reply = '现在连不上，这句没发出去。稍后再试一次。' }
     setMessages((p) => [...p, { role: 'assistant', content: reply }]); setThinking(false)
   }
   const pending = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending')
@@ -96,7 +98,7 @@ export default function Home() {
       <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
         onContentSizeChange={() => { if (follow.current) { follow.current = false; scroll.current?.scrollToEnd({ animated: true }) } }}>
         <Switcher onPress={() => setPanel(true)} />
-        {allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
+        {token ? <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
             <View style={s.head}>
               <Text style={ui.title}>{pending.length} 件事等你定</Text>
