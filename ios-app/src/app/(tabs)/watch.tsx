@@ -1,11 +1,12 @@
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
-import { useState } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
 import { ActionSheetIOS, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
 import type { ApiItem } from '@/lib/api'
 import { dueOf, recordingOf, str, titleOf, weekStart, when } from '@/lib/items'
+import { sceneLabel } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
 
@@ -15,6 +16,12 @@ export default function Watch() {
   const [draft, setDraft] = useState('')
   const [adding, setAdding] = useState(false)
   const [showDone, setShowDone] = useState(false)
+  // 进到这一页就同步一次，停留时每 20 秒再同步，不用手动下拉
+  useFocusEffect(useCallback(() => {
+    void refresh(true)
+    const t = setInterval(() => { void refresh(true) }, 20000)
+    return () => clearInterval(t)
+  }, [refresh]))
 
   const live = items.filter((i) => !i.deleted)
   const confirm = live.filter((i) => i.kind === 'idea' || i.kind === 'stash')
@@ -36,6 +43,12 @@ export default function Watch() {
     }
     if (i.kind === 'todo') acts.push({ text: i.data.done === true ? '还没办完' : '办完了', run: () => setDone(i.id, i.data.done !== true) })
     if (i.kind === 'watch') acts.push({ text: '改成我自己办', run: () => moveItem(i.id, 'todo', { done: false }) })
+    if (i.kind === 'todo' || i.kind === 'idea' || i.kind === 'watch') {
+      const kind = i.kind
+      const now = str(i.data.scene)
+      if (now !== 'work') acts.push({ text: '标为工作', run: () => moveItem(i.id, kind, { scene: 'work' }) })
+      if (now !== 'life') acts.push({ text: '标为生活', run: () => moveItem(i.id, kind, { scene: 'life' }) })
+    }
     if (recordingOf(i)) acts.push({ text: '看录音纪要', run: () => router.push({ pathname: '/minutes', params: { id: recordingOf(i) } }) })
     acts.push({ text: i.kind === 'stash' ? '拿回来' : i.kind === 'idea' ? '不用了' : '删除', run: () => deleteItem(i.id), bad: true })
     ActionSheetIOS.showActionSheetWithOptions(
@@ -54,6 +67,7 @@ export default function Watch() {
     const due = when(dueOf(i))
     const owner = str(i.data.owner)
     const parts: string[] = []
+    if (sceneLabel[str(i.data.scene)]) parts.push(sceneLabel[str(i.data.scene)])
     if (i.kind === 'watch') parts.push(owner && owner !== user?.name ? `等${owner}` : '我在盯')
     else if (owner && owner !== user?.name) parts.push(owner)
     if (str(i.data.note)) parts.push(str(i.data.note))
@@ -105,7 +119,7 @@ export default function Watch() {
         {confirm.length ? <>
           <GroupLabel top={8}>等你确认</GroupLabel>
           <Card>{confirm.map((i, n) => row(i, n, false))}</Card>
-          <Text style={s.note}>录音里提到、但没定下要办的事。点开看出处，长按安排或删掉。</Text>
+          <Text style={s.note}>录音里提到、但没定下要办的事。点开看出处，长按安排、改工作/生活标签或删掉。</Text>
         </> : null}
 
         <GroupLabel top={confirm.length ? 24 : 8}>我在办</GroupLabel>

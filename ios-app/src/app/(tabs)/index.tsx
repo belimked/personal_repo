@@ -2,9 +2,10 @@ import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
-import { AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { api, type Recording } from '@/lib/api'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Brief } from '@/components/Brief'
 import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
 import { Panel } from '@/components/Panel'
 import type { Sent } from '@/lib/recorder'
@@ -47,15 +48,16 @@ export default function Home() {
     const check = async () => {
       const got = await Promise.all(ids.map((id) => api.recording(token, id).then((r) => r.recording.status).catch(() => null)))
       if (!alive) return
+      const done = ids.filter((_, i) => got[i] === 'done')
+      // 先把对话拉回来再改状态：改状态会让这个 effect 重跑，先改的话下面的替换会被丢掉（0.9.3 里“已回复”但文字不变的原因）
+      const r = done.length ? await api.messages(token).catch(() => null) : null
+      if (!alive) return
       setVoices((v) => {
         const next = { ...v }
-        ids.forEach((id, i) => { const st = got[i]; if (st) next[id] = st })
+        ids.forEach((id, i) => { const st = got[i]; if (st && !(st === 'done' && !r)) next[id] = st })
         return next
       })
-      const done = ids.filter((_, i) => got[i] === 'done')
-      if (!done.length) return
-      const r = await api.messages(token).catch(() => null)
-      if (!r || !alive) return
+      if (!r) return
       follow.current = true
       const list = r.messages.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
       setMessages((p) => [...list, ...p.filter((m) => m.voice && !done.includes(m.voice.id))])
@@ -80,8 +82,9 @@ export default function Home() {
     if (!message || thinking) return
     follow.current = true
     setDraft(''); setMessages((p) => [...p, { role: 'user', content: message }]); setThinking(true)
+    // 演示模式用预设回复；登录后连不上就照实说，不拿演示内容充数
     let reply = BRIEF_ITEMS[0].reply
-    if (token) try { reply = (await api.chat(token, message)).reply || reply } catch { /* 离线用现有预设回复 */ }
+    if (token) try { reply = (await api.chat(token, message)).reply || '我没想出怎么回，换个说法再试一次。' } catch { reply = '现在连不上，这句没发出去。稍后再试一次。' }
     setMessages((p) => [...p, { role: 'assistant', content: reply }]); setThinking(false)
   }
   const pending = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending')
@@ -91,10 +94,11 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
         onContentSizeChange={() => { if (follow.current) { follow.current = false; scroll.current?.scrollToEnd({ animated: true }) } }}>
         <Switcher onPress={() => setPanel(true)} />
-        {allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
+        {token ? <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
             <View style={s.head}>
               <Text style={ui.title}>{pending.length} 件事等你定</Text>
@@ -128,12 +132,17 @@ export default function Home() {
         <View style={s.chat}>
           {messages.map((m, i) => m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
           {thinking ? <Text style={s.thinking}>小禾正在想…</Text> : null}
-          <View style={s.compose}>
-            <TextInput ref={input} style={s.input} value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} multiline />
-            <Pressable onPress={send} disabled={thinking || !draft.trim()}><Text style={[s.send, (!draft.trim() || thinking) && { color: c.t3 }]}>发送</Text></Pressable>
-          </View>
         </View>
       </ScrollView>
+      {/* 输入框固定在底部，不用滚到最下面找 */}
+      <View style={s.bar}>
+        <View style={s.compose}>
+          <TextInput ref={input} style={s.input} value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} multiline
+            onFocus={() => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 250)} />
+          <Pressable onPress={send} disabled={thinking || !draft.trim()} hitSlop={8}><Text style={[s.send, (!draft.trim() || thinking) && { color: c.t3 }]}>发送</Text></Pressable>
+        </View>
+      </View>
+      </KeyboardAvoidingView>
       <Panel visible={panel} onClose={() => setPanel(false)} onSettings={() => router.navigate('/me')} />
       <TalkOverlay />
     </SafeAreaView>
@@ -192,7 +201,8 @@ function Finished({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent)
 
 const s = StyleSheet.create({
   body: { flexGrow: 1, paddingHorizontal: 16 },
-  chat: { paddingTop: 16, paddingBottom: 20, gap: 8 },
+  chat: { paddingTop: 16, paddingBottom: 12, gap: 8 },
+  bar: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: c.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line },
   bubble: { maxWidth: '85%', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14 },
   mine: { alignSelf: 'flex-end', backgroundColor: c.accTint },
   assistant: { alignSelf: 'flex-start', backgroundColor: c.card },

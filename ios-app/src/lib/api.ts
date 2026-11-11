@@ -92,6 +92,7 @@ export const api = {
   transcript: (token: string, id: string) => request<Transcript>(`/recordings/${encodeURIComponent(id)}/transcript`, token),
   recordings: (token: string) => request<{ recordings: Recording[] }>('/recordings', token),
   retry: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}/retry`, token, 'POST', {}),
+  setScene: (token: string, id: string, scene: 'work' | 'life' | 'mixed') => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}/scene`, token, 'POST', { scene }),
   removeRecording: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}`, token, 'DELETE'),
   upload: uploadAudio,
   search: (token: string, q: string) => request<SearchResult>(`/search?q=${encodeURIComponent(q)}`, token),

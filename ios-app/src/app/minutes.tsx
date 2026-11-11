@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActionSheetIOS, ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Card, GroupLabel, Icon, ui } from '@/components/ui'
 import { api, ApiError, type Minutes, type Recording, type Transcript } from '@/lib/api'
@@ -60,6 +60,18 @@ export default function MinutesScreen() {
     if (!token || !rec) return
     try { await api.retry(token, rec.id); await load() } catch (e) { apply({ ...data, error: e instanceof Error ? e.message : '没能重试' }) }
   }
+  // 改标签：工作 / 生活 / 工作和生活。后台按新标签重新整理要办的事。
+  const relabel = () => {
+    if (!token || !rec || rec.status !== 'done') return
+    const opts = (['work', 'life', 'mixed'] as const).filter((k) => k !== rec.scene)
+    ActionSheetIOS.showActionSheetWithOptions({
+      title: '这份内容算哪一类？', message: '改了以后，我会按新的类别重新整理要办的事。',
+      options: [...opts.map((k) => sceneLabel[k]), '取消'], cancelButtonIndex: opts.length,
+    }, (n) => {
+      if (n >= opts.length) return
+      void api.setScene(token, rec.id, opts[n]).then(load).catch((e: Error) => apply({ ...data, error: e.message || '没能改标签' }))
+    })
+  }
   const list = (items?: string[]) => items?.length
     ? <Card>{items.map((t, i) => <View key={i} style={s.line}>{i > 0 && <View style={ui.sep} />}<Text style={s.text}>{t}</Text></View>)}</Card>
     : null
@@ -91,8 +103,11 @@ export default function MinutesScreen() {
           <Text style={ui.srcText}>{[
             new Date(rec.recorded_at || rec.created_at).toLocaleString('zh-CN', { hour12: false }),
             file ? fileType(rec.mime) : rec.duration_s ? clock(rec.duration_s * 1000) : '',
-            rec.scene ? sceneLabel[rec.scene] : '',
           ].filter(Boolean).join(' · ')}</Text>
+          {rec.status === 'done' ? <Pressable onPress={relabel} hitSlop={8} style={s.tag} accessibilityLabel="改标签">
+            <Text style={s.tagText}>{rec.scene ? sceneLabel[rec.scene] : '未分类'}</Text>
+            <Icon name="chevron.down" size={11} color={c.accInk} />
+          </Pressable> : null}
 
           {busy(rec) || rec.status === 'failed' ? <View style={s.status}>
             {busy(rec) ? <ActivityIndicator size="small" color={c.acc} /> : <Icon name="exclamationmark.circle" size={16} color={c.bad} />}
@@ -151,6 +166,8 @@ const s = StyleSheet.create({
   nav: { height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 44, width: 80 },
   mid: { fontSize: 17, fontWeight: '500', color: c.t1 },
+  tag: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, paddingHorizontal: 10, height: 28, borderRadius: 14, backgroundColor: c.accTint },
+  tagText: { fontSize: 13, color: c.accInk },
   status: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
   statusText: { fontSize: 15, color: c.t2, flexShrink: 1 },
   seg: { flexDirection: 'row', backgroundColor: c.raised, borderRadius: 9, padding: 2, marginTop: 20 },

@@ -3,13 +3,20 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { RealReview } from '@/components/RealReview'
 import { Button, Icon, ui } from '@/components/ui'
 import { BRIEF_ITEMS, type ItemState } from '@/lib/data'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
 
-/** 02 逐件过：一次一件，确认 / 改一改 / 不算问题；右滑或“稍后”暂存 */
+/** 02 逐件过：登录后过真实的待确认事项；演示模式用演示简报 */
 export default function Review() {
+  const { token } = useStore()
+  return token ? <RealReview /> : <DemoReview />
+}
+
+/** 演示：一次一件，确认 / 改一改 / 不算问题；右滑或“稍后”暂存 */
+function DemoReview() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const { states, setState, replies, setReply } = useStore()
   const queue = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending' || i.id === id)

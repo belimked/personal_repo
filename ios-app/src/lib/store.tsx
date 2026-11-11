@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import * as Notifications from 'expo-notifications'
 import { AppState } from 'react-native'
 import { api, ApiError, tokenStorage, type ApiItem, type Kind, type User } from './api'
 import { BRIEF_ITEMS, FACTS, WATCHING, type Fact, type ItemState } from './data'
@@ -17,7 +18,7 @@ interface Store {
   ready: boolean
   demo: boolean
   refreshing: boolean
-  refresh: () => Promise<void>
+  refresh: (silent?: boolean) => Promise<void>
   login: (email: string, password: string) => Promise<void>
   enterDemo: () => void
   logout: () => Promise<void>
@@ -113,9 +114,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }])
     queue({ id, kind, data: { ...old?.data, ...data } })
   }, [publish, queue])
-  const sync = useCallback(async (auth: string) => {
+  // silent：后台自动刷新，不显示下拉刷新的转圈
+  const sync = useCallback(async (auth: string, silent = false) => {
     if (tokenRef.current !== auth) return
-    setRefreshing(true)
+    if (!silent) setRefreshing(true)
     try {
       await Promise.all([...pending.current.keys()].map((id) => flush(id, auth)))
       let remote: ApiItem[]
@@ -145,7 +147,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch { /* 离线保持当前内容，保留 pending */ }
     finally { if (tokenRef.current === auth) setRefreshing(false) }
   }, [flush, publish, queue])
-  const refresh = useCallback(async () => { if (tokenRef.current) await sync(tokenRef.current) }, [sync])
+  const refresh = useCallback(async (silent = false) => { if (tokenRef.current) await sync(tokenRef.current, silent) }, [sync])
 
   useEffect(() => {
     let mounted = true
@@ -165,8 +167,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => { mounted = false }
   }, [sync])
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && tokenRef.current) void sync(tokenRef.current) })
-    return () => sub.remove()
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && tokenRef.current) void sync(tokenRef.current, true) })
+    // 收到推送（纪要、资料、语音回复整理好了）说明事项有变化，马上同步一次
+    const push = Notifications.addNotificationReceivedListener(() => { if (tokenRef.current) void sync(tokenRef.current, true) })
+    return () => { sub.remove(); push.remove() }
   }, [sync])
 
   const reset = useCallback(() => {
