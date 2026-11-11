@@ -20,6 +20,10 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		a.recordingRoutes(w, r, b, u)
 		return
 	}
+	if p == "/api/search" && m == "GET" {
+		a.search(w, r, str(uid))
+		return
+	}
 	if p == "/api/items" && m == "GET" {
 		kind, since := r.URL.Query().Get("kind"), r.URL.Query().Get("since")
 		if kind != "" && !kinds[kind] {
