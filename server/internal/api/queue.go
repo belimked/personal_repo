@@ -22,7 +22,7 @@ import (
 
 // Minutes generation reads long transcripts with thinking enabled; it needs
 // far more time and output room than interactive chat.
-var minutesLLM = llm.Options{Timeout: 3 * time.Minute, MaxTokens: 8000}
+var minutesLLM = llm.Options{Timeout: 4 * time.Minute, MaxTokens: 16000}
 
 func (a *API) Start(ctx context.Context) error {
 	result, e := a.DB.Exec("UPDATE recordings SET status=CASE WHEN status='transcribing' THEN 'queued' ELSE 'summarizing' END,updated_at=? WHERE status IN ('transcribing','summarizing')", Now())
@@ -367,8 +367,9 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			return
 		}
 		content = strings.TrimSpace(content)
-		content = strings.TrimPrefix(content, "```json")
-		content = strings.TrimSuffix(content, "```")
+		if i, j := strings.Index(content, "{"), strings.LastIndex(content, "}"); i >= 0 && j > i {
+			content = content[i : j+1]
+		}
 		e = json.Unmarshal([]byte(strings.TrimSpace(content)), &min)
 		if e != nil {
 			e = fmt.Errorf("invalid JSON (%T)", e)
