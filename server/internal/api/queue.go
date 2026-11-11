@@ -235,7 +235,7 @@ func (a *API) jobError(row map[string]any, stage string, offline bool, cause err
 			log.Printf("recording=%s stage=%s status_update_failed=%v", id, label, e)
 			return
 		}
-		a.notify(str(row["user_id"]), id, false, "")
+		a.notify(str(row["user_id"]), id, false, "", "")
 		return
 	}
 	if _, e := a.DB.Exec("UPDATE recordings SET status=?,attempts=?,next_try_at=?,updated_at=? WHERE id=?", stage, attempts, time.Now().UTC().Add(time.Duration(attempts)*time.Minute).Format("2006-01-02T15:04:05.000Z"), Now(), id); e != nil {
@@ -274,9 +274,17 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		Text    string `json:"text"`
 	}
 	json.Unmarshal([]byte(str(tr["segments"])), &segments)
+	speakers := map[int]bool{}
+	for _, s := range segments {
+		speakers[s.Speaker] = true
+	}
 	var lines []string
 	for _, s := range segments {
-		lines = append(lines, fmt.Sprintf("说话人 %d：%s", s.Speaker, s.Text))
+		if len(speakers) > 1 {
+			lines = append(lines, fmt.Sprintf("说话人 %d：%s", s.Speaker+1, s.Text))
+		} else {
+			lines = append(lines, s.Text)
+		}
 	}
 	if len(lines) == 0 {
 		lines = append(lines, str(tr["text"]))
@@ -293,43 +301,61 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	} else {
 		log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
 	}
-	prompt := minutesPrompt(scene, recordingDateHint(row), name)
-	if len([]rune(input)) > 40000 {
-		runes := []rune(input)
-		var partial []string
-		for start := 0; start < len(runes); start += 30000 {
-			end := start + 30000
-			if end > len(runes) {
-				end = len(runes)
-			}
-			piece, err := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}}, minutesLLM)
-			if err != nil {
-				a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", err))
-				return
-			}
-			partial = append(partial, piece)
-		}
-		input = "以下是各段整理结果，请合并去重并输出同样格式的最终 JSON：\n" + strings.Join(partial, "\n")
+	prompt := minutesPrompt(scene, speakerHint(len(speakers))+recordingDateHint(row), name)
+	// 按住“说一句”的语音：首次处理时像打字一样进首页对话并由小禾回答；重新生成时不再重复对话。
+	voice := str(row["kind"]) == "voice"
+	chat := voice && str(tr["minutes"]) == ""
+	spoken := strings.TrimSpace(str(tr["text"]))
+	if spoken == "" {
+		spoken = strings.Join(lines, "")
 	}
-	content, e := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}}, minutesLLM)
-	if e != nil {
-		a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", e))
-		return
+	var reply string
+	if chat {
+		reply = a.voiceReply(uid, name, spoken, row)
 	}
 	var min minutes
-	content = strings.TrimSpace(content)
-	content = strings.TrimPrefix(content, "```json")
-	content = strings.TrimSuffix(content, "```")
-	e = json.Unmarshal([]byte(strings.TrimSpace(content)), &min)
-	if e != nil {
-		e = fmt.Errorf("invalid JSON (%T)", e)
+	if voice && !scene.ExtractWork && !scene.ExtractLife {
+		min = minutes{Title: voiceTitle(spoken), Summary: spoken, Points: []string{}, Decisions: []string{}, Actions: []action{}}
+	} else {
+		if len([]rune(input)) > 40000 {
+			runes := []rune(input)
+			var partial []string
+			for start := 0; start < len(runes); start += 30000 {
+				end := start + 30000
+				if end > len(runes) {
+					end = len(runes)
+				}
+				piece, err := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}}, minutesLLM)
+				if err != nil {
+					a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", err))
+					return
+				}
+				partial = append(partial, piece)
+			}
+			input = "以下是各段整理结果，请合并去重并输出同样格式的最终 JSON：\n" + strings.Join(partial, "\n")
+		}
+		content, e := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}}, minutesLLM)
+		if e != nil {
+			a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", e))
+			return
+		}
+		content = strings.TrimSpace(content)
+		content = strings.TrimPrefix(content, "```json")
+		content = strings.TrimSuffix(content, "```")
+		e = json.Unmarshal([]byte(strings.TrimSpace(content)), &min)
+		if e != nil {
+			e = fmt.Errorf("invalid JSON (%T)", e)
+		}
+		if e == nil && min.Title == "" {
+			e = errors.New("missing title")
+		}
+		if e != nil {
+			a.jobError(row, "summarizing", false, fmt.Errorf("llm response JSON: %w", e))
+			return
+		}
 	}
-	if e == nil && min.Title == "" {
-		e = errors.New("missing title")
-	}
-	if e != nil {
-		a.jobError(row, "summarizing", false, fmt.Errorf("llm response JSON: %w", e))
-		return
+	if voice {
+		min.Title = voiceTitle(spoken)
 	}
 	raw, _ := json.Marshal(min)
 	tx, e := a.DB.Begin()
@@ -413,7 +439,16 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		}
 		_, e = tx.Exec("UPDATE recordings SET status='done',error=NULL,attempts=0,next_try_at=NULL,finished_at=?,updated_at=?,title=?,scene=?,scene_p=?,work_actions_p=?,life_actions_p=?,scene_model=? WHERE id=? AND status='summarizing'", now, now, min.Title, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, sceneModel, id)
 	}
-	if e == nil {
+	if e == nil && chat {
+		answer := reply
+		if count > 0 {
+			answer += "\n\n已记到事项：" + strings.Join(labels, "、")
+		}
+		if _, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", spoken, nil, now); e == nil {
+			later, _ := time.Parse(time.RFC3339Nano, now)
+			_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
+		}
+	} else if e == nil {
 		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", minutesMessage(count, total, labels), "deepseek-v4-pro", now)
 	}
 	if e != nil {
@@ -427,7 +462,11 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		return
 	}
 	log.Printf("recording=%s stage=summarizing completed elapsed=%s duration_s=%.3f items=%d", id, time.Since(started), audioSeconds(row), count)
-	a.notify(uid, id, true, minutesBody(count, total))
+	if chat {
+		a.notify(uid, id, true, "小禾回复了", clip(reply, 120))
+	} else {
+		a.notify(uid, id, true, "会议纪要整理好了", minutesBody(count, total))
+	}
 	_ = ctx
 }
 

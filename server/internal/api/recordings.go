@@ -46,7 +46,7 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 	}
 	if p == "/api/recordings" && m == "GET" {
 		since := r.URL.Query().Get("since")
-		rows, e := a.DB.Rows("SELECT id,title,mime,size_bytes,duration_s,status,error,recorded_at,created_at,updated_at,finished_at,audio_deleted_at,scene FROM recordings WHERE user_id=? AND (?='' OR updated_at>?) ORDER BY created_at DESC", uid, since, since)
+		rows, e := a.DB.Rows("SELECT id,title,mime,size_bytes,duration_s,status,error,recorded_at,created_at,updated_at,finished_at,audio_deleted_at,scene,kind FROM recordings WHERE user_id=? AND (?='' OR updated_at>?) ORDER BY created_at DESC", uid, since, since)
 		if e != nil {
 			a.internal(w)
 			return
@@ -168,6 +168,7 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 		return
 	}
 	var title, recorded, ext, typ, path string
+	kind := "meeting"
 	var size int64
 	found := false
 	id := ID()
@@ -186,15 +187,22 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 			return
 		}
 		switch part.FormName() {
-		case "title", "recorded_at":
+		case "title", "recorded_at", "kind":
 			raw, err := io.ReadAll(io.LimitReader(part, 1024))
 			if err != nil {
 				a.internal(w)
 				return
 			}
-			if part.FormName() == "title" {
+			switch part.FormName() {
+			case "title":
 				title = string(raw)
-			} else {
+			case "kind":
+				if string(raw) != "meeting" && string(raw) != "voice" {
+					fail(w, 400, "invalid_kind", "录音类型无效")
+					return
+				}
+				kind = string(raw)
+			default:
 				recorded = string(raw)
 			}
 		case "file":
@@ -265,13 +273,13 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 		return
 	}
 	now := Now()
-	_, e = a.DB.Exec("INSERT INTO recordings(id,user_id,title,mime,size_bytes,audio_path,status,recorded_at,created_at,updated_at) VALUES(?,?,?,?,?,?,'queued',?,?,?)", id, uid, title, typ, size, path, recorded, now, now)
+	_, e = a.DB.Exec("INSERT INTO recordings(id,user_id,title,mime,size_bytes,audio_path,status,recorded_at,created_at,updated_at,kind) VALUES(?,?,?,?,?,?,'queued',?,?,?,?)", id, uid, title, typ, size, path, recorded, now, now, kind)
 	if e != nil {
 		a.internal(w)
 		return
 	}
 	path = ""
-	send(w, 200, map[string]any{"recording": map[string]any{"id": id, "status": "queued", "title": title, "created_at": now}})
+	send(w, 200, map[string]any{"recording": map[string]any{"id": id, "status": "queued", "title": title, "created_at": now, "kind": kind}})
 }
 func (a *API) adminASR(w http.ResponseWriter) {
 	rows, e := a.DB.Rows("SELECT r.id,r.status,r.attempts,r.created_at,r.finished_at,r.duration_s,t.asr_elapsed_s FROM recordings r LEFT JOIN transcripts t ON t.recording_id=r.id ORDER BY r.created_at DESC LIMIT 20")

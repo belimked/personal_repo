@@ -103,7 +103,7 @@ func minutesMessage(added, total int, labels []string) string {
 	return "会议纪要整理好了，" + minutesBody(added, total)
 }
 
-func (a *API) notify(uid, id string, success bool, successBody string) {
+func (a *API) notify(uid, id string, success bool, successTitle, successBody string) {
 	if a.Push == nil {
 		log.Printf("recording=%s push skipped reason=not_configured", id)
 		return
@@ -121,7 +121,7 @@ func (a *API) notify(uid, id string, success bool, successBody string) {
 	statuses := map[string]int{}
 	title, body := "录音没能转写", "点开看原因，可以重试"
 	if success {
-		title = "会议纪要整理好了"
+		title = successTitle
 		body = successBody
 	}
 	payload, _ := json.Marshal(map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "recording_id": id, "body": map[string]string{"recording_id": id}})
