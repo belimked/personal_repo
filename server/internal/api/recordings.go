@@ -158,7 +158,7 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 }
 func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-		fail(w, 400, "invalid_file", "请上传音频文件")
+		fail(w, 400, "invalid_file", "请上传文件")
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxAudio+(1<<20))
@@ -197,25 +197,34 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 			case "title":
 				title = string(raw)
 			case "kind":
-				if string(raw) != "meeting" && string(raw) != "voice" {
-					fail(w, 400, "invalid_kind", "录音类型无效")
+				if string(raw) != "meeting" && string(raw) != "voice" && string(raw) != "file" {
+					fail(w, 400, "invalid_kind", "类型无效")
 					return
 				}
-				kind = string(raw)
+				if kind != "file" {
+					kind = string(raw)
+				}
 			default:
 				recorded = string(raw)
 			}
 		case "file":
 			if found {
-				fail(w, 400, "invalid_file", "只能上传一个音频文件")
+				fail(w, 400, "invalid_file", "一次只能上传一个文件")
 				return
 			}
 			found = true
 			ext = strings.ToLower(filepath.Ext(part.FileName()))
 			typ = audioTypes[ext]
+			if ft := fileTypes[ext]; ft != "" {
+				// 照片和文档按资料处理，不管表单里写的是什么录音类型
+				typ, kind = ft, "file"
+			} else if kind == "file" {
+				fail(w, 400, "invalid_file", "支持照片（jpg、png、heic）、PDF、Word（docx）和 txt")
+				return
+			}
 			declared, _, _ := mime.ParseMediaType(part.Header.Get("Content-Type"))
-			if typ == "" || declared != "" && declared != "application/octet-stream" && declared != typ && !(ext == ".m4a" && declared == "audio/x-m4a") && !(ext == ".wav" && declared == "audio/x-wav") {
-				fail(w, 400, "invalid_file", "不支持的音频类型")
+			if typ == "" || kind != "file" && declared != "" && declared != "application/octet-stream" && declared != typ && !(ext == ".m4a" && declared == "audio/x-m4a") && !(ext == ".wav" && declared == "audio/x-wav") {
+				fail(w, 400, "invalid_file", "不支持这种文件")
 				return
 			}
 			dir := a.AudioDir
@@ -239,12 +248,20 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 				a.internal(w)
 				return
 			}
+			if kind == "file" && size > maxFile {
+				fail(w, 413, "too_large", "文件超过 30 MB")
+				return
+			}
 			if size > maxAudio {
 				fail(w, 413, "too_large", "音频文件超过 95 MB")
 				return
 			}
 			if size == 0 {
-				fail(w, 400, "invalid_file", "音频文件为空")
+				fail(w, 400, "invalid_file", "文件是空的")
+				return
+			}
+			if kind == "file" && !sniff(path, ext) {
+				fail(w, 400, "invalid_file", "文件内容和类型对不上，可能已损坏")
 				return
 			}
 		default:
@@ -252,7 +269,7 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 		}
 	}
 	if !found {
-		fail(w, 400, "invalid_file", "请上传音频文件")
+		fail(w, 400, "invalid_file", "请上传文件")
 		return
 	}
 	if recorded != "" {
@@ -264,11 +281,20 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 	var count int
 	var duration float64
 	today := time.Now().UTC().Format("2006-01-02")
-	if e = a.DB.QueryRow("SELECT count(*),coalesce(sum(CASE WHEN duration_s IS NOT NULL AND duration_s>0 THEN duration_s ELSE size_bytes/4000.0 END),0) FROM recordings WHERE user_id=? AND created_at>=?", uid, today).Scan(&count, &duration); e != nil {
+	if kind == "file" {
+		if e = a.DB.QueryRow("SELECT count(*) FROM recordings WHERE user_id=? AND created_at>=? AND kind='file'", uid, today).Scan(&count); e != nil {
+			a.internal(w)
+			return
+		}
+		if count >= 50 {
+			fail(w, 429, "rate_limited", "今天交的资料已达上限（50 份）")
+			return
+		}
+	} else if e = a.DB.QueryRow("SELECT count(*),coalesce(sum(CASE WHEN duration_s IS NOT NULL AND duration_s>0 THEN duration_s ELSE size_bytes/4000.0 END),0) FROM recordings WHERE user_id=? AND created_at>=? AND kind<>'file'", uid, today).Scan(&count, &duration); e != nil {
 		a.internal(w)
 		return
 	}
-	if count >= 20 || duration+float64(size)/4000 > 5*3600 {
+	if kind != "file" && (count >= 20 || duration+float64(size)/4000 > 5*3600) {
 		fail(w, 429, "rate_limited", "今日录音上传已达上限")
 		return
 	}

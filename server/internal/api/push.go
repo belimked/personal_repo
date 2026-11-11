@@ -120,7 +120,7 @@ func (a *API) notify(uid, id string, success bool, successTitle, successBody str
 	}
 	statuses := map[string]int{}
 	title, body := "录音没能转写", "点开看原因，可以重试"
-	if success {
+	if success || successTitle != "" {
 		title = successTitle
 		body = successBody
 	}

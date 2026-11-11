@@ -169,7 +169,7 @@ func TestRecordingScenarios(t *testing.T) {
 	})
 	t.Run("类型不符", func(t *testing.T) {
 		f := newRecordingFixture(t)
-		code, _ := uploadTest(t, f.a, f.user, "bad.txt", []byte("bad"))
+		code, _ := uploadTest(t, f.a, f.user, "bad.exe", []byte("bad"))
 		expect(t, code, 400)
 	})
 	t.Run("成功全流程", func(t *testing.T) {
