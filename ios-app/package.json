@@ -1,6 +1,6 @@
 {
   "name": "daily-assistant-ios",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "main": "expo-router/entry",
   "private": true,
   "scripts": {
