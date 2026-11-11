@@ -16,6 +16,11 @@ export type Minutes = {
 export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number; kind?: 'meeting' | 'voice' }
 export type Transcript = { text: string; speakers: number | null; segments: { speaker?: number; text: string; start_ms?: number; end_ms?: number }[] | null }
 export type AudioFile = { uri: string; name: string; type: string }
+export type SearchResult = {
+  said: { type: 'recording' | 'chat'; recording_id?: string; title?: string; role?: string; at: string; snippet: string; start_ms?: number }[]
+  things: { id: string; kind: Kind; title: string; due: string; done: boolean; owner: string; recording_id?: string }[]
+  files: { recording_id: string; title: string; kind: string; at: string; duration_s: number | null; snippet?: string }[]
+}
 
 // Expo SDK 58 的全局 fetch（expo/fetch）不支持 { uri, name, type } 形式的文件，
 // 上传改用 React Native 自带的 XMLHttpRequest，由原生层按 uri 读取本地文件。
@@ -89,4 +94,5 @@ export const api = {
   retry: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}/retry`, token, 'POST', {}),
   removeRecording: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}`, token, 'DELETE'),
   upload: uploadAudio,
+  search: (token: string, q: string) => request<SearchResult>(`/search?q=${encodeURIComponent(q)}`, token),
 }
