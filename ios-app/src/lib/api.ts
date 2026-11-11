@@ -17,22 +17,28 @@ export type Recording = { id: string; title: string | null; status: 'queued' | '
 export type Transcript = { text: string; speakers: number | null; segments: { speaker?: number; text: string; start_ms?: number; end_ms?: number }[] | null }
 export type AudioFile = { uri: string; name: string; type: string }
 
-async function uploadAudio(token: string, file: AudioFile, recordedAt?: string, title?: string): Promise<{ recording: Recording }> {
+// Expo SDK 58 的全局 fetch（expo/fetch）不支持 { uri, name, type } 形式的文件，
+// 上传改用 React Native 自带的 XMLHttpRequest，由原生层按 uri 读取本地文件。
+function uploadAudio(token: string, file: AudioFile, recordedAt?: string, title?: string): Promise<{ recording: Recording }> {
   const form = new FormData()
   if (title) form.append('title', title)
   if (recordedAt) form.append('recorded_at', recordedAt)
   form.append('file', file as unknown as Blob)
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 10 * 60 * 1000)
-  try {
-    const response = await fetch(`${API_BASE}/recordings`, { method: 'POST', body: form, signal: controller.signal, headers: { Authorization: `Bearer ${token}` } })
-    const json = await response.json() as { recording: Recording; message?: string }
-    if (!response.ok) throw new ApiError(response.status, json.message ?? '上传失败')
-    return json
-  } catch (error) {
-    if (error instanceof ApiError) throw error
-    throw new ApiError(0, controller.signal.aborted ? '上传超时' : '网络不可用，上传失败')
-  } finally { clearTimeout(timer) }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API_BASE}/recordings`)
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.timeout = 10 * 60 * 1000
+    xhr.onload = () => {
+      let json: { recording?: Recording; message?: string } = {}
+      try { json = JSON.parse(xhr.responseText) } catch { /* 非 JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300 && json.recording) resolve({ recording: json.recording })
+      else reject(new ApiError(xhr.status, json.message ?? `上传失败（${xhr.status}）`))
+    }
+    xhr.onerror = () => reject(new ApiError(0, '网络不可用，上传失败'))
+    xhr.ontimeout = () => reject(new ApiError(0, '上传超时'))
+    xhr.send(form)
+  })
 }
 
 export class ApiError extends Error {
