@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
+import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import { api } from '@/lib/api'
+import { AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { api, type Recording } from '@/lib/api'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
 import { Panel } from '@/components/Panel'
@@ -21,29 +22,53 @@ export default function Home() {
   const say = () => input.current?.focus()
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number } }[]>([])
-  // 按住说的语音：后台转成文字后把原话和小禾的回答写进对话；处理完就重新拉对话，替换掉占位气泡。
-  // 失败的语音保留气泡，点开可在纪要页重试。
-  const [pendingVoice, setPendingVoice] = useState<string[]>([])
+  // 按住说的语音：记下每条的处理状态，气泡和按钮下方的提示跟着变；处理完重新拉对话，用原话 + 小禾的回答替换气泡。
+  // 失败的保留气泡，点开在纪要页重试。收到推送或回到前台时立刻查一次。
+  const [voices, setVoices] = useState<Record<string, Recording['status']>>({})
+  const [poke, setPoke] = useState(0)
+  const scroll = useRef<React.ElementRef<typeof ScrollView>>(null)
+  const follow = useRef(false)
   const voice = (sent: Sent) => {
+    follow.current = true
     setMessages((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
-    setPendingVoice((v) => [...v, sent.recording.id])
+    setVoices((v) => ({ ...v, [sent.recording.id]: 'queued' }))
   }
+  const waiting = Object.keys(voices).filter((id) => voices[id] !== 'done' && voices[id] !== 'failed')
+  const waitKey = waiting.join(',')
   useEffect(() => {
-    if (!token || !pendingVoice.length) return
-    const t = setInterval(async () => {
-      const states = await Promise.all(pendingVoice.map((id) => api.recording(token, id).then((r) => r.recording.status).catch(() => 'queued')))
-      const done = pendingVoice.filter((_, i) => states[i] === 'done')
-      const settled = pendingVoice.filter((_, i) => states[i] === 'done' || states[i] === 'failed')
-      if (!settled.length) return
-      setPendingVoice((v) => v.filter((id) => !settled.includes(id)))
+    const a = Notifications.addNotificationReceivedListener(() => setPoke((n) => n + 1))
+    const b = AppState.addEventListener('change', (st) => { if (st === 'active') setPoke((n) => n + 1) })
+    return () => { a.remove(); b.remove() }
+  }, [])
+  useEffect(() => {
+    if (!token || !waitKey) return
+    const ids = waitKey.split(',')
+    let alive = true
+    const check = async () => {
+      const got = await Promise.all(ids.map((id) => api.recording(token, id).then((r) => r.recording.status).catch(() => null)))
+      if (!alive) return
+      setVoices((v) => {
+        const next = { ...v }
+        ids.forEach((id, i) => { const st = got[i]; if (st) next[id] = st })
+        return next
+      })
+      const done = ids.filter((_, i) => got[i] === 'done')
       if (!done.length) return
       const r = await api.messages(token).catch(() => null)
-      if (!r) return
+      if (!r || !alive) return
+      follow.current = true
       const list = r.messages.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
       setMessages((p) => [...list, ...p.filter((m) => m.voice && !done.includes(m.voice.id))])
-    }, 4000)
-    return () => clearInterval(t)
-  }, [pendingVoice, token])
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }
+    void check()
+    const t = setInterval(() => { void check() }, 3000)
+    return () => { alive = false; clearInterval(t) }
+  }, [waitKey, token, poke])
+  const lastVoice = Object.keys(voices).at(-1)
+  const voiceTip = waiting.length
+    ? voices[waiting[waiting.length - 1]] === 'summarizing' ? '听清了，小禾正在想怎么回你…' : '语音已发出，正在转成文字…'
+    : lastVoice && voices[lastVoice] === 'failed' ? '这条语音没能处理，点下方气泡重试' : ''
   const [thinking, setThinking] = useState(false)
   useEffect(() => {
     let current = true
@@ -53,6 +78,7 @@ export default function Home() {
   const send = async () => {
     const message = draft.trim()
     if (!message || thinking) return
+    follow.current = true
     setDraft(''); setMessages((p) => [...p, { role: 'user', content: message }]); setThinking(true)
     let reply = BRIEF_ITEMS[0].reply
     if (token) try { reply = (await api.chat(token, message)).reply || reply } catch { /* 离线用现有预设回复 */ }
@@ -65,9 +91,10 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={s.body} bounces={false}>
+      <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false}
+        onContentSizeChange={() => { if (follow.current) { follow.current = false; scroll.current?.scrollToEnd({ animated: true }) } }}>
         <Switcher onPress={() => setPanel(true)} />
-        {allDone ? <Finished onSay={say} onSent={voice} /> : (
+        {allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
             <View style={s.head}>
               <Text style={ui.title}>{pending.length} 件事等你定</Text>
@@ -95,11 +122,11 @@ export default function Home() {
               <Button title="开始" onPress={() => open()} />
               <HoldToTalk title="说一句" onTap={say} onSent={voice} />
             </View>
-            <Text style={s.foot}>另有 7 件我在办，不用你管</Text>
+            {voiceTip ? <Text style={[s.foot, s.tip]}>{voiceTip}</Text> : <Text style={s.foot}>另有 7 件我在办，不用你管</Text>}
           </>
         )}
         <View style={s.chat}>
-          {messages.map((m, i) => m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
+          {messages.map((m, i) => m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
           {thinking ? <Text style={s.thinking}>小禾正在想…</Text> : null}
           <View style={s.compose}>
             <TextInput ref={input} style={s.input} value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} multiline />
@@ -122,7 +149,7 @@ function BriefTop() {
   )
 }
 
-function Finished({ onSay, onSent }: { onSay: () => void; onSent: (s: Sent) => void }) {
+function Finished({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent) => void; tip: string }) {
   const { states } = useStore()
   const done = BRIEF_ITEMS.filter((i) => states[i.id] === 'done').length
   const later = BRIEF_ITEMS.length - done
@@ -158,6 +185,7 @@ function Finished({ onSay, onSent }: { onSay: () => void; onSent: (s: Sent) => v
       <View style={s.actions}>
         <HoldToTalk title="有别的事，说一句" style={{ flex: 1 }} onTap={onSay} onSent={onSent} />
       </View>
+      {tip ? <Text style={[s.foot, s.tip]}>{tip}</Text> : null}
     </>
   )
 }
@@ -184,6 +212,7 @@ const s = StyleSheet.create({
   meta: { fontSize: 13, lineHeight: 24, color: c.t2 },
   actions: { flexDirection: 'row', gap: 12, paddingTop: 16, paddingBottom: 12 },
   foot: { fontSize: 13, lineHeight: 18, color: c.t3, textAlign: 'center', paddingBottom: 12 },
+  tip: { color: c.accInk },
   done: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: c.ok, alignItems: 'center', justifyContent: 'center' },
   state: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stateText: { fontSize: 13, lineHeight: 18, color: c.t3 },

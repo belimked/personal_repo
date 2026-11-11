@@ -16,7 +16,6 @@ export default function TabLayout() {
         tabBarStyle: { backgroundColor: 'rgba(249,249,251,0.96)', borderTopColor: c.line },
       }}>
       <Tabs.Screen name="index" options={{ title: '管家', tabBarIcon: ({ color, focused }) => <Icon name={focused ? 'house.fill' : 'house'} size={24} color={String(color)} /> }} />
-      <Tabs.Screen name="records" options={{ title: '录音', tabBarIcon: ({ color, focused }) => <Icon name={focused ? 'waveform.circle.fill' : 'waveform.circle'} size={24} color={String(color)} /> }} />
       <Tabs.Screen name="watch" options={{ title: '盯着', tabBarIcon: ({ color, focused }) => <Icon name={focused ? 'eye.fill' : 'eye'} size={24} color={String(color)} /> }} />
       <Tabs.Screen name="me" options={{ title: '我的', tabBarIcon: ({ color, focused }) => <Icon name={focused ? 'person.fill' : 'person'} size={24} color={String(color)} /> }} />
     </Tabs>

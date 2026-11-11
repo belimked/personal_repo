@@ -1,83 +1,174 @@
+import * as Haptics from 'expo-haptics'
+import { router } from 'expo-router'
 import { useState } from 'react'
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { ActionSheetIOS, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Card, GroupLabel, ui } from '@/components/ui'
+import { Card, GroupLabel, Icon, ui } from '@/components/ui'
+import type { ApiItem } from '@/lib/api'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
-import type { ApiItem, Kind } from '@/lib/api'
 
-const titleOf = (i: ApiItem) => typeof i.data.title === 'string' ? i.data.title : typeof i.data.text === 'string' ? i.data.text : '未命名'
+const str = (v: unknown) => typeof v === 'string' ? v : ''
+const titleOf = (i: ApiItem) => str(i.data.title) || str(i.data.text) || '未命名'
+const recordingOf = (i: ApiItem) => {
+  const src = i.data.source as { type?: string; recording_id?: string } | undefined
+  return src?.type === 'recording' && src.recording_id ? src.recording_id : ''
+}
+const dueOf = (i: ApiItem) => str(i.data.due) || str(i.data.date) || str(i.data.remind_at).slice(0, 10)
+const weekStart = () => {
+  const d = new Date(); d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return d
+}
+/** 截止日写成“今天 / 明天 / 周五 / 11月20日”，过期标红 */
+function when(due: string): { text: string; late: boolean } {
+  if (!due) return { text: '', late: false }
+  const d = new Date(due.slice(0, 10) + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return { text: due, late: false }
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const days = Math.round((d.getTime() - today.getTime()) / 86400000)
+  if (days < 0) return { text: `${-days} 天前到期`, late: true }
+  if (days === 0) return { text: '今天', late: false }
+  if (days === 1) return { text: '明天', late: false }
+  if (days < 7) return { text: '周' + '日一二三四五六'[d.getDay()], late: false }
+  return { text: `${d.getMonth() + 1}月${d.getDate()}日`, late: false }
+}
 
-/** 盯着及用户自己的待办、想法和暂存。演示模式保留原有预设列表。 */
+/** 04 盯着：等你确认 / 我在办 / 本周办完。一件事只在一个地方。 */
 export default function Watch() {
-  const { watching, items, token, refreshing, refresh, addItem, setDone, deleteItem } = useStore()
-  const [drafts, setDrafts] = useState<Record<string, string>>({})
-  const sections: { kind: 'todo' | 'idea' | 'stash' | 'watch'; label: string; placeholder?: string }[] = [
-    { kind: 'todo', label: '待办', placeholder: '记一条待办' },
-    { kind: 'idea', label: '想法', placeholder: '记一个想法' },
-    { kind: 'stash', label: '先放着' },
-    { kind: 'watch', label: '盯着的事', placeholder: '要盯着什么？' },
-  ]
-  const confirmDelete = (i: ApiItem) => Alert.alert(i.kind === 'stash' ? '拿回来？' : '删除这条？', titleOf(i), [
-    { text: '取消', style: 'cancel' },
-    { text: i.kind === 'stash' ? '拿回来' : '删除', style: 'destructive', onPress: () => deleteItem(i.id) },
-  ])
-  const submit = (kind: Kind) => {
-    const title = drafts[kind]?.trim()
-    if (!title || kind === 'stash' || kind === 'file' || kind === 'fact' || kind === 'setting') return
-    addItem(kind, title)
-    setDrafts((p) => ({ ...p, [kind]: '' }))
+  const { watching, items, token, user, refreshing, refresh, addItem, setDone, deleteItem, moveItem } = useStore()
+  const [draft, setDraft] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [showDone, setShowDone] = useState(false)
+
+  const live = items.filter((i) => !i.deleted)
+  const confirm = live.filter((i) => i.kind === 'idea' || i.kind === 'stash')
+  const doing = live.filter((i) => (i.kind === 'todo' && i.data.done !== true && !i.data.state) || i.kind === 'watch')
+    .sort((a, b) => (dueOf(a) || '9999').localeCompare(dueOf(b) || '9999'))
+  const since = weekStart().toISOString()
+  const done = live.filter((i) => i.kind === 'todo' && i.data.done === true && !i.data.state && (str(i.data.done_at) || i.updated_at) >= since)
+
+  const open = (i: ApiItem) => {
+    const rec = recordingOf(i)
+    if (rec) { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id: rec } }) }
+    else more(i)
   }
+  const more = (i: ApiItem) => {
+    const acts: { text: string; run: () => void; bad?: boolean }[] = []
+    if (i.kind === 'idea') {
+      acts.push({ text: '安排成待办', run: () => moveItem(i.id, 'todo', { done: false }) })
+      acts.push({ text: '交给小禾盯着', run: () => moveItem(i.id, 'watch') })
+    }
+    if (i.kind === 'todo') acts.push({ text: i.data.done === true ? '还没办完' : '办完了', run: () => setDone(i.id, i.data.done !== true) })
+    if (i.kind === 'watch') acts.push({ text: '改成我自己办', run: () => moveItem(i.id, 'todo', { done: false }) })
+    if (recordingOf(i)) acts.push({ text: '看录音纪要', run: () => router.push({ pathname: '/minutes', params: { id: recordingOf(i) } }) })
+    acts.push({ text: i.kind === 'stash' ? '拿回来' : i.kind === 'idea' ? '不用了' : '删除', run: () => deleteItem(i.id), bad: true })
+    ActionSheetIOS.showActionSheetWithOptions(
+      { title: titleOf(i), options: [...acts.map((a) => a.text), '取消'], cancelButtonIndex: acts.length, destructiveButtonIndex: acts.findIndex((a) => a.bad) },
+      (n) => { if (n < acts.length) { Haptics.selectionAsync(); acts[n].run() } },
+    )
+  }
+  const submit = () => {
+    const t = draft.trim()
+    if (!t) { setAdding(false); return }
+    addItem('todo', t); setDraft(''); setAdding(false)
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+  }
+
+  const meta = (i: ApiItem) => {
+    const due = when(dueOf(i))
+    const owner = str(i.data.owner)
+    const parts: string[] = []
+    if (i.kind === 'watch') parts.push(owner && owner !== user?.name ? `等${owner}` : '我在盯')
+    else if (owner && owner !== user?.name) parts.push(owner)
+    if (str(i.data.note)) parts.push(str(i.data.note))
+    if (recordingOf(i)) parts.push('来自录音')
+    return { text: parts.join(' · '), due }
+  }
+  const row = (i: ApiItem, index: number, check: boolean) => {
+    const m = meta(i)
+    const finished = i.data.done === true
+    return (
+      <Pressable key={i.id} onPress={() => open(i)} onLongPress={() => more(i)} style={({ pressed }) => [s.row, pressed && { backgroundColor: c.raised }]}>
+        {index > 0 && <View style={[ui.sep, check && { left: 50 }]} />}
+        {check ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: finished }} hitSlop={10}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDone(i.id, !finished) }} style={[s.check, finished && s.checked]}>
+          {finished ? <Icon name="checkmark" size={12} color="#fff" weight="bold" /> : null}
+        </Pressable> : <View style={s.dot}><Icon name={i.kind === 'watch' ? 'eye' : 'lightbulb'} size={15} color={c.t3} /></View>}
+        <View style={{ flex: 1 }}>
+          <Text style={[s.t, finished && { color: c.t3, textDecorationLine: 'line-through' }]} numberOfLines={2}>{titleOf(i)}</Text>
+          {m.text ? <Text style={s.n} numberOfLines={1}>{m.text}</Text> : null}
+        </View>
+        {m.due.text && !finished ? <Text style={[s.due, m.due.late && { color: c.bad }]}>{m.due.text}</Text> : null}
+      </Pressable>
+    )
+  }
+
+  if (!token) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
+          <View style={s.head}><Text style={ui.title}>盯着</Text><Text style={ui.lede}>这 {watching.length} 件我在办，有变化再告诉你</Text></View>
+          <Card>{watching.map((w, i) => <View key={w.title} style={s.row}>
+            {i > 0 && <View style={ui.sep} />}
+            <View style={{ flex: 1 }}><Text style={s.t}>{w.title}</Text><Text style={s.n}>{w.note}</Text></View>
+          </View>)}</Card>
+        </ScrollView>
+      </SafeAreaView>
+    )
+  }
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }} refreshControl={token ? <RefreshControl refreshing={refreshing} onRefresh={() => { void refresh() }} /> : undefined}>
-        <View style={{ paddingHorizontal: 4, paddingTop: 12, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void refresh() }} />}>
+        <View style={s.head}>
           <Text style={ui.title}>盯着</Text>
-          <Text style={ui.lede}>这 {watching.length} 件我在办，有变化再告诉你</Text>
+          <Text style={ui.lede}>{confirm.length ? `${confirm.length} 件等你定，` : ''}{doing.length} 件在办{done.length ? `，本周办完 ${done.length} 件` : ''}</Text>
         </View>
-        {token ? sections.map(({ kind, label, placeholder }) => {
-          const list = items.filter((i) => i.kind === kind && !i.deleted)
-          return <View key={kind}>
-            <GroupLabel>{label}</GroupLabel>
-            <Card>
-              {list.length ? list.map((i, index) => <View key={i.id} style={s.row}>
-                {index > 0 && <View style={ui.sep} />}
-                <View style={s.line}>
-                  {kind === 'todo' ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: i.data.done === true }} onPress={() => setDone(i.id, i.data.done !== true)} hitSlop={8} style={[s.check, i.data.done === true && s.checked]}><Text style={s.tick}>{i.data.done === true ? '✓' : ''}</Text></Pressable> : null}
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.t, i.data.done === true && { color: c.t3, textDecorationLine: 'line-through' }]}>{titleOf(i)}</Text>
-                    {kind === 'todo' && typeof i.data.remind_at === 'string' ? <Text style={s.n}>提醒：{i.data.remind_at.replace('T', ' ').slice(0, 16)}</Text> : null}
-                    {kind === 'watch' && typeof i.data.note === 'string' && i.data.note ? <Text style={s.n}>{i.data.note}</Text> : null}
-                    {kind === 'stash' && typeof i.data.until === 'string' ? <Text style={s.n}>放到 {i.data.until.slice(0, 10)}</Text> : null}
-                  </View>
-                  <Pressable onPress={() => confirmDelete(i)} onLongPress={() => confirmDelete(i)} hitSlop={8} accessibilityLabel={kind === 'stash' ? '拿回来' : '删除'}><Text style={s.action}>{kind === 'stash' ? '拿回来' : '删除'}</Text></Pressable>
-                </View>
-              </View>) : <View style={s.row}><Text style={s.n}>{kind === 'watch' ? '还没有盯着的事' : `还没有${label}`}</Text></View>}
-              {placeholder ? <View style={s.add}>
-                <TextInput style={s.input} value={drafts[kind] ?? ''} onChangeText={(text) => setDrafts((p) => ({ ...p, [kind]: text }))} placeholder={placeholder} placeholderTextColor={c.t3} returnKeyType="done" onSubmitEditing={() => submit(kind)} />
-                <Pressable onPress={() => submit(kind)} accessibilityLabel={`新增${label}`}><Text style={s.action}>添加</Text></Pressable>
-              </View> : null}
-            </Card>
-          </View>
-        }) : <Card>{watching.map((w, i) => <View key={w.title} style={s.row}>
-          {i > 0 && <View style={ui.sep} />}
-          <Text style={s.t}>{w.title}</Text>
-          <Text style={s.n}>{w.note}</Text>
-        </View>)}</Card>}
+
+        {confirm.length ? <>
+          <GroupLabel top={8}>等你确认</GroupLabel>
+          <Card>{confirm.map((i, n) => row(i, n, false))}</Card>
+          <Text style={s.note}>录音里提到、但没定下要办的事。点开看出处，长按安排或删掉。</Text>
+        </> : null}
+
+        <GroupLabel top={confirm.length ? 24 : 8}>我在办</GroupLabel>
+        <Card>
+          {doing.length ? doing.map((i, n) => row(i, n, i.kind === 'todo')) : <View style={s.row}><Text style={[s.n, { marginTop: 0 }]}>你交给我的事会在这里，我替你盯着</Text></View>}
+          {adding ? <View style={s.add}>
+            <TextInput autoFocus style={s.input} value={draft} onChangeText={setDraft} placeholder="要办的事，比如：周五前交报销单" placeholderTextColor={c.t3}
+              returnKeyType="done" onSubmitEditing={submit} onBlur={() => { if (!draft.trim()) setAdding(false) }} />
+            <Pressable onPress={submit} hitSlop={8}><Text style={s.action}>添加</Text></Pressable>
+          </View> : <Pressable onPress={() => setAdding(true)} style={({ pressed }) => [s.add, pressed && { backgroundColor: c.raised }]}>
+            <Icon name="plus" size={15} color={c.accInk} /><Text style={[s.action, { flex: 1 }]}>记一件事</Text>
+          </Pressable>}
+        </Card>
+
+        {done.length ? <>
+          <Pressable onPress={() => setShowDone((v) => !v)} style={s.doneHead} hitSlop={6}>
+            <Text style={ui.groupLabel}>本周办完 {done.length} 件</Text>
+            <Icon name={showDone ? 'chevron.up' : 'chevron.down'} size={12} color={c.t3} />
+          </Pressable>
+          {showDone ? <Card>{done.map((i, n) => row(i, n, true))}</Card> : null}
+        </> : null}
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 const s = StyleSheet.create({
-  row: { paddingVertical: 12, paddingHorizontal: 16 },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  head: { paddingHorizontal: 4, paddingTop: 12, paddingBottom: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, minHeight: 56 },
   t: { fontSize: 17, lineHeight: 24, color: c.t1 },
   n: { fontSize: 13, lineHeight: 18, color: c.t3, marginTop: 2 },
-  action: { fontSize: 15, color: c.accInk, paddingVertical: 4 },
-  check: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: c.t3, alignItems: 'center', justifyContent: 'center' },
+  due: { fontSize: 13, color: c.t2 },
+  dot: { width: 22, alignItems: 'center' },
+  check: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: c.chev, alignItems: 'center', justifyContent: 'center' },
   checked: { backgroundColor: c.acc, borderColor: c.acc },
-  tick: { color: c.card, fontSize: 14 },
-  add: { flexDirection: 'row', alignItems: 'center', gap: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line, paddingHorizontal: 16 },
+  add: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line },
   input: { flex: 1, fontSize: 15, color: c.t1, paddingVertical: 12 },
+  action: { fontSize: 15, color: c.accInk },
+  note: { fontSize: 13, lineHeight: 18, color: c.t3, paddingHorizontal: 16, paddingTop: 8 },
+  doneHead: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 16 },
 })

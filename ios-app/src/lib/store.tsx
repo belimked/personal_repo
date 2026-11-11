@@ -23,11 +23,15 @@ interface Store {
   logout: () => Promise<void>
   addItem: (kind: 'todo' | 'idea' | 'watch', title: string) => void
   setDone: (id: string, done: boolean) => void
+  /** 改类型或补字段，例如把“想做的事”安排成待办 */
+  moveItem: (id: string, kind: 'todo' | 'idea' | 'watch', patch?: Record<string, unknown>) => void
   deleteItem: (id: string) => void
   setState: (id: string, s: ItemState) => void
   setReply: (id: string, text: string) => void
   removeFact: (id: string) => void
   setGeneralMode: (v: boolean) => void
+  /** 用户偏好，存成 setting 事项，多端同步 */
+  setSetting: (key: string, value: unknown) => void
   reset: () => void
 }
 
@@ -188,7 +192,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addItem: (kind, title) => { if (tokenRef.current && title.trim()) upsert(Crypto.randomUUID(), kind, { title: title.trim(), ...(kind === 'todo' ? { done: false } : kind === 'watch' ? { note: '' } : {}) }) },
     setDone: (id, done) => {
       const item = itemsRef.current.find((i) => i.id === id)
-      if (tokenRef.current && item) upsert(id, item.kind, { done })
+      if (tokenRef.current && item) upsert(id, item.kind, { done, done_at: done ? new Date().toISOString() : null })
+    },
+    moveItem: (id, kind, patch = {}) => {
+      const item = itemsRef.current.find((i) => i.id === id)
+      if (tokenRef.current && item) upsert(id, kind, patch)
     },
     deleteItem: (id) => {
       const item = itemsRef.current.find((i) => i.id === id)
@@ -223,6 +231,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setGeneralModeLocal(v)
       if (tokenRef.current) upsert('setting-generalMode', 'setting', { key: 'generalMode', value: v })
     },
+    setSetting: (key, value) => { if (tokenRef.current) upsert(`setting-${key}`, 'setting', { key, value }) },
     reset,
   }), [states, replies, facts, watching, items, generalMode, token, user, ready, demo, refreshing, refresh, reset, sync, upsert, publish, queue])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

@@ -12,7 +12,7 @@ import { c, mono } from '@/lib/theme'
 const busy = (r: Recording) => r.status === 'queued' || r.status === 'transcribing' || r.status === 'summarizing'
 const when = (r: Recording) => new Date(r.recorded_at || r.created_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
 
-/** 录音：录会议、导入音频、看每段录音的进度 */
+/** 录音（我的 › 录音）：录会议、导入音频、看历史录音和进度 */
 export default function Records() {
   const { token, demo } = useStore()
   const rec = useRecorder()
@@ -51,7 +51,11 @@ export default function Records() {
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { setLoading(true); reload() }} />}>
-        <View style={{ paddingHorizontal: 4, paddingTop: 12, paddingBottom: 16 }}>
+        <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/me')} hitSlop={8} style={s.back}>
+          <Icon name="chevron.left" size={20} color={c.accInk} weight="semibold" />
+          <Text style={{ fontSize: 17, color: c.accInk }}>我的</Text>
+        </Pressable>
+        <View style={{ paddingHorizontal: 4, paddingTop: 4, paddingBottom: 16 }}>
           <Text style={ui.title}>录音</Text>
           <Text style={ui.lede}>开会时录下来，我转成文字、整理纪要，要办的事直接记上。</Text>
         </View>
@@ -98,6 +102,7 @@ export default function Records() {
 }
 
 const s = StyleSheet.create({
+  back: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 44, alignSelf: 'flex-start' },
   recCard: { alignItems: 'center', paddingTop: 24, paddingBottom: 8, paddingHorizontal: 16 },
   live: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.bad },
