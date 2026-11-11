@@ -27,6 +27,7 @@ type API struct {
 	Origins          []string
 	AudioDir         string
 	ASRURL, ASRToken string
+	OCRURL           string
 	Push             *Push
 	Jev              Jev
 }

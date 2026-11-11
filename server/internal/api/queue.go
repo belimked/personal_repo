@@ -82,12 +82,31 @@ func (a *API) ProcessOne(ctx context.Context) {
 	if status == "queued" {
 		started := time.Now()
 		log.Printf("recording=%s stage=transcribing started duration_s=%.3f", id, audioSeconds(row))
-		res, offline, err := a.transcribe(ctx, row)
+		var res asrResponse
+		var segments []byte
+		var offline bool
+		var err error
+		if str(row["kind"]) == "file" {
+			var segs []fileSeg
+			res, segs, offline, err = a.extract(ctx, row)
+			var bad unreadable
+			if errors.As(err, &bad) {
+				a.failNow(row, string(bad))
+				return
+			}
+			segments, _ = json.Marshal(segs)
+		} else {
+			res, offline, err = a.transcribe(ctx, row)
+			segments, _ = json.Marshal(res.Segments)
+		}
 		if err != nil {
 			a.jobError(row, "queued", offline, err)
 			return
 		}
-		segments, _ := json.Marshal(res.Segments)
+		var duration any
+		if res.Duration > 0 {
+			duration = res.Duration
+		}
 		tx, e := a.DB.Begin()
 		if e != nil {
 			a.jobError(row, "queued", false, fmt.Errorf("store transcribe begin: %w", e))
@@ -100,7 +119,7 @@ func (a *API) ProcessOne(ctx context.Context) {
 		}
 		_, e = tx.Exec("INSERT INTO transcripts(recording_id,text,segments,speakers,asr_model,asr_elapsed_s,created_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(recording_id) DO UPDATE SET text=excluded.text,segments=excluded.segments,speakers=excluded.speakers,asr_model=excluded.asr_model,asr_elapsed_s=excluded.asr_elapsed_s", id, res.Text, string(segments), res.Speakers, res.Model, res.Elapsed, Now())
 		if e == nil {
-			_, e = tx.Exec("UPDATE recordings SET status='summarizing',attempts=0,duration_s=?,updated_at=? WHERE id=?", res.Duration, Now(), id)
+			_, e = tx.Exec("UPDATE recordings SET status='summarizing',attempts=0,duration_s=?,updated_at=? WHERE id=?", duration, Now(), id)
 		}
 		if e != nil {
 			tx.Rollback()
@@ -235,7 +254,11 @@ func (a *API) jobError(row map[string]any, stage string, offline bool, cause err
 			log.Printf("recording=%s stage=%s status_update_failed=%v", id, label, e)
 			return
 		}
-		a.notify(str(row["user_id"]), id, false, "", "")
+		if str(row["kind"]) == "file" {
+			a.notify(str(row["user_id"]), id, false, "资料没能处理", "点开看原因，可以重试")
+		} else {
+			a.notify(str(row["user_id"]), id, false, "", "")
+		}
 		return
 	}
 	if _, e := a.DB.Exec("UPDATE recordings SET status=?,attempts=?,next_try_at=?,updated_at=? WHERE id=?", stage, attempts, time.Now().UTC().Add(time.Duration(attempts)*time.Minute).Format("2006-01-02T15:04:05.000Z"), Now(), id); e != nil {
@@ -302,6 +325,10 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
 	}
 	prompt := minutesPrompt(scene, speakerHint(len(speakers))+recordingDateHint(row), name)
+	file := str(row["kind"]) == "file"
+	if file {
+		prompt = filePrompt(scene, row, name)
+	}
 	// 按住“说一句”的语音：首次处理时像打字一样进首页对话并由小禾回答；重新生成时不再重复对话。
 	voice := str(row["kind"]) == "voice"
 	chat := voice && str(tr["minutes"]) == ""
@@ -449,7 +476,11 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
 		}
 	} else if e == nil {
-		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", minutesMessage(count, total, labels), "deepseek-v4-pro", now)
+		msg := minutesMessage(count, total, labels)
+		if file {
+			msg = strings.Replace(msg, "会议纪要整理好了", "资料“"+clip(min.Title, 20)+"”整理好了", 1)
+		}
+		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", msg, "deepseek-v4-pro", now)
 	}
 	if e != nil {
 		tx.Rollback()
@@ -465,7 +496,11 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	if chat {
 		a.notify(uid, id, true, "小禾回复了", clip(reply, 120))
 	} else {
-		a.notify(uid, id, true, "会议纪要整理好了", minutesBody(count, total))
+		doneTitle := "会议纪要整理好了"
+		if file {
+			doneTitle = "资料整理好了"
+		}
+		a.notify(uid, id, true, doneTitle, minutesBody(count, total))
 	}
 	_ = ctx
 }
@@ -502,7 +537,7 @@ func (a *API) CleanupAudio() {
 			days = n
 		}
 	}
-	rows, e := a.DB.Rows("SELECT id,audio_path FROM recordings WHERE audio_path IS NOT NULL AND ((status='done' AND finished_at<?) OR (status='failed' AND finished_at<?))", time.Now().UTC().AddDate(0, 0, -days).Format("2006-01-02T15:04:05.000Z"), time.Now().UTC().AddDate(0, 0, -30).Format("2006-01-02T15:04:05.000Z"))
+	rows, e := a.DB.Rows("SELECT id,audio_path FROM recordings WHERE audio_path IS NOT NULL AND ((status='done' AND kind<>'file' AND finished_at<?) OR (status='done' AND kind='file' AND finished_at<?) OR (status='failed' AND finished_at<?))", time.Now().UTC().AddDate(0, 0, -days).Format("2006-01-02T15:04:05.000Z"), time.Now().UTC().AddDate(0, 0, -fileRetentionDays).Format("2006-01-02T15:04:05.000Z"), time.Now().UTC().AddDate(0, 0, -30).Format("2006-01-02T15:04:05.000Z"))
 	if e != nil {
 		return
 	}
