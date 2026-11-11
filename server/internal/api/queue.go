@@ -286,7 +286,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	if user != nil {
 		name = str(user["name"])
 	}
-	prompt := "将会议逐句转写整理为 JSON：title 标题、summary 三到五句摘要、points 要点数组、decisions 已定事项数组、action_items 数组（text 内容、owner 负责人、due YYYY-MM-DD 日期、is_self 是否为用户本人）。未提到的字段留空，勿编造。用户显示名：" + name
+	prompt := "将会议逐句转写整理为 JSON：title 标题、summary 三到五句摘要、points 要点数组、decisions 已定事项数组、action_items 数组（text 内容、owner 负责人、due YYYY-MM-DD 日期、is_self 是否为用户本人）。未提到的字段留空，勿编造。" + recordingDateHint(row) + "用户显示名：" + name
 	input := strings.Join(lines, "\n")
 	if len([]rune(input)) > 40000 {
 		runes := []rune(input)
@@ -413,6 +413,30 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	log.Printf("recording=%s stage=summarizing completed elapsed=%s duration_s=%.3f items=%d", id, time.Since(started), audioSeconds(row), count)
 	a.notify(uid, id, true, count)
 	_ = ctx
+}
+
+var taipei = func() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Taipei"); err == nil {
+		return loc
+	}
+	return time.FixedZone("CST", 8*3600)
+}()
+
+// recordingDateHint 给纪要提示词提供录音当天的日期，让模型把“本周五”“明天”等相对日期换算成 YYYY-MM-DD。
+func recordingDateHint(row map[string]any) string {
+	var at time.Time
+	for _, key := range []string{"recorded_at", "created_at"} {
+		if t, err := time.Parse(time.RFC3339Nano, str(row[key])); err == nil {
+			at = t
+			break
+		}
+	}
+	if at.IsZero() {
+		return ""
+	}
+	at = at.In(taipei)
+	week := []string{"日", "一", "二", "三", "四", "五", "六"}[at.Weekday()]
+	return fmt.Sprintf("录音日期：%s（星期%s，Asia/Taipei）。转写中的相对日期（今天、明天、本周五、下周三、月底等）一律按录音日期换算成 YYYY-MM-DD 填入 due；一周从星期一开始，“本周X”指录音当周，“下周X”指下一周；只有确实提到时间才填 due。", at.Format("2006-01-02"), week)
 }
 func (a *API) CleanupAudio() {
 	days := 7

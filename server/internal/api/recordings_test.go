@@ -53,6 +53,7 @@ type recordingFixture struct {
 	asrMode, pushStatus atomic.Int32
 	llmFail             atomic.Bool
 	minutes             atomic.Value
+	lastPrompt          atomic.Value
 	pushMu              sync.Mutex
 	payloads            []string
 	pushes              atomic.Int32
@@ -81,6 +82,15 @@ func newRecordingFixture(t *testing.T) *recordingFixture {
 		if f.llmFail.Load() {
 			http.Error(w, "fail", 502)
 			return
+		}
+		var req struct {
+			Messages []struct{ Role, Content string } `json:"messages"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		for _, m := range req.Messages {
+			if m.Role == "system" {
+				f.lastPrompt.Store(m.Content)
+			}
 		}
 		content, _ := json.Marshal(f.minutes.Load().(string))
 		fmt.Fprintf(w, `{"choices":[{"message":{"content":%s}}]}`, content)
@@ -208,6 +218,30 @@ func TestRecordingScenarios(t *testing.T) {
 		f.a.DB.QueryRow("SELECT status FROM recordings WHERE id=?", id).Scan(&status)
 		if status != "failed" {
 			t.Fatal(status)
+		}
+	})
+	t.Run("纪要提示词带录音日期，相对日期转成待办", func(t *testing.T) {
+		f := newRecordingFixture(t)
+		id := f.upload(t)
+		// 2026-11-10 20:00 UTC = 台北 2026-11-11 星期三
+		f.a.DB.Exec("UPDATE recordings SET recorded_at=? WHERE id=?", "2026-11-10T20:00:00.000Z", id)
+		f.minutes.Store(`{"title":"周会","action_items":[{"text":"本周五交方案","owner":"lily","is_self":true,"due":"2026-11-13"}]}`)
+		f.a.ProcessOne(context.Background())
+		prompt, _ := f.lastPrompt.Load().(string)
+		if !strings.Contains(prompt, "录音日期：2026-11-11（星期三") || !strings.Contains(prompt, "本周五") {
+			t.Fatal(prompt)
+		}
+		if kind, deleted := f.item(t, id+"-0"); kind != "todo" || deleted != 0 {
+			t.Fatal(kind, deleted)
+		}
+	})
+	t.Run("无 recorded_at 时用 created_at", func(t *testing.T) {
+		hint := recordingDateHint(map[string]any{"created_at": "2026-11-09T01:00:00.000Z"})
+		if !strings.Contains(hint, "2026-11-09（星期一") {
+			t.Fatal(hint)
+		}
+		if recordingDateHint(map[string]any{}) != "" {
+			t.Fatal("empty row should give no hint")
 		}
 	})
 	t.Run("LLM 失败仍可查转写", func(t *testing.T) {
