@@ -3,7 +3,7 @@
     "name": "DailyAssistant",
     "slug": "daily-assistant",
     "scheme": "dailyassistant",
-    "version": "0.9.2",
+    "version": "0.9.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,9 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "extra": { "apiBase": "https://personal-repo-api.saulxj.ggff.net/api" },
+    "extra": {
+      "apiBase": "https://personal-repo-api.saulxj.ggff.net/api"
+    },
     "plugins": [
       "expo-router",
       [
@@ -45,6 +47,14 @@
           "microphonePermission": "小禾需要用麦克风录下你说的话和会议，转成文字和纪要。",
           "enableBackgroundRecording": true,
           "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "小禾需要读取你选的照片，认出里面的文字，整理成摘要和要办的事。",
+          "cameraPermission": "小禾需要用相机拍下通知、票据等资料，认出里面的文字。",
+          "microphonePermission": false
         }
       ]
     ]

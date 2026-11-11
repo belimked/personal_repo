@@ -24,7 +24,7 @@ export default function Records() {
   useEffect(() => {
     if (!token) return
     let alive = true
-    void api.recordings(token).then((r) => { if (alive) { setList(r.recordings); setLoading(false) } }).catch(() => { if (alive) setLoading(false) })
+    void api.recordings(token).then((r) => { if (alive) { setList(r.recordings.filter((x) => x.kind !== 'file')); setLoading(false) } }).catch(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [token, tick])
   // 有处理中的录音时每 5 秒刷新一次

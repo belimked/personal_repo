@@ -34,6 +34,10 @@ function Routes() {
       <Stack.Screen name="privacy" />
       <Stack.Screen name="minutes" />
       <Stack.Screen name="records" />
+      <Stack.Screen name="search" />
+      <Stack.Screen name="schedule" />
+      <Stack.Screen name="history" />
+      <Stack.Screen name="files" />
     </Stack.Protected>
     <Stack.Protected guard={!token && !demo}>
       <Stack.Screen name="login" />

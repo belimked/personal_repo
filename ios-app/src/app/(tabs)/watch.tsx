@@ -5,34 +5,9 @@ import { ActionSheetIOS, Pressable, RefreshControl, ScrollView, StyleSheet, Text
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
 import type { ApiItem } from '@/lib/api'
+import { dueOf, recordingOf, str, titleOf, weekStart, when } from '@/lib/items'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
-
-const str = (v: unknown) => typeof v === 'string' ? v : ''
-const titleOf = (i: ApiItem) => str(i.data.title) || str(i.data.text) || '未命名'
-const recordingOf = (i: ApiItem) => {
-  const src = i.data.source as { type?: string; recording_id?: string } | undefined
-  return src?.type === 'recording' && src.recording_id ? src.recording_id : ''
-}
-const dueOf = (i: ApiItem) => str(i.data.due) || str(i.data.date) || str(i.data.remind_at).slice(0, 10)
-const weekStart = () => {
-  const d = new Date(); d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-  return d
-}
-/** 截止日写成“今天 / 明天 / 周五 / 11月20日”，过期标红 */
-function when(due: string): { text: string; late: boolean } {
-  if (!due) return { text: '', late: false }
-  const d = new Date(due.slice(0, 10) + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return { text: due, late: false }
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const days = Math.round((d.getTime() - today.getTime()) / 86400000)
-  if (days < 0) return { text: `${-days} 天前到期`, late: true }
-  if (days === 0) return { text: '今天', late: false }
-  if (days === 1) return { text: '明天', late: false }
-  if (days < 7) return { text: '周' + '日一二三四五六'[d.getDay()], late: false }
-  return { text: `${d.getMonth() + 1}月${d.getDate()}日`, late: false }
-}
 
 /** 04 盯着：等你确认 / 我在办 / 本周办完。一件事只在一个地方。 */
 export default function Watch() {
