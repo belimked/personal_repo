@@ -83,7 +83,27 @@ func (p *Push) token() (string, error) {
 	p.issued = now
 	return p.jwt, nil
 }
-func (a *API) notify(uid, id string, success bool, count int) {
+
+// minutesBody 是纪要完成推送的正文：重新生成时已有事项只是更新，不算新增。
+func minutesBody(added, total int) string {
+	switch {
+	case added > 0:
+		return fmt.Sprintf("新增 %d 件事", added)
+	case total > 0:
+		return fmt.Sprintf("已更新，共 %d 件事", total)
+	default:
+		return "没有需要跟进的事"
+	}
+}
+
+func minutesMessage(added, total int, labels []string) string {
+	if added > 0 {
+		return fmt.Sprintf("会议纪要整理好了，新增 %d 件事：%s", added, strings.Join(labels, "、"))
+	}
+	return "会议纪要整理好了，" + minutesBody(added, total)
+}
+
+func (a *API) notify(uid, id string, success bool, successBody string) {
 	if a.Push == nil {
 		log.Printf("recording=%s push skipped reason=not_configured", id)
 		return
@@ -102,7 +122,7 @@ func (a *API) notify(uid, id string, success bool, count int) {
 	title, body := "录音没能转写", "点开看原因，可以重试"
 	if success {
 		title = "会议纪要整理好了"
-		body = fmt.Sprintf("新增 %d 件事", count)
+		body = successBody
 	}
 	payload, _ := json.Marshal(map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "recording_id": id, "body": map[string]string{"recording_id": id}})
 	// expo-notifications 在 iOS 上只把远程推送的 body 字段作为 data 交给 App；顶层 recording_id 保留兼容。

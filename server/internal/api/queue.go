@@ -235,7 +235,7 @@ func (a *API) jobError(row map[string]any, stage string, offline bool, cause err
 			log.Printf("recording=%s stage=%s status_update_failed=%v", id, label, e)
 			return
 		}
-		a.notify(str(row["user_id"]), id, false, 0)
+		a.notify(str(row["user_id"]), id, false, "")
 		return
 	}
 	if _, e := a.DB.Exec("UPDATE recordings SET status=?,attempts=?,next_try_at=?,updated_at=? WHERE id=?", stage, attempts, time.Now().UTC().Add(time.Duration(attempts)*time.Minute).Format("2006-01-02T15:04:05.000Z"), Now(), id); e != nil {
@@ -355,7 +355,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		now = last.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z")
 	}
 	_, e = tx.Exec("UPDATE transcripts SET minutes=? WHERE recording_id=?", string(raw), id)
-	count := 0
+	count, total := 0, 0
 	var labels []string
 	keep := []string{}
 	for i, item := range min.Actions {
@@ -381,12 +381,18 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		}
 		b, _ := json.Marshal(data)
 		itemID := fmt.Sprintf("%s-%d", id, i)
-		var deleted int
+		var deleted, existed int
+		if e = tx.QueryRow("SELECT count(*) FROM items WHERE id=?", itemID).Scan(&existed); e != nil {
+			break
+		}
 		e = tx.QueryRow("INSERT INTO items(id,user_id,kind,data,created_at,updated_at,deleted) VALUES(?,?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,data=excluded.data,updated_at=excluded.updated_at WHERE items.user_id=excluded.user_id RETURNING deleted", itemID, uid, kind, string(b), now, now).Scan(&deleted)
 		keep = append(keep, itemID)
 		if e == nil && deleted == 0 {
-			count++
-			labels = append(labels, item.Text)
+			total++
+			if existed == 0 {
+				count++
+				labels = append(labels, item.Text)
+			}
 		}
 	}
 	if e == nil {
@@ -408,7 +414,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		_, e = tx.Exec("UPDATE recordings SET status='done',error=NULL,attempts=0,next_try_at=NULL,finished_at=?,updated_at=?,title=?,scene=?,scene_p=?,work_actions_p=?,life_actions_p=?,scene_model=? WHERE id=? AND status='summarizing'", now, now, min.Title, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, sceneModel, id)
 	}
 	if e == nil {
-		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", fmt.Sprintf("会议纪要整理好了，新增 %d 件事：%s", count, strings.Join(labels, "、")), "deepseek-v4-pro", now)
+		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", minutesMessage(count, total, labels), "deepseek-v4-pro", now)
 	}
 	if e != nil {
 		tx.Rollback()
@@ -421,7 +427,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		return
 	}
 	log.Printf("recording=%s stage=summarizing completed elapsed=%s duration_s=%.3f items=%d", id, time.Since(started), audioSeconds(row), count)
-	a.notify(uid, id, true, count)
+	a.notify(uid, id, true, minutesBody(count, total))
 	_ = ctx
 }
 

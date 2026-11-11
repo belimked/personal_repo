@@ -134,3 +134,18 @@ func TestSummarizeStoresScene(t *testing.T) {
 		t.Fatal(prompt)
 	}
 }
+
+func TestRegeneratePushBody(t *testing.T) {
+	if minutesBody(2, 3) != "新增 2 件事" || minutesBody(0, 3) != "已更新，共 3 件事" || minutesBody(0, 0) != "没有需要跟进的事" {
+		t.Fatal(minutesBody(2, 3), minutesBody(0, 3), minutesBody(0, 0))
+	}
+	f := newRecordingFixture(t)
+	f.device(t, strings.Repeat("ab", 32))
+	id := f.completed(t)
+	f.regenerate(t, id)
+	f.pushMu.Lock()
+	defer f.pushMu.Unlock()
+	if len(f.payloads) != 2 || !strings.Contains(f.payloads[0], "新增 3 件事") || !strings.Contains(f.payloads[1], "已更新，共 3 件事") {
+		t.Fatal(f.payloads)
+	}
+}
