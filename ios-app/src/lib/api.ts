@@ -1,13 +1,19 @@
 import Constants from 'expo-constants'
 import * as SecureStore from 'expo-secure-store'
 
-export const API_BASE = (Constants.expoConfig?.extra?.apiBase as string | undefined ?? 'https://personal-repo.saulxj.ggff.net/api').replace(/\/$/, '')
+export const API_BASE = (Constants.expoConfig?.extra?.apiBase as string | undefined ?? 'https://personal-repo-api.saulxj.ggff.net/api').replace(/\/$/, '')
 const TOKEN_KEY = 'daily-assistant-token'
 
 export type User = { id: string; email: string; name: string; role: 'user' | 'admin' }
 export type Kind = 'todo' | 'stash' | 'watch' | 'idea' | 'file' | 'fact' | 'setting'
 export type ApiItem = { id: string; kind: Kind; data: Record<string, unknown>; created_at: string; updated_at: string; deleted: number }
 export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string }
+
+export type Minutes = {
+  title?: string; summary?: string; points?: string[]; decisions?: string[]
+  action_items?: { text: string; owner?: string; due?: string; is_self?: boolean }[]
+}
+export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string }
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); this.name = 'ApiError' }
@@ -47,4 +53,8 @@ export const api = {
   deleteItem: (token: string, id: string) => request<{ ok: boolean }>(`/items/${encodeURIComponent(id)}`, token, 'DELETE'),
   chat: (token: string, message: string) => request<{ reply: string; model: string; thread: string; fallback: boolean }>('/chat', token, 'POST', { message, thread: 'home', mode: 'chat' }),
   messages: (token: string) => request<{ messages: Message[] }>('/messages?thread=home&limit=50', token),
+  registerDevice: (token: string, device: string, env: 'production' | 'sandbox') => request<{ ok: boolean }>('/devices', token, 'POST', { token: device, platform: 'ios', env }),
+  unregisterDevice: (token: string, device: string) => request<{ ok: boolean }>(`/devices/${encodeURIComponent(device)}`, token, 'DELETE'),
+  recording: (token: string, id: string) => request<{ recording: Recording }>(`/recordings/${encodeURIComponent(id)}`, token),
+  minutes: (token: string, id: string) => request<Minutes>(`/recordings/${encodeURIComponent(id)}/minutes`, token),
 }

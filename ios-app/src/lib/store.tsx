@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native'
 import { api, ApiError, tokenStorage, type ApiItem, type Kind, type User } from './api'
 import { BRIEF_ITEMS, FACTS, WATCHING, type Fact, type ItemState } from './data'
+import { registerPush, unregisterPush } from './push'
 
 interface Store {
   states: Record<string, ItemState>
@@ -151,6 +152,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!mounted) return
         setUser(result.user); setToken(saved); tokenRef.current = saved
         void sync(saved)
+        void registerPush(saved)
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) await tokenStorage.clear()
         else if (mounted) { setToken(saved); tokenRef.current = saved; void sync(saved) }
@@ -174,13 +176,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await tokenStorage.set(result.token)
       reset(); setDemo(false); setUser(result.user); setToken(result.token); tokenRef.current = result.token
       void sync(result.token)
+      void registerPush(result.token)
     },
     enterDemo: () => { tokenRef.current = null; reset(); setDemo(true); setToken(null); setUser(null) },
     logout: async () => {
       const old = tokenRef.current
       tokenRef.current = null; setToken(null); setUser(null); setDemo(false); reset()
       await tokenStorage.clear().catch(() => {})
-      if (old) void api.logout(old).catch(() => {})
+      if (old) void unregisterPush(old).finally(() => api.logout(old).catch(() => {}))
     },
     addItem: (kind, title) => { if (tokenRef.current && title.trim()) upsert(Crypto.randomUUID(), kind, { title: title.trim(), ...(kind === 'todo' ? { done: false } : kind === 'watch' ? { note: '' } : {}) }) },
     setDone: (id, done) => {

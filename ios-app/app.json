@@ -3,7 +3,7 @@
     "name": "DailyAssistant",
     "slug": "daily-assistant",
     "scheme": "dailyassistant",
-    "version": "0.7.1",
+    "version": "0.8.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "extra": { "apiBase": "https://personal-repo.saulxj.ggff.net/api" },
+    "extra": { "apiBase": "https://personal-repo-api.saulxj.ggff.net/api" },
     "plugins": [
       "expo-router",
       [
@@ -32,7 +32,13 @@
           "backgroundColor": "#F2F2F7"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "mode": "production"
+        }
+      ]
     ]
   }
 }

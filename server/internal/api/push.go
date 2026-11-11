@@ -104,7 +104,8 @@ func (a *API) notify(uid, id string, success bool, count int) {
 		title = "会议纪要整理好了"
 		body = fmt.Sprintf("新增 %d 件事", count)
 	}
-	payload, _ := json.Marshal(map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "recording_id": id})
+	payload, _ := json.Marshal(map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "recording_id": id, "body": map[string]string{"recording_id": id}})
+	// expo-notifications 在 iOS 上只把远程推送的 body 字段作为 data 交给 App；顶层 recording_id 保留兼容。
 	for _, row := range rows {
 		device := str(row["token"])
 		prefix := device

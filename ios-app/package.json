@@ -1,6 +1,6 @@
 {
   "name": "daily-assistant-ios",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "main": "expo-router/entry",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "expo-font": "~58.0.8",
     "expo-haptics": "~58.0.7",
     "expo-linking": "~58.0.13",
+    "expo-notifications": "~58.0.11",
     "expo-router": "~58.0.23",
     "expo-secure-store": "~58.0.2",
     "expo-splash-screen": "~58.0.10",

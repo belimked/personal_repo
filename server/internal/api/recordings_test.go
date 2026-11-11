@@ -380,7 +380,7 @@ func TestRecordingScenarios(t *testing.T) {
 		f.completed(t)
 		f.pushMu.Lock()
 		defer f.pushMu.Unlock()
-		if len(f.payloads) != 1 || strings.Contains(f.payloads[0], "机密标题") || strings.Contains(f.payloads[0], "隐私转写") || !strings.Contains(f.payloads[0], "新增 3 件事") {
+		if len(f.payloads) != 1 || strings.Contains(f.payloads[0], "机密标题") || strings.Contains(f.payloads[0], "隐私转写") || !strings.Contains(f.payloads[0], "新增 3 件事") || !strings.Contains(f.payloads[0], `"body":{"recording_id":`) {
 			t.Fatal(f.payloads)
 		}
 	})
