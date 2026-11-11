@@ -13,14 +13,15 @@ export type Minutes = {
   title?: string; summary?: string; points?: string[]; decisions?: string[]
   action_items?: { text: string; owner?: string; due?: string; is_self?: boolean }[]
 }
-export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number }
+export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number; kind?: 'meeting' | 'voice' }
 export type Transcript = { text: string; speakers: number | null; segments: { speaker?: number; text: string; start_ms?: number; end_ms?: number }[] | null }
 export type AudioFile = { uri: string; name: string; type: string }
 
 // Expo SDK 58 的全局 fetch（expo/fetch）不支持 { uri, name, type } 形式的文件，
 // 上传改用 React Native 自带的 XMLHttpRequest，由原生层按 uri 读取本地文件。
-function uploadAudio(token: string, file: AudioFile, recordedAt?: string, title?: string): Promise<{ recording: Recording }> {
+function uploadAudio(token: string, file: AudioFile, recordedAt?: string, title?: string, kind: 'meeting' | 'voice' = 'meeting'): Promise<{ recording: Recording }> {
   const form = new FormData()
+  form.append('kind', kind)
   if (title) form.append('title', title)
   if (recordedAt) form.append('recorded_at', recordedAt)
   form.append('file', file as unknown as Blob)

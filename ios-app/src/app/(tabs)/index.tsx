@@ -21,7 +21,29 @@ export default function Home() {
   const say = () => input.current?.focus()
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number } }[]>([])
-  const voice = (sent: Sent) => setMessages((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
+  // 按住说的语音：后台转成文字后把原话和小禾的回答写进对话；处理完就重新拉对话，替换掉占位气泡。
+  // 失败的语音保留气泡，点开可在纪要页重试。
+  const [pendingVoice, setPendingVoice] = useState<string[]>([])
+  const voice = (sent: Sent) => {
+    setMessages((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
+    setPendingVoice((v) => [...v, sent.recording.id])
+  }
+  useEffect(() => {
+    if (!token || !pendingVoice.length) return
+    const t = setInterval(async () => {
+      const states = await Promise.all(pendingVoice.map((id) => api.recording(token, id).then((r) => r.recording.status).catch(() => 'queued')))
+      const done = pendingVoice.filter((_, i) => states[i] === 'done')
+      const settled = pendingVoice.filter((_, i) => states[i] === 'done' || states[i] === 'failed')
+      if (!settled.length) return
+      setPendingVoice((v) => v.filter((id) => !settled.includes(id)))
+      if (!done.length) return
+      const r = await api.messages(token).catch(() => null)
+      if (!r) return
+      const list = r.messages.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+      setMessages((p) => [...list, ...p.filter((m) => m.voice && !done.includes(m.voice.id))])
+    }, 4000)
+    return () => clearInterval(t)
+  }, [pendingVoice, token])
   const [thinking, setThinking] = useState(false)
   useEffect(() => {
     let current = true

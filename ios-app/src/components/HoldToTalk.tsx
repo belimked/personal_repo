@@ -48,7 +48,7 @@ export function VoiceNote({ id, ms }: { id: string; ms: number }) {
   return (
     <Pressable onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id } }) }} style={({ pressed }) => [s.note, pressed && { opacity: 0.6 }]}>
       <Icon name="waveform" size={16} color={c.accInk} />
-      <Text style={s.noteText}>语音 {clock(ms)} · 正在转成文字，整理好会通知你</Text>
+      <Text style={s.noteText}>语音 {clock(ms)} · 小禾在听，马上回你</Text>
     </Pressable>
   )
 }
