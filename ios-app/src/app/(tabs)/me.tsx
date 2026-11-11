@@ -30,7 +30,7 @@ export default function Me() {
     let alive = true
     void Notifications.getPermissionsAsync().then((p) => { if (alive) setNotify(p.granted ? 'on' : p.canAskAgain ? 'ask' : 'off') }).catch(() => {})
     if (token) void api.recordings(token).then((r) => {
-      if (alive) setRecCount({ total: r.recordings.length, busy: r.recordings.filter((x) => x.status === 'queued' || x.status === 'transcribing' || x.status === 'summarizing').length })
+      if (alive) { const recs = r.recordings.filter((x) => x.kind !== 'file'); setRecCount({ total: recs.length, busy: recs.filter((x) => x.status === 'queued' || x.status === 'transcribing' || x.status === 'summarizing').length }) }
     }).catch(() => {})
     return () => { alive = false }
   }, [token]))

@@ -96,7 +96,7 @@ export default function Search() {
               <Card>{data.files.map((f, i) => (
                 <Pressable key={f.recording_id} onPress={() => openRec(f.recording_id)} style={({ pressed }) => [s.row, pressed && { backgroundColor: c.raised }]}>
                   {i > 0 && <View style={ui.sep} />}
-                  <Icon name="waveform" size={17} color={c.t3} />
+                  <Icon name={f.kind === 'file' ? 'doc.text' : 'waveform'} size={17} color={c.t3} />
                   <View style={{ flex: 1 }}>
                     <Text style={s.t} numberOfLines={1}>{mark(f.title || '录音')}</Text>
                     <Text style={s.meta} numberOfLines={2}>{f.snippet ? mark(f.snippet) : short(f.at)}</Text>

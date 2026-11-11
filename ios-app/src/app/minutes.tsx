@@ -4,12 +4,15 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Card, GroupLabel, Icon, ui } from '@/components/ui'
 import { api, ApiError, type Minutes, type Recording, type Transcript } from '@/lib/api'
-import { clock, sceneLabel } from '@/lib/recorder'
+import { clock, fileType, isFile, sceneLabel } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
 import { c, mono } from '@/lib/theme'
 
 const statusText: Record<Recording['status'], string> = {
   queued: '排队中，马上开始', transcribing: '正在把录音转成文字', summarizing: '文字已转好，正在整理纪要', done: '', failed: '这段录音没能处理完',
+}
+const fileStatusText: Record<Recording['status'], string> = {
+  queued: '排队中，马上开始', transcribing: '正在读里面的文字', summarizing: '文字读好了，正在整理', done: '', failed: '这份资料没能处理完',
 }
 const busy = (r: Recording | null) => !!r && (r.status === 'queued' || r.status === 'transcribing' || r.status === 'summarizing')
 
@@ -62,6 +65,8 @@ export default function MinutesScreen() {
     : null
   const segments = text?.segments?.length ? text.segments : text?.text ? [{ text: text.text }] : []
   const speakers = new Set(segments.map((g) => g.speaker ?? 0)).size
+  const file = !!rec && isFile(rec)
+  const pages = segments.some((g) => g.page != null) && segments.length > 1
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -70,7 +75,7 @@ export default function MinutesScreen() {
           <Icon name="chevron.left" size={20} color={c.accInk} weight="semibold" />
           <Text style={{ fontSize: 17, color: c.accInk }}>返回</Text>
         </Pressable>
-        <Text style={s.mid}>{min ? '会议纪要' : '录音'}</Text>
+        <Text style={s.mid}>{file ? '资料' : min ? '会议纪要' : '录音'}</Text>
         <View style={{ width: 80 }} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}
@@ -82,17 +87,17 @@ export default function MinutesScreen() {
         </View> : null}
 
         {rec && !error ? <>
-          <Text style={[ui.title, { paddingTop: 16 }]}>{min?.title || rec.title || '新录音'}</Text>
+          <Text style={[ui.title, { paddingTop: 16 }]}>{min?.title || rec.title || (file ? '新资料' : '新录音')}</Text>
           <Text style={ui.srcText}>{[
             new Date(rec.recorded_at || rec.created_at).toLocaleString('zh-CN', { hour12: false }),
-            rec.duration_s ? clock(rec.duration_s * 1000) : '',
+            file ? fileType(rec.mime) : rec.duration_s ? clock(rec.duration_s * 1000) : '',
             rec.scene ? sceneLabel[rec.scene] : '',
           ].filter(Boolean).join(' · ')}</Text>
 
           {busy(rec) || rec.status === 'failed' ? <View style={s.status}>
             {busy(rec) ? <ActivityIndicator size="small" color={c.acc} /> : <Icon name="exclamationmark.circle" size={16} color={c.bad} />}
             <Text style={[s.statusText, rec.status === 'failed' && { color: c.bad }]}>
-              {statusText[rec.status]}{rec.status === 'queued' && rec.queue_position ? `（前面 ${Math.max(0, rec.queue_position - 1)} 段）` : ''}
+              {(file ? fileStatusText : statusText)[rec.status]}{rec.status === 'queued' && rec.queue_position ? `（前面 ${Math.max(0, rec.queue_position - 1)} 份）` : ''}{file && rec.status === 'failed' && rec.error ? `：${rec.error}` : ''}
             </Text>
             {rec.status === 'failed' ? <Button kind="text" title="重试" onPress={retry} /> : null}
           </View> : null}
@@ -100,17 +105,18 @@ export default function MinutesScreen() {
           {segments.length ? <View style={s.seg}>
             {(['minutes', 'text'] as const).map((k) => (
               <Pressable key={k} onPress={() => setTab(k)} style={[s.segItem, tab === k && s.segOn]}>
-                <Text style={[s.segText, tab === k && { color: c.t1, fontWeight: '500' }]}>{k === 'minutes' ? '纪要' : '原文'}</Text>
+                <Text style={[s.segText, tab === k && { color: c.t1, fontWeight: '500' }]}>{k === 'minutes' ? (file ? '整理' : '纪要') : '原文'}</Text>
               </Pressable>
             ))}
           </View> : null}
 
           {tab === 'text' && segments.length ? <>
-            <GroupLabel>{speakers > 1 ? `${speakers} 人说话` : '转写原文'}</GroupLabel>
+            <GroupLabel>{file ? (rec.mime?.startsWith('image/') ? '认出的文字' : pages ? `${segments.length} 页` : '正文') : speakers > 1 ? `${speakers} 人说话` : '转写原文'}</GroupLabel>
             <Card>{segments.map((g, i) => (
               <View key={i} style={s.line}>
                 {i > 0 && <View style={ui.sep} />}
-                {speakers > 1 || g.start_ms != null ? <Text style={[s.meta, mono, { marginTop: 0, marginBottom: 4 }]}>
+                {pages && g.page != null ? <Text style={[s.meta, { marginTop: 0, marginBottom: 4 }]}>第 {g.page} 页</Text> : null}
+                {!file && (speakers > 1 || g.start_ms != null) ? <Text style={[s.meta, mono, { marginTop: 0, marginBottom: 4 }]}>
                   {[speakers > 1 ? `说话人 ${(g.speaker ?? 0) + 1}` : '', g.start_ms != null ? clock(g.start_ms) : ''].filter(Boolean).join(' · ')}
                 </Text> : null}
                 <Text selectable style={s.text}>{g.text}</Text>
@@ -130,11 +136,11 @@ export default function MinutesScreen() {
                 </View>
               ))}</Card>
               <Text style={s.note}>这些事已经加到你的事项里。</Text>
-            </> : <Text style={s.note}>这段录音里没有需要跟进的事。</Text>}
+            </> : <Text style={s.note}>{file ? '这份资料里没有需要跟进的事。' : '这段录音里没有需要跟进的事。'}</Text>}
             {min.decisions?.length ? <><GroupLabel>定下来的</GroupLabel>{list(min.decisions)}</> : null}
             {min.points?.length ? <><GroupLabel>要点</GroupLabel>{list(min.points)}</> : null}
           </> : null}
-          {tab === 'minutes' && !min && rec.status === 'summarizing' && segments.length ? <Text style={s.note}>纪要整理好前，可以先看原文。</Text> : null}
+          {tab === 'minutes' && !min && rec.status === 'summarizing' && segments.length ? <Text style={s.note}>{file ? '整理好前，可以先看原文。' : '纪要整理好前，可以先看原文。'}</Text> : null}
         </> : null}
       </ScrollView>
     </SafeAreaView>

@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics'
 import { router, type Href } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActionSheetIOS, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { api } from '@/lib/api'
 import { dayOf, doneAt, dueOf, isDone, isOpen, weekStart } from '@/lib/items'
-import { useRecorder } from '@/lib/recorder'
+import { useGive } from '@/lib/give'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
 import { Switcher } from './Switcher'
@@ -15,7 +15,7 @@ import { Icon, Row, type SfName } from './ui'
 export function Panel({ visible, onClose, onSettings }: { visible: boolean; onClose: () => void; onSettings: () => void }) {
   const insets = useSafeAreaInsets()
   const { items, token, demo } = useStore()
-  const rec = useRecorder()
+  const giveSheet = useGive()
   const [files, setFiles] = useState<number | null>(null)
   useEffect(() => {
     if (!visible || !token) return
@@ -32,23 +32,13 @@ export function Panel({ visible, onClose, onSettings }: { visible: boolean; onCl
   const doneWeek = items.filter((i) => isDone(i) && doneAt(i) >= weekStart().toISOString()).length
 
   const go = (href: Href) => { onClose(); Haptics.selectionAsync(); router.push(href) }
-  const give = () => {
-    onClose()
-    const acts = [
-      { text: '录会议', run: () => router.push('/records') },
-      { text: '导入录音文件', run: () => { void rec.importFile().then((sent) => { if (sent) router.push({ pathname: '/minutes', params: { id: sent.recording.id } }) }) } },
-    ]
-    setTimeout(() => ActionSheetIOS.showActionSheetWithOptions({
-      title: '交资料', message: '现在能交录音：录下来或导入文件，我转成文字、整理纪要。照片、文档和链接后面再开放。',
-      options: [...acts.map((a) => a.text), '取消'], cancelButtonIndex: acts.length,
-    }, (n) => { if (n < acts.length) acts[n].run() }), 350)
-  }
+  const give = () => { onClose(); giveSheet(350) }
 
   const rows: { icon: SfName; label: string; value: string; onPress: () => void }[] = [
     { icon: 'calendar', label: '日程', value: dueToday ? `今天 ${dueToday} 件到期` : dueWeek ? `本周 ${dueWeek} 件` : '本周没有到期的', onPress: () => go('/schedule') },
     { icon: 'clock.arrow.circlepath', label: '历史事情', value: `本周办完 ${doneWeek} 件`, onPress: () => go('/history') },
     { icon: 'folder', label: '交给我的资料', value: files == null ? '' : `${files} 份`, onPress: () => go('/files') },
-    { icon: 'plus.circle', label: '交资料', value: '录音、导入文件', onPress: give },
+    { icon: 'plus.circle', label: '交资料', value: '照片、文件、录音', onPress: give },
     { icon: 'gearshape', label: '设置', value: '', onPress: () => { onClose(); onSettings() } },
   ]
   const shown = demo ? rows.filter((r) => r.label === '设置') : rows

@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { NavBar } from '@/components/NavBar'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
 import { api, type Recording } from '@/lib/api'
-import { clock, sceneLabel, statusLabel } from '@/lib/recorder'
+import { useGive } from '@/lib/give'
+import { clock, fileStatusLabel, fileType, isFile, sceneLabel, statusLabel } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
 
@@ -16,6 +17,7 @@ const when = (r: Recording) => new Date(r.recorded_at || r.created_at).toLocaleS
 /** 交给我的资料：按类型分组（会议录音 / 语音）；点开看纪要和原文 */
 export default function Files() {
   const { token } = useStore()
+  const give = useGive()
   const [list, setList] = useState<Recording[] | null>(null)
   const load = useCallback(() => {
     if (!token) return
@@ -26,13 +28,14 @@ export default function Files() {
   useFocusEffect(load)
 
   const groups = [
-    { label: '会议录音', icon: 'waveform' as const, list: (list ?? []).filter((r) => r.kind !== 'voice') },
+    { label: '照片和文档', icon: 'doc.text' as const, list: (list ?? []).filter(isFile) },
+    { label: '会议录音', icon: 'waveform' as const, list: (list ?? []).filter((r) => r.kind !== 'voice' && !isFile(r)) },
     { label: '说过的语音', icon: 'mic' as const, list: (list ?? []).filter((r) => r.kind === 'voice') },
   ].filter((g) => g.list.length)
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <NavBar title="交给我的资料" right={<Pressable hitSlop={8} onPress={() => router.push('/records')} accessibilityLabel="交资料"><Icon name="plus" size={20} color={c.accInk} /></Pressable>} />
+      <NavBar title="交给我的资料" right={<Pressable hitSlop={8} onPress={() => give()} accessibilityLabel="交资料"><Icon name="plus" size={20} color={c.accInk} /></Pressable>} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={false} onRefresh={() => { load() }} />}>
         <Pressable onPress={() => router.push('/search')} style={s.search}>
           <Icon name="magnifyingglass" size={17} color={c.t3} />
@@ -45,21 +48,21 @@ export default function Files() {
             <Card>{g.list.map((r, n) => (
               <Pressable key={r.id} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id: r.id } }) }} style={({ pressed }) => [s.row, pressed && { backgroundColor: c.raised }]}>
                 {n > 0 && <View style={[ui.sep, { left: 50 }]} />}
-                <Icon name={g.icon} size={17} color={c.t3} />
+                <Icon name={isFile(r) && r.mime?.startsWith('image/') ? 'photo' : g.icon} size={17} color={c.t3} />
                 <View style={{ flex: 1 }}>
                   <Text style={s.t} numberOfLines={1}>{r.title || (busy(r) ? '新录音' : '录音')}</Text>
-                  <Text style={s.meta}>{[when(r), r.duration_s ? clock(r.duration_s * 1000) : '', r.scene ? sceneLabel[r.scene] : ''].filter(Boolean).join(' · ')}</Text>
+                  <Text style={s.meta}>{[when(r), isFile(r) ? fileType(r.mime) : r.duration_s ? clock(r.duration_s * 1000) : '', r.scene ? sceneLabel[r.scene] : ''].filter(Boolean).join(' · ')}</Text>
                 </View>
-                {r.status !== 'done' ? <Text style={[s.meta, r.status === 'failed' && { color: c.bad }]}>{statusLabel[r.status]}</Text> : null}
+                {r.status !== 'done' ? <Text style={[s.meta, r.status === 'failed' && { color: c.bad }]}>{(isFile(r) ? fileStatusLabel : statusLabel)[r.status]}</Text> : null}
               </Pressable>
             ))}</Card>
           </View>
         ))}
         {list && !list.length ? <View style={s.empty}>
           <Icon name="folder" size={28} color={c.t3} />
-          <Text style={s.emptyText}>录一段会议，或导入录音文件给我</Text>
+          <Text style={s.emptyText}>点右上角 ＋，拍照、选文件或录音交给我</Text>
         </View> : null}
-        <Text style={s.note}>现在能交的是录音。照片、文档、链接后面再开放。</Text>
+        <Text style={s.note}>照片和扫描件会认出里面的字，文档直接读正文；原件保留 90 天，整理结果一直留着。链接后面再开放。</Text>
       </ScrollView>
     </SafeAreaView>
   )
