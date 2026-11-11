@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { api } from '@/lib/api'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
 import { Panel } from '@/components/Panel'
+import type { Sent } from '@/lib/recorder'
 import { Switcher } from '@/components/Switcher'
 import { Button, Card, Chev, Icon, Row, ui } from '@/components/ui'
 import { BRIEF_ITEMS } from '@/lib/data'
@@ -18,7 +20,8 @@ export default function Home() {
   const input = useRef<React.ElementRef<typeof TextInput>>(null)
   const say = () => input.current?.focus()
   const [draft, setDraft] = useState('')
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number } }[]>([])
+  const voice = (sent: Sent) => setMessages((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
   const [thinking, setThinking] = useState(false)
   useEffect(() => {
     let current = true
@@ -42,7 +45,7 @@ export default function Home() {
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={s.body} bounces={false}>
         <Switcher onPress={() => setPanel(true)} />
-        {allDone ? <Finished onSay={say} /> : (
+        {allDone ? <Finished onSay={say} onSent={voice} /> : (
           <>
             <View style={s.head}>
               <Text style={ui.title}>{pending.length} 件事等你定</Text>
@@ -68,13 +71,13 @@ export default function Home() {
             <View style={{ flex: 1 }} />
             <View style={s.actions}>
               <Button title="开始" onPress={() => open()} />
-              <Button kind="second" title="说一句" icon="message" onPress={say} />
+              <HoldToTalk title="说一句" onTap={say} onSent={voice} />
             </View>
             <Text style={s.foot}>另有 7 件我在办，不用你管</Text>
           </>
         )}
         <View style={s.chat}>
-          {messages.map((m, i) => <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
+          {messages.map((m, i) => m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
           {thinking ? <Text style={s.thinking}>小禾正在想…</Text> : null}
           <View style={s.compose}>
             <TextInput ref={input} style={s.input} value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} multiline />
@@ -83,6 +86,7 @@ export default function Home() {
         </View>
       </ScrollView>
       <Panel visible={panel} onClose={() => setPanel(false)} onSettings={() => router.navigate('/me')} />
+      <TalkOverlay />
     </SafeAreaView>
   )
 }
@@ -96,7 +100,7 @@ function BriefTop() {
   )
 }
 
-function Finished({ onSay }: { onSay: () => void }) {
+function Finished({ onSay, onSent }: { onSay: () => void; onSent: (s: Sent) => void }) {
   const { states } = useStore()
   const done = BRIEF_ITEMS.filter((i) => states[i.id] === 'done').length
   const later = BRIEF_ITEMS.length - done
@@ -130,7 +134,7 @@ function Finished({ onSay }: { onSay: () => void }) {
       </Card>
       <View style={{ flex: 1 }} />
       <View style={s.actions}>
-        <Button kind="second" title="有别的事，说一句" icon="message" style={{ flex: 1 }} onPress={onSay} />
+        <HoldToTalk title="有别的事，说一句" style={{ flex: 1 }} onTap={onSay} onSent={onSent} />
       </View>
     </>
   )

@@ -3,46 +3,65 @@ import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Card, GroupLabel, Icon, ui } from '@/components/ui'
-import { api, ApiError, type Minutes, type Recording } from '@/lib/api'
+import { api, ApiError, type Minutes, type Recording, type Transcript } from '@/lib/api'
+import { clock, sceneLabel } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
-import { c } from '@/lib/theme'
+import { c, mono } from '@/lib/theme'
 
 const statusText: Record<Recording['status'], string> = {
-  queued: '排队中，稍后再来看', transcribing: '正在转写录音', summarizing: '正在整理纪要', done: '', failed: '这段录音没能处理完',
+  queued: '排队中，马上开始', transcribing: '正在把录音转成文字', summarizing: '文字已转好，正在整理纪要', done: '', failed: '这段录音没能处理完',
 }
+const busy = (r: Recording | null) => !!r && (r.status === 'queued' || r.status === 'transcribing' || r.status === 'summarizing')
 
-type Loaded = { rec: Recording | null; min: Minutes | null; error: string }
+type Loaded = { rec: Recording | null; min: Minutes | null; text: Transcript | null; error: string }
 
-async function fetchMinutes(token: string | null, id?: string): Promise<Loaded> {
-  if (!token || !id) return { rec: null, min: null, error: token ? '找不到这段录音' : '登录后才能查看纪要' }
+async function fetchAll(token: string | null, id?: string): Promise<Loaded> {
+  if (!token || !id) return { rec: null, min: null, text: null, error: token ? '找不到这段录音' : '登录后才能查看纪要' }
   try {
     const { recording } = await api.recording(token, id)
-    return { rec: recording, min: recording.status === 'done' ? await api.minutes(token, id) : null, error: '' }
+    const hasText = recording.status === 'summarizing' || recording.status === 'done' || recording.status === 'failed'
+    const [min, text] = await Promise.all([
+      recording.status === 'done' ? api.minutes(token, id).catch(() => null) : Promise.resolve(null),
+      hasText ? api.transcript(token, id).catch(() => null) : Promise.resolve(null),
+    ])
+    return { rec: recording, min, text, error: '' }
   } catch (e) {
-    return { rec: null, min: null, error: e instanceof ApiError && e.status === 404 ? '找不到这段录音' : e instanceof Error ? e.message : '加载失败' }
+    return { rec: null, min: null, text: null, error: e instanceof ApiError && e.status === 404 ? '找不到这段录音' : e instanceof Error ? e.message : '加载失败' }
   }
 }
 
-/** 录音纪要：从推送点进来，或带 ?id= 打开 */
+/** 录音纪要和原文：从推送、录音列表或首页语音消息点进来 */
 export default function MinutesScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const { token } = useStore()
-  const [rec, setRec] = useState<Recording | null>(null)
-  const [min, setMin] = useState<Minutes | null>(null)
-  const [error, setError] = useState('')
+  const [data, setData] = useState<Loaded>({ rec: null, min: null, text: null, error: '' })
   const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<'minutes' | 'text'>('minutes')
+  const { rec, min, text, error } = data
 
-  const apply = useCallback((r: Loaded) => { setRec(r.rec); setMin(r.min); setError(r.error); setLoading(false) }, [])
-  const load = useCallback(async () => { setLoading(true); apply(await fetchMinutes(token, id)) }, [apply, token, id])
+  const apply = useCallback((r: Loaded) => { setData(r); setLoading(false) }, [])
+  const load = useCallback(async () => { setLoading(true); apply(await fetchAll(token, id)) }, [apply, token, id])
   useEffect(() => {
     let alive = true
-    void fetchMinutes(token, id).then((r) => { if (alive) apply(r) })
+    void fetchAll(token, id).then((r) => { if (alive) apply(r) })
     return () => { alive = false }
   }, [apply, token, id])
+  // 处理中每 5 秒刷新
+  useEffect(() => {
+    if (!busy(rec)) return
+    const t = setInterval(() => { void fetchAll(token, id).then(apply) }, 5000)
+    return () => clearInterval(t)
+  }, [rec, token, id, apply])
 
+  const retry = async () => {
+    if (!token || !rec) return
+    try { await api.retry(token, rec.id); await load() } catch (e) { apply({ ...data, error: e instanceof Error ? e.message : '没能重试' }) }
+  }
   const list = (items?: string[]) => items?.length
     ? <Card>{items.map((t, i) => <View key={i} style={s.line}>{i > 0 && <View style={ui.sep} />}<Text style={s.text}>{t}</Text></View>)}</Card>
     : null
+  const segments = text?.segments?.length ? text.segments : text?.text ? [{ text: text.text }] : []
+  const speakers = new Set(segments.map((g) => g.speaker ?? 0)).size
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -51,7 +70,7 @@ export default function MinutesScreen() {
           <Icon name="chevron.left" size={20} color={c.accInk} weight="semibold" />
           <Text style={{ fontSize: 17, color: c.accInk }}>返回</Text>
         </Pressable>
-        <Text style={s.mid}>会议纪要</Text>
+        <Text style={s.mid}>{min ? '会议纪要' : '录音'}</Text>
         <View style={{ width: 80 }} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}
@@ -61,28 +80,61 @@ export default function MinutesScreen() {
           <Text style={s.note}>{error}</Text>
           <Button kind="text" title="重试" onPress={load} />
         </View> : null}
-        {rec && !min && !error ? <View style={{ paddingTop: 32 }}>
-          <Text style={ui.title}>{rec.title || '录音'}</Text>
-          <Text style={ui.lede}>{statusText[rec.status] || '纪要还没生成'}</Text>
-          <Button kind="text" title="刷新" onPress={load} />
-        </View> : null}
-        {min ? <>
-          <Text style={[ui.title, { paddingTop: 16 }]}>{min.title || rec?.title || '会议纪要'}</Text>
-          {rec ? <Text style={ui.srcText}>{new Date(rec.recorded_at || rec.created_at).toLocaleString('zh-CN', { hour12: false })}</Text> : null}
-          {min.summary ? <Text style={[ui.lede, { marginTop: 12 }]}>{min.summary}</Text> : null}
-          {min.action_items?.length ? <>
-            <GroupLabel>要办的事</GroupLabel>
-            <Card>{min.action_items.map((a, i) => (
+
+        {rec && !error ? <>
+          <Text style={[ui.title, { paddingTop: 16 }]}>{min?.title || rec.title || '新录音'}</Text>
+          <Text style={ui.srcText}>{[
+            new Date(rec.recorded_at || rec.created_at).toLocaleString('zh-CN', { hour12: false }),
+            rec.duration_s ? clock(rec.duration_s * 1000) : '',
+            rec.scene ? sceneLabel[rec.scene] : '',
+          ].filter(Boolean).join(' · ')}</Text>
+
+          {busy(rec) || rec.status === 'failed' ? <View style={s.status}>
+            {busy(rec) ? <ActivityIndicator size="small" color={c.acc} /> : <Icon name="exclamationmark.circle" size={16} color={c.bad} />}
+            <Text style={[s.statusText, rec.status === 'failed' && { color: c.bad }]}>
+              {statusText[rec.status]}{rec.status === 'queued' && rec.queue_position ? `（前面 ${Math.max(0, rec.queue_position - 1)} 段）` : ''}
+            </Text>
+            {rec.status === 'failed' ? <Button kind="text" title="重试" onPress={retry} /> : null}
+          </View> : null}
+
+          {segments.length ? <View style={s.seg}>
+            {(['minutes', 'text'] as const).map((k) => (
+              <Pressable key={k} onPress={() => setTab(k)} style={[s.segItem, tab === k && s.segOn]}>
+                <Text style={[s.segText, tab === k && { color: c.t1, fontWeight: '500' }]}>{k === 'minutes' ? '纪要' : '原文'}</Text>
+              </Pressable>
+            ))}
+          </View> : null}
+
+          {tab === 'text' && segments.length ? <>
+            <GroupLabel>{speakers > 1 ? `${speakers} 人说话` : '转写原文'}</GroupLabel>
+            <Card>{segments.map((g, i) => (
               <View key={i} style={s.line}>
                 {i > 0 && <View style={ui.sep} />}
-                <Text style={s.text}>{a.text}</Text>
-                {(a.owner || a.due) ? <Text style={s.meta}>{[a.owner, a.due].filter(Boolean).join(' · ')}</Text> : null}
+                {speakers > 1 || g.start_ms != null ? <Text style={[s.meta, mono, { marginTop: 0, marginBottom: 4 }]}>
+                  {[speakers > 1 ? `说话人 ${(g.speaker ?? 0) + 1}` : '', g.start_ms != null ? clock(g.start_ms) : ''].filter(Boolean).join(' · ')}
+                </Text> : null}
+                <Text selectable style={s.text}>{g.text}</Text>
               </View>
             ))}</Card>
-            <Text style={s.note}>这些事已经加到你的事项里。</Text>
           </> : null}
-          {min.decisions?.length ? <><GroupLabel>定下来的</GroupLabel>{list(min.decisions)}</> : null}
-          {min.points?.length ? <><GroupLabel>要点</GroupLabel>{list(min.points)}</> : null}
+
+          {tab === 'minutes' && min ? <>
+            {min.summary ? <Text style={[ui.lede, { marginTop: 12 }]}>{min.summary}</Text> : null}
+            {min.action_items?.length ? <>
+              <GroupLabel>要办的事</GroupLabel>
+              <Card>{min.action_items.map((a, i) => (
+                <View key={i} style={s.line}>
+                  {i > 0 && <View style={ui.sep} />}
+                  <Text style={s.text}>{a.text}</Text>
+                  {(a.owner || a.due) ? <Text style={s.meta}>{[a.owner, a.due].filter(Boolean).join(' · ')}</Text> : null}
+                </View>
+              ))}</Card>
+              <Text style={s.note}>这些事已经加到你的事项里。</Text>
+            </> : <Text style={s.note}>这段录音里没有需要跟进的事。</Text>}
+            {min.decisions?.length ? <><GroupLabel>定下来的</GroupLabel>{list(min.decisions)}</> : null}
+            {min.points?.length ? <><GroupLabel>要点</GroupLabel>{list(min.points)}</> : null}
+          </> : null}
+          {tab === 'minutes' && !min && rec.status === 'summarizing' && segments.length ? <Text style={s.note}>纪要整理好前，可以先看原文。</Text> : null}
         </> : null}
       </ScrollView>
     </SafeAreaView>
@@ -93,6 +145,12 @@ const s = StyleSheet.create({
   nav: { height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 44, width: 80 },
   mid: { fontSize: 17, fontWeight: '500', color: c.t1 },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
+  statusText: { fontSize: 15, color: c.t2, flexShrink: 1 },
+  seg: { flexDirection: 'row', backgroundColor: c.raised, borderRadius: 9, padding: 2, marginTop: 20 },
+  segItem: { flex: 1, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 7 },
+  segOn: { backgroundColor: c.card },
+  segText: { fontSize: 13, color: c.t2 },
   line: { paddingVertical: 12, paddingHorizontal: 16 },
   text: { fontSize: 17, lineHeight: 24, color: c.t1 },
   meta: { fontSize: 13, lineHeight: 18, color: c.t3, marginTop: 4 },

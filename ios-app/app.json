@@ -3,7 +3,7 @@
     "name": "DailyAssistant",
     "slug": "daily-assistant",
     "scheme": "dailyassistant",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -37,6 +37,14 @@
         "expo-notifications",
         {
           "mode": "production"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "小禾需要用麦克风录下你说的话和会议，转成文字和纪要。",
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
         }
       ]
     ]

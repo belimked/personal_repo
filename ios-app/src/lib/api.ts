@@ -13,7 +13,27 @@ export type Minutes = {
   title?: string; summary?: string; points?: string[]; decisions?: string[]
   action_items?: { text: string; owner?: string; due?: string; is_self?: boolean }[]
 }
-export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string }
+export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number }
+export type Transcript = { text: string; speakers: number | null; segments: { speaker?: number; text: string; start_ms?: number; end_ms?: number }[] | null }
+export type AudioFile = { uri: string; name: string; type: string }
+
+async function uploadAudio(token: string, file: AudioFile, recordedAt?: string, title?: string): Promise<{ recording: Recording }> {
+  const form = new FormData()
+  if (title) form.append('title', title)
+  if (recordedAt) form.append('recorded_at', recordedAt)
+  form.append('file', file as unknown as Blob)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10 * 60 * 1000)
+  try {
+    const response = await fetch(`${API_BASE}/recordings`, { method: 'POST', body: form, signal: controller.signal, headers: { Authorization: `Bearer ${token}` } })
+    const json = await response.json() as { recording: Recording; message?: string }
+    if (!response.ok) throw new ApiError(response.status, json.message ?? '上传失败')
+    return json
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(0, controller.signal.aborted ? '上传超时' : '网络不可用，上传失败')
+  } finally { clearTimeout(timer) }
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); this.name = 'ApiError' }
@@ -57,4 +77,9 @@ export const api = {
   unregisterDevice: (token: string, device: string) => request<{ ok: boolean }>(`/devices/${encodeURIComponent(device)}`, token, 'DELETE'),
   recording: (token: string, id: string) => request<{ recording: Recording }>(`/recordings/${encodeURIComponent(id)}`, token),
   minutes: (token: string, id: string) => request<Minutes>(`/recordings/${encodeURIComponent(id)}/minutes`, token),
+  transcript: (token: string, id: string) => request<Transcript>(`/recordings/${encodeURIComponent(id)}/transcript`, token),
+  recordings: (token: string) => request<{ recordings: Recording[] }>('/recordings', token),
+  retry: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}/retry`, token, 'POST', {}),
+  removeRecording: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}`, token, 'DELETE'),
+  upload: uploadAudio,
 }
