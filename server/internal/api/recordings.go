@@ -140,6 +140,7 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 			a.internal(w)
 			return
 		}
+		a.wakeQueue()
 		send(w, 200, map[string]any{"ok": true, "status": "summarizing", "scene": scene})
 		return
 	}
@@ -169,6 +170,7 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 			a.internal(w)
 			return
 		}
+		a.wakeQueue()
 		send(w, 200, map[string]any{"ok": true, "status": target})
 		return
 	}
@@ -323,6 +325,7 @@ func (a *API) upload(w http.ResponseWriter, r *http.Request, uid string) {
 		return
 	}
 	path = ""
+	a.wakeQueue()
 	send(w, 200, map[string]any{"recording": map[string]any{"id": id, "status": "queued", "title": title, "created_at": now, "kind": kind}})
 }
 func (a *API) adminASR(w http.ResponseWriter) {

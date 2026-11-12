@@ -34,19 +34,25 @@ func (a *API) Start(ctx context.Context) error {
 		return e
 	}
 	log.Printf("queue started recovered=%d", recovered)
+	if a.wake == nil {
+		a.wake = make(chan struct{}, 1)
+	}
+	a.startJobs(ctx)
 	go func() {
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		if ctx.Err() != nil {
 			return
 		}
-		a.ProcessOne(ctx)
+		a.drainQueue(ctx)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				a.ProcessOne(ctx)
+				a.drainQueue(ctx)
+			case <-a.wake:
+				a.drainQueue(ctx)
 			}
 		}
 	}()
@@ -64,6 +70,23 @@ func (a *API) Start(ctx context.Context) error {
 		}
 	}()
 	return nil
+}
+func (a *API) wakeQueue() {
+	if a.wake != nil {
+		select {
+		case a.wake <- struct{}{}:
+		default:
+		}
+	}
+}
+func (a *API) drainQueue(ctx context.Context) {
+	for ctx.Err() == nil {
+		var n int
+		if a.DB.QueryRow("SELECT count(*) FROM recordings WHERE status IN ('queued','summarizing') AND (next_try_at IS NULL OR next_try_at<=?)", Now()).Scan(&n) != nil || n == 0 {
+			return
+		}
+		a.ProcessOne(ctx)
+	}
 }
 func (a *API) ProcessOne(ctx context.Context) {
 	if ctx.Err() != nil {

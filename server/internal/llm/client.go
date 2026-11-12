@@ -1,11 +1,13 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -82,6 +84,91 @@ func (c Client) CallWith(model string, messages []map[string]string, o Options) 
 	}
 	return v.Choices[0].Message.Content, nil
 }
+
+// Stream reads OpenAI-compatible SSE chunks and forwards content as it arrives.
+func (c Client) Stream(model string, messages []map[string]string, o Options, onDelta func(string)) (string, error) {
+	if c.Key == "" {
+		return "", errors.New("missing key")
+	}
+	base := c.Base
+	if base == "" {
+		base = "https://api.belimked.com/v1"
+	}
+	tokens, thinking := 800, "disabled"
+	if model == "deepseek-v4-pro" {
+		tokens, thinking = 3000, "enabled"
+	}
+	if o.MaxTokens > 0 {
+		tokens = o.MaxTokens
+	}
+	timeout := 25 * time.Second
+	if o.Timeout > 0 {
+		timeout = o.Timeout
+	}
+	b, _ := json.Marshal(map[string]any{"model": model, "messages": messages, "max_tokens": tokens, "thinking": map[string]string{"type": thinking}, "stream": true})
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(base, "/")+"/chat/completions", bytes.NewReader(b))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.Key)
+	req.Header.Set("Content-Type", "application/json")
+	client := c.HTTP
+	if client == nil {
+		client = http.DefaultClient
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("upstream %d", resp.StatusCode)
+	}
+	reader := bufio.NewReader(resp.Body)
+	var out strings.Builder
+	done := false
+	for {
+		line, e := reader.ReadString('\n')
+		if e != nil && e != io.EOF {
+			return out.String(), e
+		}
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "data:") {
+			data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+			if data == "[DONE]" {
+				done = true
+				break
+			}
+			var chunk struct {
+				Choices []struct {
+					Delta struct {
+						Content string `json:"content"`
+					} `json:"delta"`
+				} `json:"choices"`
+				Error any `json:"error"`
+			}
+			if json.Unmarshal([]byte(data), &chunk) != nil || chunk.Error != nil {
+				return out.String(), errors.New("invalid upstream stream")
+			}
+			for _, choice := range chunk.Choices {
+				if choice.Delta.Content != "" {
+					out.WriteString(choice.Delta.Content)
+					onDelta(choice.Delta.Content)
+				}
+			}
+		}
+		if e == io.EOF {
+			break
+		}
+	}
+	if !done || out.Len() == 0 {
+		return out.String(), errors.New("incomplete upstream stream")
+	}
+	return out.String(), nil
+}
+
 func Fallback(s string) string {
 	if strings.Contains(s, "周报") || strings.Contains(s, "简版") {
 		return "我先给你列个简版：本周完成的事、当前进展、下周计划。把具体事项发我，我直接整理成稿。"

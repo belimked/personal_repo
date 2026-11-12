@@ -1,6 +1,7 @@
 package api
 
 import (
+	"compress/gzip"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -30,6 +31,7 @@ type API struct {
 	OCRURL           string
 	Push             *Push
 	Jev              Jev
+	wake             chan struct{}
 }
 
 func Now() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z") }
@@ -73,6 +75,19 @@ func fail(w http.ResponseWriter, status int, code, msg string) {
 	send(w, status, map[string]any{"error": code, "message": msg})
 }
 
+type gzipWriter struct {
+	http.ResponseWriter
+	writer *gzip.Writer
+}
+
+func (w *gzipWriter) Write(b []byte) (int, error) { return w.writer.Write(b) }
+func (w *gzipWriter) Flush() {
+	w.writer.Flush()
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -90,6 +105,12 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 		w.WriteHeader(http.StatusOK)
 	}
 	return w.ResponseWriter.Write(b)
+}
+
+func (w *statusWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 func safeLogPath(path string) string {
@@ -117,6 +138,13 @@ func (a *API) Handler() http.Handler {
 			log.Printf("request method=%s path=%s status=%d duration=%s", r.Method, safeLogPath(r.URL.Path), logged.status, time.Since(start))
 		}()
 		w = logged
+		if strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api/chat/stream" && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			w.Header().Set("Content-Encoding", "gzip")
+			w.Header().Add("Vary", "Accept-Encoding")
+			gz := gzip.NewWriter(w)
+			defer gz.Close()
+			w = &gzipWriter{w, gz}
+		}
 		origin := r.Header.Get("Origin")
 		for _, o := range a.Origins {
 			if origin != "" && origin == strings.TrimSpace(o) {
@@ -235,6 +263,10 @@ func (a *API) handle(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(path, "/api/admin/") {
 		if u["role"] != "admin" {
 			fail(w, 403, "forbidden", "仅管理员可操作")
+			return
+		}
+		if path == "/api/admin/jobs" || strings.HasPrefix(path, "/api/admin/jobs/") {
+			a.adminJobs(w, r, body, u)
 			return
 		}
 		if path == "/api/admin/asr" && method == "GET" {

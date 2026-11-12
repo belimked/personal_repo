@@ -28,7 +28,14 @@
 | PATCH | /api/items/:id | `{data}`，与原 data 浅合并 → `{item}` |
 | DELETE | /api/items/:id | 软删除 → `{ok:true}` |
 | POST | /api/chat | `{message, thread?='home', mode?='chat'\|'make'}` → `{reply, model, thread, fallback}` |
-| GET | /api/messages?thread=home&limit=50 | `{messages:[{id,role,content,model,created_at}]}`，时间正序 |
+| GET | /api/messages?thread=home&limit=50&before=<created_at> | `{messages:[{id,role,content,model,created_at}],has_more}`；before 为严格小于该时间的消息，取最近 limit 条，时间正序；不带 before 时保持原分页行为 |
+
+| GET | /api/home?msg_limit=10 | `{user,items,messages,has_more,brief,server_time}`；items 同 `/api/items`，home 消息最近 10 条（最多 50，正序），brief 为台北当天最新简报或 null |
+| POST | /api/chat/stream | 请求体同 `/api/chat`；SSE 多条 `data: {"delta":"..."}`，最后 `data: {"done":true,"reply":"...","model":"...","fallback":false}`；错误时发送兜底 delta 后 done |
+| POST | /api/ask | `{q}`（最多 200 字）→ `{answer,filter,said,things,files,mode}`；filter 包含 from/to/kinds/status/scope/keywords/answer_hint，解析失败退回关键词模式；things 包含 kind、due |
+| GET | /api/briefs?limit=10 | `{briefs:[{id,kind,text,created_at}]}`，仅当前用户 |
+
+`/api/` 的 JSON 响应在客户端发送 `Accept-Encoding: gzip` 时压缩；SSE 不压缩。
 
 ### /api/chat
 - 上游：`https://api.belimked.com/v1/chat/completions`（OpenAI 兼容）。
@@ -51,6 +58,13 @@
 | POST | /api/admin/test-model | `{model}` → `{ok, latency_ms, model, message}`（发一句极短请求） |
 | GET/PUT | /api/admin/settings | 非敏感配置 |
 | GET | /api/admin/audit?limit=50 | 操作记录 |
+| GET | /api/admin/jobs | `{jobs:{morning|remind|profile|weekly:{enabled,at,runs:[...]}}}`；每项最近 10 次运行，含 started_at/finished_at/duration_ms/status/detail/user_id/run_key |
+| PUT | /api/admin/jobs/:name | `{enabled:boolean,at:"HH:MM"}`，保存到 settings 的 `job.<name>` |
+| POST | /api/admin/jobs/:name/run | `{user_id?:string}`；立即运行，忽略去重；返回 `{ok,processed_users}`，可仅指定用户 |
+
+## 定期任务与数据（Go 后台）
+
+新增 `job_runs(id,job,user_id,run_key,status,detail,started_at,finished_at)`（同一 job/user/run_key 唯一）和 `briefs(id,user_id,kind,text,data,created_at)`。任务使用 Asia/Taipei 时间：morning 每天 08:00、remind 每 5 分钟、profile 每天 02:00、weekly 周五 17:00；可由管理员修改 enabled/at（remind 固定每 5 分钟）。`XIAOHE_JOBS=off` 停止自动调度；手动运行仍可用。主动服务 on/quiet/off 控制简报与画像（remind 不受影响）。
 
 ## 阶段 2（暂不做）
 - `/api/files`（R2 存储上传/下载）、录音转写（63 上的 FunASR，经 Cloudflare Tunnel 接入）。

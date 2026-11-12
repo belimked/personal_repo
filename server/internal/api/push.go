@@ -104,27 +104,34 @@ func minutesMessage(added, total int, labels []string) string {
 }
 
 func (a *API) notify(uid, id string, success bool, successTitle, successBody string) {
+	title, body := "录音没能转写", "点开看原因，可以重试"
+	if success || successTitle != "" {
+		title, body = successTitle, successBody
+	}
+	a.pushUser(uid, title, body, map[string]string{"recording_id": id})
+}
+
+func (a *API) pushUser(uid, title, body string, data map[string]string) {
 	if a.Push == nil {
-		log.Printf("recording=%s push skipped reason=not_configured", id)
+		log.Printf("push skipped reason=not_configured")
 		return
 	}
 	var enabled string
 	if e := a.DB.QueryRow("SELECT value FROM settings WHERE key='push_enabled'").Scan(&enabled); e == nil && (enabled == "false" || enabled == "0") {
-		log.Printf("recording=%s push skipped reason=disabled", id)
+		log.Printf("push skipped reason=disabled")
 		return
 	}
 	rows, e := a.DB.Rows("SELECT token,env FROM devices WHERE user_id=?", uid)
 	if e != nil {
-		log.Printf("recording=%s push devices_error=%v", id, e)
+		log.Printf("push devices_error=%v", e)
 		return
 	}
 	statuses := map[string]int{}
-	title, body := "录音没能转写", "点开看原因，可以重试"
-	if success || successTitle != "" {
-		title = successTitle
-		body = successBody
+	payloadData := map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "body": data}
+	for k, v := range data {
+		payloadData[k] = v
 	}
-	payload, _ := json.Marshal(map[string]any{"aps": map[string]any{"alert": map[string]string{"title": title, "body": body}, "sound": "default"}, "recording_id": id, "body": map[string]string{"recording_id": id}})
+	payload, _ := json.Marshal(payloadData)
 	// expo-notifications 在 iOS 上只把远程推送的 body 字段作为 data 交给 App；顶层 recording_id 保留兼容。
 	for _, row := range rows {
 		device := str(row["token"])
@@ -172,9 +179,9 @@ func (a *API) notify(uid, id string, success bool, successTitle, successBody str
 			}
 			if resp.StatusCode == 410 || resp.StatusCode == 400 && strings.Contains(string(b), "BadDeviceToken") {
 				if _, err := a.DB.Exec("DELETE FROM devices WHERE token=? AND user_id=?", device, uid); err != nil {
-					log.Printf("recording=%s push device_delete_failed token_prefix=%s error=%v", id, prefix, err)
+					log.Printf("push device_delete_failed token_prefix=%s error=%v", prefix, err)
 				} else {
-					log.Printf("recording=%s push device_deleted token_prefix=%s status=%d", id, prefix, resp.StatusCode)
+					log.Printf("push device_deleted token_prefix=%s status=%d", prefix, resp.StatusCode)
 				}
 				break
 			}
@@ -185,5 +192,5 @@ func (a *API) notify(uid, id string, success bool, successTitle, successBody str
 		summary = append(summary, fmt.Sprintf("%s:%d", code, n))
 	}
 	sort.Strings(summary)
-	log.Printf("recording=%s push devices=%d statuses=%s", id, len(rows), strings.Join(summary, ","))
+	log.Printf("push devices=%d statuses=%s", len(rows), strings.Join(summary, ","))
 }

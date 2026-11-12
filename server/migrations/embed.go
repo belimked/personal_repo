@@ -13,3 +13,6 @@ var RecordingScene string
 
 //go:embed 0004_recording_kind.sql
 var RecordingKind string
+
+//go:embed 0005_jobs.sql
+var Jobs string

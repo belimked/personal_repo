@@ -20,6 +20,18 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		a.recordingRoutes(w, r, b, u)
 		return
 	}
+	if p == "/api/home" && m == "GET" {
+		a.home(w, r, u)
+		return
+	}
+	if p == "/api/briefs" && m == "GET" {
+		a.briefs(w, r, str(uid))
+		return
+	}
+	if p == "/api/ask" && m == "POST" {
+		a.ask(w, b, str(uid))
+		return
+	}
 	if p == "/api/search" && m == "GET" {
 		a.search(w, r, str(uid))
 		return
@@ -127,17 +139,15 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		if thread == "" {
 			thread = "home"
 		}
-		rows := a.rows(w, "SELECT id,role,content,model,created_at FROM messages WHERE user_id=? AND thread=? ORDER BY created_at DESC,rowid DESC LIMIT ?", uid, thread, limit(r.URL.Query()))
-		if rows == nil {
+		rows, more, err := a.messagePage(str(uid), thread, limit(r.URL.Query()), r.URL.Query().Get("before"))
+		if err != nil {
+			a.internal(w)
 			return
 		}
-		for i, j := 0, len(rows)-1; i < j; i, j = i+1, j-1 {
-			rows[i], rows[j] = rows[j], rows[i]
-		}
-		send(w, 200, map[string]any{"messages": rows})
+		send(w, 200, map[string]any{"messages": rows, "has_more": more})
 		return
 	}
-	if p == "/api/chat" && m == "POST" {
+	if (p == "/api/chat" || p == "/api/chat/stream") && m == "POST" {
 		message := strings.TrimSpace(str(b["message"]))
 		thread := value(b["thread"], "home")
 		mode := value(b["mode"], "chat")
@@ -172,16 +182,35 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 			a.internal(w)
 			return
 		}
-		reply, e := a.LLM.Call(model, msgs)
+		stream := p == "/api/chat/stream"
+		var reply string
+		var e error
+		if stream {
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("X-Accel-Buffering", "no")
+			w.WriteHeader(200)
+			reply, e = a.LLM.Stream(model, msgs, llm.Options{}, func(delta string) { sse(w, map[string]any{"delta": delta}) })
+		} else {
+			reply, e = a.LLM.Call(model, msgs)
+		}
 		fallback := e != nil
 		if fallback {
-			reply = llm.Fallback(message)
+			text := llm.Fallback(message)
+			if stream {
+				sse(w, map[string]any{"delta": text})
+			}
+			reply += text
 		}
 		if _, e = a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, thread, "assistant", reply, model, Now()); e != nil {
 			a.internal(w)
 			return
 		}
-		send(w, 200, map[string]any{"reply": reply, "model": model, "thread": thread, "fallback": fallback})
+		if stream {
+			sse(w, map[string]any{"done": true, "reply": reply, "model": model, "fallback": fallback})
+		} else {
+			send(w, 200, map[string]any{"reply": reply, "model": model, "thread": thread, "fallback": fallback})
+		}
 		return
 	}
 	fail(w, 404, "not_found", "接口不存在")
