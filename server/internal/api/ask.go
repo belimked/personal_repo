@@ -86,6 +86,10 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 	for _, s := range f.Scope {
 		scopes[s] = true
 	}
+	// 问“要处理的事”这类没有关键词、也没提到录音或资料的，只查事项，不把这段时间的录音全列出来
+	if scopes["things"] && len(f.Keywords) == 0 && !mentionsFiles(q) {
+		scopes["files"], scopes["said"] = false, false
+	}
 	said, things, files := []map[string]any{}, []map[string]any{}, []map[string]any{}
 	// Reuse the existing keyword matcher for transcripts, messages and files.
 	if len(f.Keywords) > 0 && (scopes["said"] || scopes["files"]) {
@@ -164,6 +168,9 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 			if json.Unmarshal([]byte(str(row["data"])), &d) != nil {
 				continue
 			}
+			if demoItem(kind, d) {
+				continue
+			}
 			done := d["done"] == true || d["status"] == "done"
 			if f.Status == "open" && done || f.Status == "done" && !done {
 				continue
@@ -225,4 +232,22 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 		answer += fmt.Sprintf("其中 %d 件已过期。", overdue)
 	}
 	send(w, 200, map[string]any{"answer": answer, "filter": f, "said": said, "things": things, "files": files, "mode": mode})
+}
+
+// mentionsFiles 判断搜索语句是否提到录音、纪要、资料等，提到了才查资料。
+func mentionsFiles(q string) bool {
+	for _, w := range []string{"录音", "纪要", "会议", "开会", "资料", "文件", "照片", "图片", "文档", "说过", "聊过"} {
+		if strings.Contains(q, w) {
+			return true
+		}
+	}
+	return false
+}
+
+// demoItem 和 App 的 isOpen 一致：带 state 的待办、带 briefId 的暂存是简报演示数据，不算真实事项。
+func demoItem(kind string, d map[string]any) bool {
+	if kind == "todo" && d["state"] != nil {
+		return true
+	}
+	return kind == "stash" && str(d["briefId"]) != ""
 }

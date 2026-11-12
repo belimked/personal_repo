@@ -190,3 +190,21 @@ func TestWake(t *testing.T) {
 	cancel()
 	a.drainQueue(ctx)
 }
+
+func TestDemoItemAndMentionsFiles(t *testing.T) {
+	if !demoItem("todo", map[string]any{"state": "pending", "title": "小周的周报"}) {
+		t.Fatal("todo with state should be demo")
+	}
+	if !demoItem("stash", map[string]any{"briefId": "weekly-zhou"}) {
+		t.Fatal("stash with briefId should be demo")
+	}
+	if demoItem("todo", map[string]any{"title": "买菜", "done": false}) || demoItem("idea", map[string]any{"state": "x"}) {
+		t.Fatal("real items must not be demo")
+	}
+	if mentionsFiles("这个月需要处理的事情") {
+		t.Fatal("plain task query should not search files")
+	}
+	if !mentionsFiles("上周开会说要办的事") || !mentionsFiles("这周的录音") {
+		t.Fatal("meeting/recording query should search files")
+	}
+}

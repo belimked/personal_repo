@@ -251,6 +251,9 @@ func (a *API) runJobUser(name, uid string, now time.Time) (string, error) {
 	for _, r := range rows {
 		var d map[string]any
 		json.Unmarshal([]byte(str(r["data"])), &d)
+		if demoItem(str(r["kind"]), d) {
+			continue
+		}
 		due := value(d["due"], str(d["date"]))
 		done := d["done"] == true || d["status"] == "done"
 		if name == "morning" {
