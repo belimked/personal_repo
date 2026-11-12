@@ -1,38 +1,47 @@
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NavBar } from '@/components/NavBar'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
-import { api, type SearchResult } from '@/lib/api'
+import { api, askWithFallback, type AskResult, type SearchResult } from '@/lib/api'
 import { when } from '@/lib/items'
 import { clock } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
 import { c, mono } from '@/lib/theme'
 
 const short = (at: string) => new Date(at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
-const EXAMPLES = ['体检', '报销', '周报', '供应商']
+const EXAMPLES = ['体检', '报销', '周报', '供应商', '这个月需要处理的事情', '这周开会说要办的事']
+const isSentence = (q: string) => /\s/.test(q) || q.length >= 6 || /本月|这个月|这周|本周|今天|明天|下周|需要|要办|没办|过期|帮我/.test(q)
 
 /** 搜索：说过的话 / 事情 / 资料，点进去就是那件事 */
 export default function Search() {
   const { token } = useStore()
-  const [q, setQ] = useState('')
+  const params = useLocalSearchParams<{ q?: string; scope?: string }>()
+  const [q, setQ] = useState(params.q ?? '')
+  const [submitted, setSubmitted] = useState(params.q ?? '')
   const [res, setRes] = useState<{ q: string; data: SearchResult | null; error: string }>({ q: '', data: null, error: '' })
   const query = q.trim()
+  const sentence = isSentence(query) || (!!params.q && query === params.q)
+  const active = sentence ? submitted === query && !!query : !!query
+  const [loading, setLoading] = useState(false)
+  const submit = (text = query) => { if (text.trim()) { setQ(text); setSubmitted(text.trim()) } }
 
   useEffect(() => {
-    if (!token || !query) return
+    if (!token || !active) return
     let alive = true
     const t = setTimeout(() => {
-      void api.search(token, query)
+      setLoading(true)
+      void (sentence ? askWithFallback(token, query) : api.search(token, query))
         .then((data) => { if (alive) setRes({ q: query, data, error: '' }) })
         .catch((e: Error) => { if (alive) setRes({ q: query, data: null, error: e.message }) })
-    }, 350)
+        .finally(() => { if (alive) setLoading(false) })
+    }, sentence ? 0 : 350)
     return () => { alive = false; clearTimeout(t) }
-  }, [token, query])
+  }, [token, query, active, sentence])
 
-  const ready = res.q === query && !!query
+  const ready = res.q === query && active && !loading
   const data = ready ? res.data : null
   const empty = data && !data.said.length && !data.things.length && !data.files.length
   const openRec = (id?: string) => { if (id) { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id } }) } }
@@ -47,20 +56,22 @@ export default function Search() {
       <NavBar title="搜索" />
       <View style={s.box}>
         <Icon name="magnifyingglass" size={17} color={c.t3} />
-        <TextInput autoFocus value={q} onChangeText={setQ} placeholder="说过的话、事情、资料都能搜" placeholderTextColor={c.t3}
-          style={s.input} returnKeyType="search" clearButtonMode="while-editing" autoCorrect={false} />
+        <TextInput autoFocus value={q} onChangeText={setQ} placeholder={params.scope === 'records' ? '比如：上周例会说要办的事' : '说过的话、事情、资料都能搜'} placeholderTextColor={c.t3}
+          style={s.input} returnKeyType="search" onSubmitEditing={() => submit()} clearButtonMode="while-editing" autoCorrect={false} />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         {!query ? <>
           <GroupLabel top={16}>试试搜</GroupLabel>
           <View style={s.chips}>{EXAMPLES.map((e) => (
-            <Pressable key={e} onPress={() => setQ(e)} style={({ pressed }) => [s.chip, pressed && { backgroundColor: c.raised }]}><Text style={s.chipText}>{e}</Text></Pressable>
+            <Pressable key={e} onPress={() => isSentence(e) ? submit(e) : setQ(e)} style={({ pressed }) => [s.chip, pressed && { backgroundColor: c.raised }]}><Text style={s.chipText}>{e}</Text></Pressable>
           ))}</View>
           <Text style={s.note}>按关键词查你的录音原文、纪要、和小禾的对话，以及所有事项。</Text>
-        </> : !ready ? <ActivityIndicator color={c.acc} style={{ marginTop: 32 }} />
+        </> : sentence && !active ? <Pressable onPress={() => submit()} style={s.ask}><Text style={{ color: c.accInk }}>问小禾</Text></Pressable>
+          : !ready ? <ActivityIndicator color={c.acc} style={{ marginTop: 32 }} />
           : res.error ? <Text style={s.note}>{res.error}</Text>
-          : empty ? <Text style={[s.note, { textAlign: 'center', paddingTop: 32 }]}>没找到“{query}”相关的内容</Text>
+          : empty ? <><Text style={s.answer}>{(data as AskResult).answer || `没找到“${query}”相关的内容`}</Text></>
           : data ? <>
+            {(data as AskResult).answer ? <Text style={s.answer}>{(data as AskResult).answer}</Text> : null}
             {data.things.length ? <>
               <GroupLabel top={16}>事情</GroupLabel>
               <Card>{data.things.map((t, i) => {
@@ -111,6 +122,8 @@ export default function Search() {
 }
 
 const s = StyleSheet.create({
+  ask: { padding: 16, alignSelf: 'flex-start', marginLeft: 16 },
+  answer: { color: c.t1, fontSize: 15, lineHeight: 22, marginTop: 20, marginHorizontal: 16 },
   box: { marginHorizontal: 16, height: 40, borderRadius: 10, backgroundColor: '#E4E4EA', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 },
   input: { flex: 1, fontSize: 17, color: c.t1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 4 },

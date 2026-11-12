@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Card, GroupLabel, Icon, ui } from '@/components/ui'
@@ -8,6 +8,7 @@ import { api, type Recording } from '@/lib/api'
 import { clock, sceneLabel, statusLabel, useRecorder } from '@/lib/recorder'
 import { useStore } from '@/lib/store'
 import { c, mono } from '@/lib/theme'
+import { toast } from '@/components/Toast'
 
 const busy = (r: Recording) => r.status === 'queued' || r.status === 'transcribing' || r.status === 'summarizing'
 const when = (r: Recording) => new Date(r.recorded_at || r.created_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
@@ -19,6 +20,11 @@ export default function Records() {
   const [list, setList] = useState<Recording[]>([])
   const [loading, setLoading] = useState(false)
   const [tick, setTick] = useState(0)
+  const [newId, setNewId] = useState<string | null>(null)
+  const scroll = useRef<React.ElementRef<typeof ScrollView>>(null)
+  const rowY = useRef<Record<string, number>>({})
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (highlightTimer.current) clearTimeout(highlightTimer.current) }, [])
 
   const reload = useCallback(() => setTick((n) => n + 1), [])
   useEffect(() => {
@@ -34,12 +40,26 @@ export default function Records() {
     return () => clearInterval(t)
   }, [list, reload])
 
+  useEffect(() => {
+    if (newId && list.some((r) => r.id === newId)) {
+      const t = setTimeout(() => {
+        scroll.current?.scrollTo({ y: Math.max(0, (rowY.current[newId] ?? 0) - 90), animated: true })
+        if (highlightTimer.current) clearTimeout(highlightTimer.current)
+        highlightTimer.current = setTimeout(() => setNewId(null), 2000)
+      }, 200)
+      return () => clearTimeout(t)
+    }
+  }, [list, newId])
+  const uploaded = (sent: { recording: Recording } | null) => {
+    if (!sent) return
+    toast('录音已上传，正在整理'); setNewId(sent.recording.id); reload()
+  }
   const meeting = async () => {
-    if (rec.mode === 'meeting') { if (await rec.finish()) reload(); return }
+    if (rec.mode === 'meeting') { uploaded(await rec.finish()); return }
     if (rec.mode) return
     await rec.start('meeting')
   }
-  const importFile = async () => { if (await rec.importFile()) reload() }
+  const importFile = async () => { uploaded(await rec.importFile()) }
   const more = (r: Recording) => Alert.alert(r.title || '录音', undefined, [
     ...(r.status === 'failed' ? [{ text: '重试', onPress: () => { if (token) void api.retry(token, r.id).then(reload).catch((e: Error) => Alert.alert('没能重试', e.message)) } }] : []),
     { text: '删除', style: 'destructive' as const, onPress: () => { if (token) void api.removeRecording(token, r.id).then(reload).catch(() => {}) } },
@@ -49,7 +69,7 @@ export default function Records() {
   const recording = rec.mode === 'meeting'
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+      <ScrollView ref={scroll} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { setLoading(true); reload() }} />}>
         <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/me')} hitSlop={8} style={s.back}>
           <Icon name="chevron.left" size={20} color={c.accInk} weight="semibold" />
@@ -60,6 +80,9 @@ export default function Records() {
           <Text style={ui.lede}>开会时录下来，我转成文字、整理纪要，要办的事直接记上。</Text>
         </View>
 
+        <Pressable onPress={() => router.push({ pathname: '/search', params: { scope: 'records' } })} style={s.search}>
+          <Icon name="magnifyingglass" size={17} color={c.t3} /><Text style={{ color: c.t3, fontSize: 17 }}>搜录音、纪要、要办的事</Text>
+        </Pressable>
         <Card style={s.recCard}>
           {recording ? <>
             <View style={s.live}><View style={s.dot} /><Text style={s.liveText}>正在录音</Text></View>
@@ -80,9 +103,10 @@ export default function Records() {
 
         <GroupLabel>最近的录音</GroupLabel>
         {list.length === 0 ? <Card><View style={s.row}><Text style={[s.h, { color: c.t3 }]}>还没有录音</Text></View></Card> : (
-          <Card>{list.map((r, i) => (
+          <View onLayout={(e) => { rowY.current._base = e.nativeEvent.layout.y }}><Card>{list.map((r, i) => (
             <Pressable key={r.id} onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id: r.id } }) }} onLongPress={() => more(r)}
-              style={({ pressed }) => [s.row, pressed && { backgroundColor: c.raised }]}>
+              onLayout={(e) => { rowY.current[r.id] = (rowY.current._base ?? 0) + e.nativeEvent.layout.y }}
+              style={({ pressed }) => [s.row, (pressed || newId === r.id) && { backgroundColor: c.accTint }]}>
               {i > 0 && <View style={ui.sep} />}
               <View style={{ flex: 1 }}>
                 <Text style={s.h} numberOfLines={1}>{r.title || (busy(r) ? '新录音' : '录音')}</Text>
@@ -93,7 +117,7 @@ export default function Records() {
                 <Text style={[s.stateText, r.status === 'failed' && { color: c.bad }]}>{statusLabel[r.status]}</Text>
               </View>
             </Pressable>
-          ))}</Card>
+          ))}</Card></View>
         )}
         {list.length > 0 ? <Text style={s.note}>长按一段录音可以重试或删除。</Text> : null}
       </ScrollView>
@@ -102,6 +126,7 @@ export default function Records() {
 }
 
 const s = StyleSheet.create({
+  search: { height: 40, borderRadius: 10, backgroundColor: '#E4E4EA', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, marginBottom: 16 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 44, alignSelf: 'flex-start' },
   recCard: { alignItems: 'center', paddingTop: 24, paddingBottom: 8, paddingHorizontal: 16 },
   live: { flexDirection: 'row', alignItems: 'center', gap: 6 },

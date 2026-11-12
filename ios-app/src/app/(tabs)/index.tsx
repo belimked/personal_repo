@@ -3,7 +3,8 @@ import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
 import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import { api, type Recording } from '@/lib/api'
+import { api, askWithFallback, streamChat, type Recording } from '@/lib/api'
+import { toast } from '@/components/Toast'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Brief } from '@/components/Brief'
 import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
@@ -17,21 +18,30 @@ import { c, mono } from '@/lib/theme'
 
 /** 01 简报封面 / 03 结束页（3 件都过完后） */
 export default function Home() {
-  const { states, token } = useStore()
+  const { states, token, messages: history, hasMore, loadOlder, refresh } = useStore()
   const [panel, setPanel] = useState(false)
   const input = useRef<React.ElementRef<typeof TextInput>>(null)
   const say = () => input.current?.focus()
   const [draft, setDraft] = useState('')
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number } }[]>([])
+  const [local, setLocal] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number }; search?: string }[]>([])
+  const messages = [...history, ...local]
+  const older = async () => {
+    preserve.current = { height: scrollHeight.current, y: scrollY.current }
+    await loadOlder()
+  }
+  const scrollHeight = useRef(0)
+  const scrollY = useRef(0)
+  const preserve = useRef<{ height: number; y: number } | null>(null)
+  const scrollAfter = () => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 100)
   // 按住说的语音：记下每条的处理状态，气泡和按钮下方的提示跟着变；处理完重新拉对话，用原话 + 小禾的回答替换气泡。
   // 失败的保留气泡，点开在纪要页重试。收到推送或回到前台时立刻查一次。
   const [voices, setVoices] = useState<Record<string, Recording['status']>>({})
   const [poke, setPoke] = useState(0)
   const scroll = useRef<React.ElementRef<typeof ScrollView>>(null)
-  const follow = useRef(false)
   const voice = (sent: Sent) => {
-    follow.current = true
-    setMessages((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
+    toast('收到，正在转成文字')
+    setTimeout(scrollAfter, 800)
+    setLocal((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
     setVoices((v) => ({ ...v, [sent.recording.id]: 'queued' }))
   }
   const waiting = Object.keys(voices).filter((id) => voices[id] !== 'done' && voices[id] !== 'failed')
@@ -50,42 +60,56 @@ export default function Home() {
       if (!alive) return
       const done = ids.filter((_, i) => got[i] === 'done')
       // 先把对话拉回来再改状态：改状态会让这个 effect 重跑，先改的话下面的替换会被丢掉（0.9.3 里“已回复”但文字不变的原因）
-      const r = done.length ? await api.messages(token).catch(() => null) : null
+      const r = done.length ? await api.messages(token, 10).catch(() => null) : null
       if (!alive) return
       setVoices((v) => {
         const next = { ...v }
         ids.forEach((id, i) => { const st = got[i]; if (st && !(st === 'done' && !r)) next[id] = st })
         return next
       })
+      if (got.some((st) => st === 'failed')) toast('这条语音没能处理，点气泡重试')
       if (!r) return
-      follow.current = true
-      const list = r.messages.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-      setMessages((p) => [...list, ...p.filter((m) => m.voice && !done.includes(m.voice.id))])
+      setLocal((p) => p.filter((m) => !m.voice || !done.includes(m.voice.id)).filter((m) => !r.messages.some((x) => x.role === m.role && x.content === m.content)))
+      void refresh(true).then(() => { toast('小禾回复了'); scrollAfter() })
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     }
     void check()
     const t = setInterval(() => { void check() }, 3000)
     return () => { alive = false; clearInterval(t) }
-  }, [waitKey, token, poke])
+  }, [waitKey, token, poke, refresh])
   const lastVoice = Object.keys(voices).at(-1)
   const voiceTip = waiting.length
     ? voices[waiting[waiting.length - 1]] === 'summarizing' ? '听清了，小禾正在想怎么回你…' : '语音已发出，正在转成文字…'
     : lastVoice && voices[lastVoice] === 'failed' ? '这条语音没能处理，点下方气泡重试' : ''
   const [thinking, setThinking] = useState(false)
-  useEffect(() => {
-    let current = true
-    if (token) void api.messages(token).then((r) => { if (current) setMessages(r.messages.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))) }).catch(() => {})
-    return () => { current = false }
-  }, [token])
   const send = async () => {
     const message = draft.trim()
     if (!message || thinking) return
-    follow.current = true
-    setDraft(''); setMessages((p) => [...p, { role: 'user', content: message }]); setThinking(true)
-    // 演示模式用预设回复；登录后连不上就照实说，不拿演示内容充数
-    let reply = BRIEF_ITEMS[0].reply
-    if (token) try { reply = (await api.chat(token, message)).reply || '我没想出怎么回，换个说法再试一次。' } catch { reply = '现在连不上，这句没发出去。稍后再试一次。' }
-    setMessages((p) => [...p, { role: 'assistant', content: reply }]); setThinking(false)
+    setDraft(''); setLocal((p) => [...p, { role: 'user', content: message }]); setThinking(true)
+    scrollAfter()
+    const searching = /^(帮我)?[搜查找]/.test(message)
+    if (searching && token) {
+      try {
+        const result = await askWithFallback(token, message)
+        const reply = [result.answer || '找到这些结果：', ...result.things.slice(0, 5).map((t) => `· ${t.title}${t.due ? `（${t.due}）` : ''}`)].join('\n')
+        setLocal((p) => [...p, { role: 'assistant', content: reply, search: message }])
+      } catch { setLocal((p) => [...p, { role: 'assistant', content: '现在搜不了，稍后再试。' }]) }
+    } else if (token) {
+      let gotDelta = false
+      setLocal((p) => [...p, { role: 'assistant', content: '' }])
+      try {
+        const reply = await streamChat(token, message, (delta) => {
+          if (!gotDelta) { setThinking(false); scrollAfter() }
+          gotDelta = true
+          setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: next[next.length - 1].content + delta }; return next })
+        })
+        setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: reply }; return next })
+      } catch {
+        try { const reply = (await api.chat(token, message)).reply; setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: reply }; return next }) }
+        catch { setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: gotDelta ? next[next.length - 1].content + '\n连接中断，请重试。' : '现在连不上，这句没发出去。稍后再试一次。' }; return next }) }
+      }
+    } else setLocal((p) => [...p, { role: 'assistant', content: BRIEF_ITEMS[0].reply }])
+    setThinking(false); scrollAfter()
   }
   const pending = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending')
   const allDone = pending.length === 0
@@ -96,7 +120,8 @@ export default function Home() {
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
-        onContentSizeChange={() => { if (follow.current) { follow.current = false; scroll.current?.scrollToEnd({ animated: true }) } }}>
+        onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y }} scrollEventThrottle={16}
+        onContentSizeChange={(_, height) => { if (preserve.current !== null) { scroll.current?.scrollTo({ y: Math.max(0, preserve.current.y + height - preserve.current.height), animated: false }); preserve.current = null } scrollHeight.current = height }}>
         <Switcher onPress={() => setPanel(true)} />
         {token ? <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
@@ -130,7 +155,8 @@ export default function Home() {
           </>
         )}
         <View style={s.chat}>
-          {messages.map((m, i) => m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text></View>)}
+          {hasMore && history.length > 0 ? <Pressable onPress={older} style={s.older}><Text style={{ color: c.accInk, fontSize: 13 }}>查看更早的对话</Text></Pressable> : null}
+          {messages.map((m, i) => 'voice' in m && m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text>{'search' in m && m.search ? <Pressable onPress={() => router.push({ pathname: '/search', params: { q: m.search } })}><Text style={s.resultLink}>看全部结果</Text></Pressable> : null}</View>)}
           {thinking ? <Text style={s.thinking}>小禾正在想…</Text> : null}
         </View>
       </ScrollView>
@@ -202,6 +228,8 @@ function Finished({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent)
 const s = StyleSheet.create({
   body: { flexGrow: 1, paddingHorizontal: 16 },
   chat: { paddingTop: 16, paddingBottom: 12, gap: 8 },
+  older: { alignSelf: 'center', padding: 10 },
+  resultLink: { color: c.accInk, fontSize: 13, marginTop: 8 },
   bar: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: c.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line },
   bubble: { maxWidth: '85%', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14 },
   mine: { alignSelf: 'flex-end', backgroundColor: c.accTint },

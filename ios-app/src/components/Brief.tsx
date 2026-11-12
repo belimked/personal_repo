@@ -15,7 +15,7 @@ export const needsConfirm = (i: ApiItem) => !i.deleted && (i.kind === 'idea' || 
 
 /** 01 简报（登录后）：今天要办的 + 等你定的，全部来自你的真实事项 */
 export function Brief({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent) => void; tip: string }) {
-  const { items, user, setDone } = useStore()
+  const { items, user, setDone, brief } = useStore()
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const open = items.filter(isOpen)
   const due = open.filter((i) => { const d = dayOf(dueOf(i)); return i.kind === 'todo' && !!d && d <= today })
@@ -73,6 +73,7 @@ export function Brief({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: S
           <Text style={s.moreText}>还有 {rows.length - MAX} 件，去“盯着”看全部</Text><Chev />
         </Pressable> : null}
       </Card> : null}
+      {brief?.text ? <Text style={s.briefText}>{brief.text}</Text> : null}
       <View style={{ flex: 1 }} />
       <View style={s.actions}>
         {confirm.length ? <Button title="逐件过" onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/review') }} />
@@ -86,6 +87,7 @@ export function Brief({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: S
 }
 
 const s = StyleSheet.create({
+  briefText: { color: c.t2, fontSize: 13, lineHeight: 18, marginTop: 12, paddingHorizontal: 4 },
   head: { paddingHorizontal: 4, paddingVertical: 24 },
   top: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   topText: { fontSize: 13, lineHeight: 18, color: c.t2 },

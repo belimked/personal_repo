@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useEffect, useRef } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { recordingIdOf } from '@/lib/push'
+import { Toast } from '@/components/Toast'
 import { RecorderProvider } from '@/lib/recorder'
 import { StoreProvider, useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
@@ -13,12 +14,15 @@ function useOpenFromPush(enabled: boolean) {
   const last = Notifications.useLastNotificationResponse()
   const handled = useRef<string | null>(null)
   useEffect(() => {
+    if (!enabled || !last) return
     const id = recordingIdOf(last)
-    if (!enabled || !id || !last) return
+    const data = last.notification.request.content.data
     const key = last.notification.request.identifier
     if (handled.current === key) return
     handled.current = key
-    router.push({ pathname: '/minutes', params: { id } })
+    if (data?.type === 'brief') router.navigate('/')
+    else if (data?.type === 'remind' && typeof data.item_id === 'string') router.navigate('/watch')
+    else if (id) router.push({ pathname: '/minutes', params: { id } })
     Notifications.clearLastNotificationResponse()
   }, [enabled, last])
 }
@@ -52,6 +56,7 @@ export default function RootLayout() {
         <RecorderProvider>
           <StatusBar style="dark" />
           <Routes />
+          <Toast />
         </RecorderProvider>
       </StoreProvider>
     </SafeAreaProvider>

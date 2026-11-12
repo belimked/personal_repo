@@ -13,13 +13,21 @@ import { Button, Icon, ui } from './ui'
 /** 02 逐件过（登录后）：把等你确认的事一件件定下来 —— 安排成待办 / 交给小禾盯着 / 不用了 / 稍后 */
 export function RealReview() {
   const { id } = useLocalSearchParams<{ id?: string }>()
-  const { items, user, moveItem, deleteItem } = useStore()
+  const { items, user, moveItem, remindItem, deleteItem } = useStore()
   const [skipped, setSkipped] = useState<string[]>([])
   const [handled, setHandled] = useState(0)
   const queue = items.filter((i) => needsConfirm(i) && !skipped.includes(i.id))
     .sort((a, b) => Number(b.id === id) - Number(a.id === id))
   const item = queue[0]
   const back = () => router.canGoBack() ? router.back() : router.replace('/')
+  const later = () => {
+    const now = new Date()
+    const remind = new Date(now)
+    if (now.getHours() >= 17) { remind.setDate(remind.getDate() + 1); remind.setHours(9, 0, 0, 0) }
+    else remind.setHours(17, 30, 0, 0)
+    remindItem(item.id, remind.toISOString())
+    Haptics.selectionAsync(); setSkipped((p) => [...p, item.id])
+  }
 
   const act = (run: () => void, ok = true) => {
     Haptics.notificationAsync(ok ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning)
@@ -58,18 +66,22 @@ export function RealReview() {
   const rec = recordingOf(item)
   const due = when(dueOf(item))
   const owner = str(item.data.owner)
+  const reminder = typeof item.data.remind_at === 'string' ? new Date(item.data.remind_at) : null
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
+  const reminderText = reminder ? `${reminder.toDateString() === new Date().toDateString() ? '' : reminder.toDateString() === tomorrow.toDateString() ? '明天 ' : `${reminder.getMonth() + 1}月${reminder.getDate()}日 `}${reminder.getHours()}:${String(reminder.getMinutes()).padStart(2, '0')} 再提醒` : ''
   const facts: { k: string; v: string; bad?: boolean }[] = [
     { k: '类别', v: sceneLabel[str(item.data.scene)] ?? '' },
     { k: '谁来办', v: owner ? (owner === user?.name ? '你' : owner) : '' },
     { k: '时间', v: due.text, bad: due.late },
     { k: '备注', v: str(item.data.note) },
+    { k: '提醒', v: reminderText },
   ].filter((f) => f.v)
   const mine = !owner || owner === user?.name
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {nav(`第 ${handled + skipped.length + 1} 件 · 还剩 ${queue.length}`,
-        <Pressable onPress={() => { Haptics.selectionAsync(); setSkipped((p) => [...p, item.id]) }} hitSlop={8}><Text style={s.navText}>稍后</Text></Pressable>)}
+        <Pressable onPress={later} hitSlop={8}><Text style={s.navText}>稍后</Text></Pressable>)}
       <ScrollView contentContainerStyle={s.body}>
         <View style={[ui.card, s.task]}>
           <Text style={s.h2}>{titleOf(item)}</Text>
