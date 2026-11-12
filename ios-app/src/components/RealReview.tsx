@@ -23,6 +23,8 @@ export function RealReview() {
   const item = queue[0]
   const [source, setSource] = useState<{ id: string; title: string } | null>(null)
   const [x] = useState(() => new Animated.Value(0))
+  const [scrollEnabled, setScrollEnabled] = useState(true)
+  const buzzed = useRef(false)
   const rec = item ? recordingOf(item) : ''
   useEffect(() => {
     if (!token || !rec) return
@@ -52,13 +54,21 @@ export function RealReview() {
   useEffect(() => { laterRef.current = later })
   // eslint-disable-next-line react-hooks/refs
   const [pan] = useState(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => g.dx > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-    onPanResponderMove: (_, g) => x.setValue(Math.max(0, g.dx)),
+    onMoveShouldSetPanResponderCapture: (_, g) => g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onMoveShouldSetPanResponder: (_, g) => g.dx > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderGrant: () => { setScrollEnabled(false); buzzed.current = false },
+    onPanResponderMove: (_, g) => {
+      x.setValue(Math.max(0, g.dx))
+      if (g.dx > 100 && !buzzed.current) { buzzed.current = true; void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) }
+      if (g.dx < 100) buzzed.current = false
+    },
     onPanResponderRelease: (_, g) => {
-      if (g.dx > 120 || g.vx > 0.8) Animated.timing(x, { toValue: Dimensions.get('window').width, duration: 180, useNativeDriver: true }).start(() => laterRef.current())
+      setScrollEnabled(true)
+      if (g.dx > 100 || g.vx > 0.6) Animated.timing(x, { toValue: Dimensions.get('window').width, duration: 180, useNativeDriver: true }).start(() => laterRef.current())
       else Animated.spring(x, { toValue: 0, useNativeDriver: true }).start()
     },
-    onPanResponderTerminate: () => Animated.spring(x, { toValue: 0, useNativeDriver: true }).start(),
+    onPanResponderTerminate: () => { setScrollEnabled(true); Animated.spring(x, { toValue: 0, useNativeDriver: true }).start() },
   }))
   const action = (result: Outcome['result']) => {
     if (!item) return
@@ -88,13 +98,13 @@ export function RealReview() {
     { k: '时间', v: due.text }, { k: '备注', v: str(item.data.note) },
     { k: '提醒', v: reminder ? when(reminder).text : '' },
   ].filter((f) => f.v)
-  const stash = x.interpolate({ inputRange: [0, 120], outputRange: [0, 1], extrapolate: 'clamp' })
+  const stash = x.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'clamp' })
   return <SafeAreaView style={{ flex: 1 }}>
     <View style={s.nav}><Pressable onPress={back} style={s.back}><Icon name="chevron.left" size={20} color={c.accInk} /><Text style={s.navText}>简报</Text></Pressable>
       <Text style={s.mid}>{handled + 1} / {order.length || queue.length}</Text>
       <Pressable onPress={later} style={s.end}><Text style={s.navText}>稍后</Text></Pressable></View>
     <View style={s.progress}>{order.map((key) => <View key={key} style={[s.bar, (key === item.id || key in outcomes || !available.some((i) => i.id === key) || skipped.includes(key)) && { backgroundColor: c.acc }]} />)}</View>
-    <ScrollView contentContainerStyle={s.body}>
+    <ScrollView scrollEnabled={scrollEnabled} contentContainerStyle={s.body}>
       <View><Animated.View style={[s.stashBg, { opacity: stash }]}><Icon name="clock" size={18} color={c.accInk} /><Text style={{ color: c.accInk }}>暂存，稍后再提醒</Text></Animated.View>
         <Animated.View {...pan.panHandlers} style={[ui.card, s.task, { transform: [{ translateX: x }] }]}>
           <Text style={s.h2}>{titleOf(item)}</Text>

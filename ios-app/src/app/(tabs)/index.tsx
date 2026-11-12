@@ -2,8 +2,8 @@ import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
-import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { api, type Recording } from '@/lib/api'
+import { AppState, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { api, askWithFallback, streamChat, type Recording } from '@/lib/api'
 import { toast } from '@/components/Toast'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Brief, briefHeading, briefQueue } from '@/components/Brief'
@@ -21,16 +21,37 @@ import { c, mono } from '@/lib/theme'
 export default function Home() {
   const { states, token, items, outcomes, messages: allHistory, hasMore, refresh } = useStore()
   const [panel, setPanel] = useState(false)
-  // 首页不放输入框（照原型）：点“说一句”去对话页打字，按住直接说
-  const say = () => router.push({ pathname: '/chats', params: { from: 'home', type: '1' } })
+  const [compose, setCompose] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [thinking, setThinking] = useState(false)
+  const say = () => setCompose(true)
   const [local, setLocal] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number }; search?: string }[]>([])
   // 首页只放最近 3 条，更早的去“我的 › 聊天记录”
   const history = allHistory.slice(-3)
-  const messages = [...history, ...local]
+  const messages = [...history, ...local.filter((m) => m.voice || !history.some((h) => h.role === m.role && h.content === m.content))]
   const scrollHeight = useRef(0)
   const scrollY = useRef(0)
   const preserve = useRef<{ height: number; y: number } | null>(null)
   const scrollAfter = () => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 100)
+  const send = async () => {
+    const message = draft.trim()
+    if (!message || thinking || !token) return
+    setCompose(false); setDraft(''); setThinking(true)
+    setLocal((p) => [...p, { role: 'user', content: message, search: /^(帮我)?[搜查找]/.test(message) ? message : undefined }, { role: 'assistant', content: '' }])
+    scrollAfter()
+    const put = (content: string, search?: string) => { setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content, search }; return next }); scrollAfter() }
+    if (/^(帮我)?[搜查找]/.test(message)) {
+      try {
+        const r = await askWithFallback(token, message)
+        put([r.answer || '找到这些结果：', ...r.things.slice(0, 5).map((t) => `· ${t.title}${t.due ? `（${t.due}）` : ''}`)].join('\n'), message)
+      } catch { put('现在搜不了，稍后再试。') }
+    } else {
+      let text = ''
+      try { put(await streamChat(token, message, (delta) => { text += delta; put(text) })) }
+      catch { try { put((await api.chat(token, message)).reply) } catch { put(text ? `${text}\n连接中断，请重试。` : '现在连不上，这句没发出去。稍后再试一次。') } }
+    }
+    setThinking(false); scrollAfter(); void refresh(true).then(() => { if (!/^(帮我)?[搜查找]/.test(message)) setLocal((p) => p.filter((m) => !!m.voice || !!m.search)) })
+  }
   // 按住说的语音：记下每条的处理状态，气泡和按钮下方的提示跟着变；处理完重新拉对话，用原话 + 小禾的回答替换气泡。
   // 失败的保留气泡，点开在纪要页重试。收到推送或回到前台时立刻查一次。
   const [voices, setVoices] = useState<Record<string, Recording['status']>>({})
@@ -86,10 +107,10 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+      <View style={s.switcher}><Switcher onPress={() => setPanel(true)} /></View>
       <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false}
         onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y }} scrollEventThrottle={16}
         onContentSizeChange={(_, height) => { if (preserve.current !== null) { scroll.current?.scrollTo({ y: Math.max(0, preserve.current.y + height - preserve.current.height), animated: false }); preserve.current = null } scrollHeight.current = height }}>
-        <Switcher onPress={() => setPanel(true)} />
         {token ? Object.keys(outcomes).length && briefQueue(items).every((i) => i.id in outcomes) ? <RealFinished onSay={say} onSent={voice} tip={voiceTip} /> : <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
             <View style={s.head}>
@@ -126,6 +147,9 @@ export default function Home() {
           {messages.map((m, i) => 'voice' in m && m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text>{'search' in m && m.search ? <Pressable onPress={() => router.push({ pathname: '/search', params: { q: m.search } })}><Text style={s.resultLink}>看全部结果</Text></Pressable> : null}</View>)}
         </View>
       </ScrollView>
+      <Modal visible={compose} transparent animationType="slide" onRequestClose={() => setCompose(false)}>
+        <KeyboardAvoidingView behavior="padding" style={s.modal}><Pressable style={s.shade} onPress={() => setCompose(false)} /><View style={s.composeCard}><TextInput autoFocus multiline value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} style={s.composeInput} /><Pressable disabled={!draft.trim() || thinking} onPress={() => { void send() }}><Text style={[s.send, (!draft.trim() || thinking) && { color: c.t3 }]}>发送</Text></Pressable></View></KeyboardAvoidingView>
+      </Modal>
       <Panel visible={panel} onClose={() => setPanel(false)} onSettings={() => router.navigate('/me')} />
       <TalkOverlay />
     </SafeAreaView>
@@ -204,6 +228,8 @@ function Finished({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent)
 
 const s = StyleSheet.create({
   body: { flexGrow: 1, paddingHorizontal: 16 },
+  switcher: { backgroundColor: c.bg, paddingHorizontal: 16 },
+  modal: { flex: 1, justifyContent: 'flex-end' }, shade: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#0007' }, composeCard: { backgroundColor: c.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72 }, composeInput: { flex: 1, backgroundColor: c.card, borderRadius: 12, padding: 12, maxHeight: 120, fontSize: 16, color: c.t1 }, send: { fontSize: 16, color: c.accInk },
   chat: { paddingTop: 16, paddingBottom: 12, gap: 8 },
   older: { alignSelf: 'center', padding: 10 },
   resultLink: { color: c.accInk, fontSize: 13, marginTop: 8 },

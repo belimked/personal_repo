@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { File, Paths } from 'expo-file-system'
 import { router } from 'expo-router'
 import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native'
@@ -11,6 +12,9 @@ import { c } from '@/lib/theme'
 export const DEFAULT_SENSITIVE = { health: true, finance: true, kids: true, location: true, face: false }
 export default function Privacy() {
   const { items, token, refresh, generalMode, setGeneralMode } = useStore()
+  const [scrollEnabled, setScrollEnabled] = useState(true)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const swipe = (phase: 'start' | 'end') => setScrollEnabled(phase === 'end')
   const facts = items.filter((i) => i.kind === 'fact' && !i.deleted && typeof i.data.text === 'string' && (i.data.auto !== true || i.data.confirmed === true))
   const value = items.find((i) => i.id === 'setting-sensitive' && !i.deleted)?.data.value
   const sensitive = value && typeof value === 'object' && !Array.isArray(value) ? { ...DEFAULT_SENSITIVE, ...value as typeof DEFAULT_SENSITIVE } : DEFAULT_SENSITIVE
@@ -31,9 +35,9 @@ export default function Privacy() {
   ])
   return <SafeAreaView edges={['top']} style={{ flex: 1 }}>
     <View style={s.nav}><Pressable onPress={() => router.back()} style={s.back}><Icon name="chevron.left" size={20} color={c.accInk} /><Text style={{ fontSize: 17, color: c.accInk }}>我的</Text></Pressable><Text style={s.mid}>隐私与个人信息</Text><View style={{ width: 80 }} /></View>
-    <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}>
-      <GroupLabel top={16}>我了解的你：工作</GroupLabel><FactRows list={facts.filter((f) => f.data.group !== '健康')} />
-      <GroupLabel>健康</GroupLabel><FactRows list={facts.filter((f) => f.data.group === '健康')} />
+    <ScrollView scrollEnabled={scrollEnabled} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 }}>
+      <GroupLabel top={16}>我了解的你：工作</GroupLabel><FactRows list={facts.filter((f) => f.data.group !== '健康')} openId={openId} setOpenId={setOpenId} onSwipe={swipe} />
+      <GroupLabel>健康</GroupLabel><FactRows list={facts.filter((f) => f.data.group === '健康')} openId={openId} setOpenId={setOpenId} onSwipe={swipe} />
       <Text style={s.note}>这些是我为了把事办好而记下的，左滑可删掉。 <Text style={{ color: c.accInk }} onPress={() => router.push('/facts')}>查看全部，含还没确认的</Text></Text>
       <GroupLabel>不按你的情况定制</GroupLabel><Card><View style={ui.row}><Text style={ui.rowLabel}>通用模式</Text><Switch value={generalMode} onValueChange={setGeneralMode} trackColor={{ true: c.acc }} /></View><Row label="敏感类别" value={`${Object.values(sensitive).filter(Boolean).length} 项开`} onPress={() => router.push('/sensitive')} /></Card>
       <Text style={s.note}>健康、财务、孩子、位置、人脸</Text>

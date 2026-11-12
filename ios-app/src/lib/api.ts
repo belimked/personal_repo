@@ -8,7 +8,7 @@ const TOKEN_KEY = 'daily-assistant-token'
 export type User = { id: string; email: string; name: string; role: 'user' | 'admin' }
 export type Kind = 'todo' | 'stash' | 'watch' | 'idea' | 'file' | 'fact' | 'setting'
 export type ApiItem = { id: string; kind: Kind; data: Record<string, unknown>; created_at: string; updated_at: string; deleted: number }
-export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string }
+export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string; item_id: string | null; item_kind: Kind | null }
 
 export type Minutes = {
   title?: string; summary?: string; points?: string[]; decisions?: string[]
@@ -88,7 +88,8 @@ export const api = {
   deleteItem: (token: string, id: string) => request<{ ok: boolean }>(`/items/${encodeURIComponent(id)}`, token, 'DELETE'),
   chat: (token: string, message: string) => request<{ reply: string; model: string; thread: string; fallback: boolean }>('/chat', token, 'POST', { message, thread: 'home', mode: 'chat' }),
   home: (token: string, msgLimit = 10) => request<HomeData>(`/home?msg_limit=${msgLimit}`, token),
-  messages: (token: string, limit = 10, before?: string) => request<{ messages: Message[]; has_more: boolean }>(`/messages?thread=home&limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}`, token),
+  messages: (token: string, limit = 10, before?: string, q?: string) => request<{ messages: Message[]; has_more: boolean }>(`/messages?thread=home&limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`, token),
+  convertMessages: (token: string, ids: string[], kind: 'todo' | 'watch' | 'idea', scene: 'work' | 'life') => request<{ item: ApiItem }>('/messages/convert', token, 'POST', { ids, kind, scene }),
   ask: (token: string, q: string) => request<AskResult>('/ask', token, 'POST', { q }),
   registerDevice: (token: string, device: string, env: 'production' | 'sandbox') => request<{ ok: boolean }>('/devices', token, 'POST', { token: device, platform: 'ios', env }),
   unregisterDevice: (token: string, device: string) => request<{ ok: boolean }>(`/devices/${encodeURIComponent(device)}`, token, 'DELETE'),
