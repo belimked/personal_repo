@@ -520,16 +520,16 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		if count > 0 {
 			answer += "\n\n已记到事项：" + strings.Join(labels, "、")
 		}
-		if _, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", spoken, nil, now); e == nil {
+		if _, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", spoken, nil, now); e == nil {
 			later, _ := time.Parse(time.RFC3339Nano, now)
-			_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
+			_, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
 		}
 	} else if e == nil && !quiet {
 		msg := minutesMessage(count, total, labels)
 		if file {
 			msg = strings.Replace(msg, "会议纪要整理好了", "资料“"+clip(min.Title, 20)+"”整理好了", 1)
 		}
-		_, e = tx.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", msg, "deepseek-v4-pro", now)
+		_, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", msg, "deepseek-v4-pro", now)
 	}
 	if e != nil {
 		tx.Rollback()

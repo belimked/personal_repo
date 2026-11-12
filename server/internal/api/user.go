@@ -155,12 +155,16 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		if thread == "" {
 			thread = "home"
 		}
-		rows, more, err := a.messagePage(str(uid), thread, limit(r.URL.Query()), r.URL.Query().Get("before"))
+		rows, more, err := a.messagePage(str(uid), thread, limit(r.URL.Query()), r.URL.Query().Get("before"), r.URL.Query().Get("q"))
 		if err != nil {
 			a.internal(w)
 			return
 		}
 		send(w, 200, map[string]any{"messages": rows, "has_more": more})
+		return
+	}
+	if p == "/api/messages/convert" && m == "POST" {
+		a.convertMessages(w, b, u)
 		return
 	}
 	if (p == "/api/chat" || p == "/api/chat/stream") && m == "POST" {
@@ -194,7 +198,7 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 			msgs = append(msgs, map[string]string{"role": str(history[i]["role"]), "content": str(history[i]["content"])})
 		}
 		msgs = append(msgs, map[string]string{"role": "user", "content": message})
-		if _, e := a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, thread, "user", message, nil, Now()); e != nil {
+		if _, e := a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, thread, "user", message, nil, Now()); e != nil {
 			a.internal(w)
 			return
 		}
@@ -218,7 +222,7 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 			}
 			reply += text
 		}
-		if _, e = a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, thread, "assistant", reply, model, Now()); e != nil {
+		if _, e = a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, thread, "assistant", reply, model, Now()); e != nil {
 			a.internal(w)
 			return
 		}

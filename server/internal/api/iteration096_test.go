@@ -60,7 +60,7 @@ func TestPointsExportForgetAndPrivacy(t *testing.T) {
 	}
 	user := home["user"].(map[string]any)["id"]
 	today := Now()
-	f.a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), user, "home", "user", "你好", nil, today)
+	f.a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), user, "home", "user", "你好", nil, today)
 	f.a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0)", "fact-test", user, "fact", `{"text":"测试"}`, today, today)
 	f.a.DB.Exec("INSERT INTO job_runs(id,job,user_id,run_key,status,started_at) VALUES(?,?,?,?,?,?)", ID(), "profile", user, "old", "ok", today)
 	code, p := f.call("GET", "/api/points", "", f.user)
@@ -99,7 +99,7 @@ func TestMinutesSuggestionAndSensitiveProfile(t *testing.T) {
 	uid := fmt.Sprint(home["user"].(map[string]any)["id"])
 	f.a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0)", "setting-sensitive", uid, "setting", `{"value":{"health":false}}`, Now(), Now())
 	yesterday := time.Now().In(taipei).AddDate(0, 0, -1).UTC().Format(time.RFC3339)
-	f.a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", "喜欢跑步", nil, yesterday)
+	f.a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", "喜欢跑步", nil, yesterday)
 	f.minutes.Store(`[{"text":"每天跑步","group":"健康","from":"对话"},{"text":"负责项目","group":"工作","from":"对话"}]`)
 	if _, err := f.a.profileJob(uid, time.Now().In(taipei)); err != nil {
 		t.Fatal(err)

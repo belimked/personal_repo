@@ -34,7 +34,7 @@ func (d *DB) Migrate() error {
 	if _, e := d.Exec("CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TEXT NOT NULL)"); e != nil {
 		return e
 	}
-	for _, migration := range []struct{ name, sql string }{{"0001_init", migrations.Init}, {"0002_recordings", migrations.Recordings}, {"0003_recording_scene", migrations.RecordingScene}, {"0004_recording_kind", migrations.RecordingKind}, {"0005_jobs", migrations.Jobs}, {"0006_search_uses", migrations.SearchUses}} {
+	for _, migration := range []struct{ name, sql string }{{"0001_init", migrations.Init}, {"0002_recordings", migrations.Recordings}, {"0003_recording_scene", migrations.RecordingScene}, {"0004_recording_kind", migrations.RecordingKind}, {"0005_jobs", migrations.Jobs}, {"0006_search_uses", migrations.SearchUses}, {"0007_message_items", migrations.MessageItems}} {
 		var n int
 		if e := d.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=?", migration.name).Scan(&n); e != nil {
 			return e

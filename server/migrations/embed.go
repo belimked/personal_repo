@@ -19,3 +19,6 @@ var Jobs string
 
 //go:embed 0006_search_uses.sql
 var SearchUses string
+
+//go:embed 0007_message_items.sql
+var MessageItems string

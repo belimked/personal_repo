@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,8 +17,13 @@ func sse(w http.ResponseWriter, v any) {
 	}
 }
 
-func (a *API) messagePage(uid, thread string, n int, before string) ([]map[string]any, bool, error) {
-	rows, e := a.DB.Rows("SELECT id,role,content,model,created_at FROM messages WHERE user_id=? AND thread=? AND (?='' OR created_at<?) ORDER BY created_at DESC,rowid DESC LIMIT ?", uid, thread, before, before, n+1)
+func (a *API) messagePage(uid, thread string, n int, before, q string) ([]map[string]any, bool, error) {
+	pattern := "%" + strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(q) + "%"
+	rows, e := a.DB.Rows(`SELECT messages.id,role,content,model,messages.created_at,messages.item_id,items.kind AS item_kind
+		FROM messages LEFT JOIN items ON items.id=messages.item_id AND items.user_id=messages.user_id
+		WHERE messages.user_id=? AND thread=? AND (?='' OR messages.created_at<?)
+		AND (?='' OR content LIKE ? ESCAPE '\')
+		ORDER BY messages.created_at DESC,messages.rowid DESC LIMIT ?`, uid, thread, before, before, q, pattern, n+1)
 	if e != nil {
 		return nil, false, e
 	}
@@ -53,7 +59,7 @@ func (a *API) home(w http.ResponseWriter, r *http.Request, u map[string]any) {
 		decodeData(item)
 	}
 	a.suggestMissing(uid, items)
-	msgs, more, e := a.messagePage(uid, "home", n, "")
+	msgs, more, e := a.messagePage(uid, "home", n, "", "")
 	if e != nil {
 		a.internal(w)
 		return

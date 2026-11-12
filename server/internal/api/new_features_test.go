@@ -22,7 +22,7 @@ func TestHomeMessagesGzip(t *testing.T) {
 		t.Fatal(v)
 	}
 	for i, at := range []string{"2026-01-01T00:00:00.000Z", "2026-01-02T00:00:00.000Z", "2026-01-03T00:00:00.000Z"} {
-		a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", string(rune('a'+i)), nil, at)
+		a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", string(rune('a'+i)), nil, at)
 	}
 	code, v := c("GET", "/api/home?msg_limit=2", "", token)
 	expect(t, code, 200)
@@ -119,7 +119,7 @@ func TestJobs(t *testing.T) {
 	a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0)", "due", uid, "todo", `{"title":"交材料","due":"`+today+`"}`, Now(), Now())
 	a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0)", "fact", uid, "fact", `{"text":"已有"}`, Now(), Now())
 	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
-	a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", "我有一个新的事实", nil, yesterday+"T12:00:00.000+08:00")
+	a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", "我有一个新的事实", nil, yesterday+"T12:00:00.000+08:00")
 	for _, mode := range []string{"on", "quiet", "off"} {
 		a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET data=excluded.data", "setting-proactive", uid, "setting", `{"value":"`+mode+`"}`, Now(), Now())
 		for _, name := range []string{"morning", "weekly", "profile"} {

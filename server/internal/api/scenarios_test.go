@@ -135,7 +135,7 @@ func TestMessageScenarios(t *testing.T) {
 	u := login(t, c, "lily@demo.com")
 	id := loginID(t, c, u)
 	for i := 0; i < 105; i++ {
-		_, e := a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("m-%03d", i), id, "home", "user", fmt.Sprint(i), nil, time.Date(2020, 1, 1, 0, 0, i, 0, time.UTC).Format("2006-01-02T15:04:05.000Z"))
+		_, e := a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("m-%03d", i), id, "home", "user", fmt.Sprint(i), nil, time.Date(2020, 1, 1, 0, 0, i, 0, time.UTC).Format("2006-01-02T15:04:05.000Z"))
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -179,7 +179,7 @@ func TestChatScenarios(t *testing.T) {
 		u := login(t, c, "lily@demo.com")
 		id := loginID(t, c, u)
 		for i := 0; i < 10; i++ {
-			a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("minute-%d", i), id, "home", "user", "x", nil, Now())
+			a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("minute-%d", i), id, "home", "user", "x", nil, Now())
 		}
 		code, _ := c("POST", "/api/chat", `{"message":"hi"}`, u)
 		expect(t, code, 429)
@@ -190,7 +190,7 @@ func TestChatScenarios(t *testing.T) {
 		id := loginID(t, c, u)
 		at := time.Now().Add(-time.Hour).UTC().Format("2006-01-02T15:04:05.000Z")
 		for i := 0; i < 200; i++ {
-			a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("day-%d", i), id, "home", "user", "x", nil, at)
+			a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("day-%d", i), id, "home", "user", "x", nil, at)
 		}
 		code, _ := c("POST", "/api/chat", `{"message":"hi"}`, u)
 		expect(t, code, 429)
@@ -211,9 +211,9 @@ func TestChatScenarios(t *testing.T) {
 		u := login(t, c, "lily@demo.com")
 		id := loginID(t, c, u)
 		for i := 0; i < 30; i++ {
-			a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("ctx-%d", i), id, "target", "user", fmt.Sprint(i), nil, fmt.Sprintf("2020-01-01T00:00:%02d.000Z", i))
+			a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", fmt.Sprintf("ctx-%d", i), id, "target", "user", fmt.Sprint(i), nil, fmt.Sprintf("2020-01-01T00:00:%02d.000Z", i))
 		}
-		a.DB.Exec("INSERT INTO messages VALUES(?,?,?,?,?,?,?)", "other-thread", id, "other", "user", "exclude", nil, Now())
+		a.DB.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", "other-thread", id, "other", "user", "exclude", nil, Now())
 		code, _ := c("POST", "/api/chat", `{"message":"hi","thread":"target"}`, u)
 		expect(t, code, 200)
 	})
