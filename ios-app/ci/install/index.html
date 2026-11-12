@@ -6,20 +6,23 @@
 <meta name="robots" content="noindex">
 <title>安装小禾（测试版）</title>
 <link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png">
 <style>
   :root{--bg:#F2F2F7;--card:#fff;--line:rgba(60,60,67,.12);--t1:#1C1C1E;--t2:#56565C;--t3:#8A8A8E;--acc:#3F6EE8}
   *{box-sizing:border-box}
-  body{margin:0;font:15px/22px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:var(--t1);background:var(--bg)}
-  main{max-width:480px;margin:0 auto;padding:48px 16px 40px}
+  body{margin:0;font:15px/22px -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",sans-serif;color:var(--t1);background:var(--bg)}
+  main{max-width:480px;margin:0 auto;padding:48px 16px 40px;display:flex;flex-direction:column}
   header{display:flex;align-items:center;gap:16px;padding:0 4px 24px}
   header img{width:64px;height:64px;border-radius:14px}
   h1{font-size:22px;line-height:30px;font-weight:600;margin:0}
   header p{margin:2px 0 0;color:var(--t2)}
+  section{margin-bottom:16px}
+  h2{font-size:17px;line-height:24px;font-weight:600;margin:8px 4px 12px}
+  h3{font-size:13px;line-height:18px;font-weight:400;color:var(--t3);margin:20px 16px 8px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
   .btn{display:flex;align-items:center;justify-content:center;height:50px;border-radius:12px;background:var(--acc);color:#fff;font-size:17px;font-weight:500;text-decoration:none}
   .btn:active{opacity:.85}
   .meta{display:flex;justify-content:space-between;color:var(--t3);font-size:13px;margin-top:12px;font-variant-numeric:tabular-nums}
-  h2{font-size:13px;line-height:18px;font-weight:400;color:var(--t3);margin:24px 16px 8px}
   ol{margin:0;padding-left:20px}
   li+li{margin-top:8px}
   .warn{display:none;background:#FDF1E3;color:#8A4B0F;border-radius:12px;padding:12px 16px;margin-bottom:12px}
@@ -29,30 +32,56 @@
 <main>
   <header>
     <img src="icon-512.png" alt="">
-    <div><h1>小禾</h1><p>个人日常助手 · v7 原型测试版</p></div>
+    <div><h1>小禾</h1><p>个人日常助手 · 测试版</p></div>
   </header>
-  <div class="warn" id="warn">请用 iPhone 的 Safari 打开本页安装。</div>
-  <div class="card">
-    <a class="btn" href="itms-services://?action=download-manifest&amp;url=__BASE_URL__/manifest.plist">安装小禾</a>
-    <div class="meta"><span>版本 __VERSION__（__BUILD__）</span><span>__DATE__</span></div>
-  </div>
+  <div class="warn" id="wx">在微信里打开时可能装不了，请点右上角“…”，选“在浏览器打开”。</div>
 
-  <h2>首次安装</h2>
-  <div class="card"><ol>
-    <li>点“安装小禾”，弹窗里点“安装”，回到主屏幕等图标下载完。</li>
-    <li>点一次小禾图标，系统提示需要开发者模式，点“好”。</li>
-    <li>打开“设置 → 隐私与安全性 → 开发者模式”，开启后重启手机，重启后点“打开”。</li>
-  </ol></div>
+  <section id="ios">
+    <h2>iPhone</h2>
+    <div class="card">
+      <a class="btn" href="itms-services://?action=download-manifest&amp;url=__BASE_URL__/manifest.plist" id="ios-btn">安装小禾</a>
+      <div class="meta"><span id="ios-ver">版本 —</span><span id="ios-date"></span></div>
+    </div>
+    <h3>首次安装</h3>
+    <div class="card"><ol>
+      <li>用 Safari 打开本页，点“安装小禾”，弹窗里点“安装”，回到主屏幕等图标下载完。</li>
+      <li>点一次小禾图标，系统提示需要开发者模式，点“好”。</li>
+      <li>打开“设置 → 隐私与安全性 → 开发者模式”，开启后重启手机，重启后点“打开”。</li>
+    </ol></div>
+    <h3>装不上？</h3>
+    <div class="card">只有登记过 UDID 的 iPhone（iOS 16.4 及以上）能装。提示“无法安装”时，把手机 UDID 发给项目组登记。再打开本页点“安装小禾”即可覆盖更新。</div>
+  </section>
 
-  <h2>更新</h2>
-  <div class="card">再打开本页点“安装小禾”即可覆盖更新。</div>
-
-  <h2>装不上？</h2>
-  <div class="card">只有登记过 UDID 的 iPhone（iOS 16.4 及以上）能装。提示“无法安装”时，把手机 UDID 发给项目组登记。</div>
+  <section id="android">
+    <h2>安卓</h2>
+    <div class="card">
+      <a class="btn" href="DailyAssistant.apk" download>下载安卓安装包</a>
+      <div class="meta"><span id="and-ver">版本 —</span><span id="and-date"></span></div>
+    </div>
+    <h3>首次安装</h3>
+    <div class="card"><ol>
+      <li>点“下载安卓安装包”，下载完成后打开 DailyAssistant.apk。</li>
+      <li>系统提示“禁止安装未知应用”时，按提示允许当前浏览器安装，再返回安装。</li>
+      <li>部分手机会提示“未经检测”或“风险应用”，选“继续安装”。</li>
+    </ol></div>
+    <h3>更新</h3>
+    <div class="card">再下载一次安装包直接安装即可覆盖更新，数据保留。</div>
+  </section>
 </main>
 <script>
-  var ua=navigator.userAgent;
-  if(!(/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document)))document.getElementById('warn').style.display='block';
+  var ua = navigator.userAgent;
+  // 安卓手机把安卓放前面
+  if (/Android/i.test(ua)) document.querySelector('main').insertBefore(document.getElementById('android'), document.getElementById('ios'));
+  if (/MicroMessenger/i.test(ua)) document.getElementById('wx').style.display = 'block';
+  function load(file, verId, dateId) {
+    fetch(file + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null }).then(function (j) {
+      if (!j) return;
+      document.getElementById(verId).textContent = '版本 ' + j.version + '（' + j.build + '）';
+      document.getElementById(dateId).textContent = j.date;
+    }).catch(function () {});
+  }
+  load('ios.json', 'ios-ver', 'ios-date');
+  load('android.json', 'and-ver', 'and-date');
 </script>
 </body>
 </html>

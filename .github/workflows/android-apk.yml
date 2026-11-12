@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: android-apk
@@ -103,4 +105,52 @@ jobs:
           fi
           gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/$APP.apk" --clobber
           URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$APP.apk"
-          echo "APK: $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "APK (Release): $URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Collect Android install files
+        run: |
+          OUT="$RUNNER_TEMP/pages-android"
+          mkdir -p "$OUT"
+          cp "$RUNNER_TEMP/$APP.apk" "$OUT/"
+          DATE=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')
+          printf '{"version":"%s","build":"%s","date":"%s"}\n' "$APP_VERSION" "${{ github.run_number }}" "$DATE" > "$OUT/android.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pages-android
+          path: ${{ runner.temp }}/pages-android
+          retention-days: 1
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # 与 ios-adhoc.yml 共用同一个 Pages 站点：排队部署，部署前合并线上另一平台的文件
+    concurrency:
+      group: pages-install
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ios-app/ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pages-android
+          path: ${{ runner.temp }}/new
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Merge with live site
+        run: bash ios-app/ci/pages-merge.sh "${{ steps.pages.outputs.base_url }}" "$RUNNER_TEMP/new" "$RUNNER_TEMP/site"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

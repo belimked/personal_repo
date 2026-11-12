@@ -23,7 +23,8 @@
 ### 安卓 APK
 
 - 同样推送 `main` 改动 `ios-app/` 时，`.github/workflows/android-apk.yml` 在 ubuntu 上 `expo prebuild` + `gradlew assembleRelease`（仅 arm64），用正式密钥重签。
-- 下载地址（固定）：https://github.com/belimked/personal_repo/releases/download/android-latest/DailyAssistant.apk ，任何安卓手机允许“安装未知应用”即可装，不用登记设备。
+- 和 iOS 共用安装页 https://belimked.github.io/personal_repo/ （安卓手机打开时安卓排前面）；APK 直链 https://belimked.github.io/personal_repo/DailyAssistant.apk ，Release `android-latest` 里也有一份。任何安卓手机允许“安装未知应用”即可装，不用登记设备。
 - 包名 `com.blk.dailyassistant`；versionCode 取工作流 run 号。
 - 仓库 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`（别名 `dailyassistant`）。密钥原件在本机 `/root/.config/dailyassistant-android/`，**丢了就无法覆盖升级**，请另行备份。
 - 已知限制：图标用的 SF Symbols（`expo-symbols`）在安卓不显示；推送只做了 iOS（未接 FCM）。
+- 两个工作流部署同一个 Pages 站点：部署任务共用并发组 `pages-install` 排队，部署前用 `ci/pages-merge.sh` 拉取线上另一平台的文件合并，互不覆盖。

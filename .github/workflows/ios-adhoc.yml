@@ -121,28 +121,24 @@ jobs:
           path: ${{ runner.temp }}/${{ env.APP }}.ipa
           retention-days: 30
 
-      - id: pages
-        uses: actions/configure-pages@v5
-
-      - name: Build install page
-        env:
-          BASE_URL: ${{ steps.pages.outputs.base_url }}
+      - name: Collect iOS install files
         run: |
-          SITE="$RUNNER_TEMP/site"
-          mkdir -p "$SITE"
-          cp "$RUNNER_TEMP/$APP.ipa" "$SITE/"
-          sips -z 57 57 assets/icon.png --out "$SITE/icon-57.png" > /dev/null
-          sips -z 512 512 assets/icon.png --out "$SITE/icon-512.png" > /dev/null
+          OUT="$RUNNER_TEMP/pages-ios"
+          mkdir -p "$OUT"
+          cp "$RUNNER_TEMP/$APP.ipa" "$OUT/"
+          sips -z 57 57 assets/icon.png --out "$OUT/icon-57.png" > /dev/null
+          sips -z 512 512 assets/icon.png --out "$OUT/icon-512.png" > /dev/null
+          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          sed -e "s#__BASE_URL__#$BASE_URL#g" -e "s#__VERSION__#$APP_VERSION#g" -e "s#__BUNDLE_ID__#$BUNDLE_ID#g" -e "s#__APP__#$APP#g" \
+            ci/install/manifest.plist > "$OUT/manifest.plist"
           DATE=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')
-          for f in index.html manifest.plist; do
-            sed -e "s#__BASE_URL__#$BASE_URL#g" -e "s#__VERSION__#$APP_VERSION#g" -e "s#__BUILD__#${{ github.run_number }}#g" \
-              -e "s#__BUNDLE_ID__#$BUNDLE_ID#g" -e "s#__DATE__#$DATE#g" -e "s#__APP__#$APP#g" "ci/install/$f" > "$SITE/$f"
-          done
-          echo "Install page: $BASE_URL/" >> "$GITHUB_STEP_SUMMARY"
+          printf '{"version":"%s","build":"%s","date":"%s"}\n' "$APP_VERSION" "${{ github.run_number }}" "$DATE" > "$OUT/ios.json"
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          path: ${{ runner.temp }}/site
+          name: pages-ios
+          path: ${{ runner.temp }}/pages-ios
+          retention-days: 1
 
       - name: Remove keychain
         if: always()
@@ -152,9 +148,32 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    # 与 android-apk.yml 共用同一个 Pages 站点：排队部署，部署前合并线上另一平台的文件
+    concurrency:
+      group: pages-install
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ios-app/ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: pages-ios
+          path: ${{ runner.temp }}/new
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Merge with live site
+        run: bash ios-app/ci/pages-merge.sh "${{ steps.pages.outputs.base_url }}" "$RUNNER_TEMP/new" "$RUNNER_TEMP/site"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
       - id: deployment
         uses: actions/deploy-pages@v4
