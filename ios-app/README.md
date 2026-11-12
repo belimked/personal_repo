@@ -19,3 +19,11 @@
 - Team `8J42Q87M5P`，Bundle ID `com.blk.dailyassistant`，描述文件 `dailyassistant adhoc`（到 2027-10-19），证书与 AusFlow 共用 Apple Distribution。
 - 仓库 Secrets：`IOS_DIST_P12_BASE64`、`IOS_DIST_P12_PASSWORD`、`IOS_ADHOC_PROFILE_BASE64`。
 - 加测试机：开发者网站 Devices 登记 UDID → 编辑描述文件勾上新设备 → 下载 → 更新 `IOS_ADHOC_PROFILE_BASE64` → 重跑工作流。
+
+### 安卓 APK
+
+- 同样推送 `main` 改动 `ios-app/` 时，`.github/workflows/android-apk.yml` 在 ubuntu 上 `expo prebuild` + `gradlew assembleRelease`（仅 arm64），用正式密钥重签。
+- 下载地址（固定）：https://github.com/belimked/personal_repo/releases/download/android-latest/DailyAssistant.apk ，任何安卓手机允许“安装未知应用”即可装，不用登记设备。
+- 包名 `com.blk.dailyassistant`；versionCode 取工作流 run 号。
+- 仓库 Secrets：`ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`（别名 `dailyassistant`）。密钥原件在本机 `/root/.config/dailyassistant-android/`，**丢了就无法覆盖升级**，请另行备份。
+- 已知限制：图标用的 SF Symbols（`expo-symbols`）在安卓不显示；推送只做了 iOS（未接 FCM）。

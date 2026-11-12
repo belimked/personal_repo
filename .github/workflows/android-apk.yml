@@ -1,0 +1,106 @@
+name: Android APK
+
+# v7 App（ios-app/，Expo 同一套代码）：打安卓 release APK，发布到 GitHub Release `android-latest`
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios-app/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+env:
+  APP: DailyAssistant
+  RELEASE_TAG: android-latest
+  CI: 1
+  EXPO_NO_TELEMETRY: 1
+
+defaults:
+  run:
+    working-directory: ios-app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ios-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+
+      - name: Typecheck and lint
+        run: |
+          npx tsc --noEmit
+          npx expo lint
+
+      - name: Generate native project
+        run: npx expo prebuild -p android --clean
+
+      - name: Set versionCode
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          grep -E 'versionCode|versionName' android/app/build.gradle
+          echo "APP_VERSION=$(node -p "require('./app.json').expo.version")" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        working-directory: ios-app/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+
+      - name: Sign with release key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD; do
+            [ -n "${!v}" ] || { echo "::error::Missing signing secret ($v)"; exit 1; }
+          done
+          KS="$RUNNER_TEMP/release.p12"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KS"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          # 模板 release 默认用 debug 签名，这里用正式密钥重签（apksigner 会替换原签名）
+          "$BT/apksigner" sign --ks "$KS" --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias dailyassistant \
+            --out "$RUNNER_TEMP/$APP.apk" android/app/build/outputs/apk/release/app-release.apk
+          "$BT/apksigner" verify --print-certs "$RUNNER_TEMP/$APP.apk" | head -3
+          rm -f "$KS"
+          ls -lh "$RUNNER_TEMP/$APP.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP }}-${{ env.APP_VERSION }}-${{ github.run_number }}-apk
+          path: ${{ runner.temp }}/${{ env.APP }}.apk
+          retention-days: 30
+
+      - name: Publish to release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="版本 $APP_VERSION（${{ github.run_number }}），$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')，提交 ${GITHUB_SHA::7}"
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --notes "$NOTES" --prerelease
+          else
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "小禾 安卓测试版" --notes "$NOTES" --prerelease
+          fi
+          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/$APP.apk" --clobber
+          URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$APP.apk"
+          echo "APK: $URL" >> "$GITHUB_STEP_SUMMARY"

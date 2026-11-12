@@ -20,6 +20,14 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "android": {
+      "package": "com.blk.dailyassistant",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#F2F2F7"
+      }
+    },
     "extra": {
       "apiBase": "https://personal-repo-api.saulxj.ggff.net/api"
     },
