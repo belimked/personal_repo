@@ -20,6 +20,22 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		a.recordingRoutes(w, r, b, u)
 		return
 	}
+	if p == "/api/files/link" && m == "POST" {
+		a.importLink(w, r, b, str(uid))
+		return
+	}
+	if p == "/api/points" && m == "GET" {
+		a.points(w, str(uid))
+		return
+	}
+	if p == "/api/export" && m == "GET" {
+		a.exportData(w, u)
+		return
+	}
+	if p == "/api/forget" && m == "POST" {
+		a.forget(w, u)
+		return
+	}
 	if p == "/api/home" && m == "GET" {
 		a.home(w, r, u)
 		return

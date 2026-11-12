@@ -52,6 +52,7 @@ func (a *API) home(w http.ResponseWriter, r *http.Request, u map[string]any) {
 	for _, item := range items {
 		decodeData(item)
 	}
+	a.suggestMissing(uid, items)
 	msgs, more, e := a.messagePage(uid, "home", n, "")
 	if e != nil {
 		a.internal(w)

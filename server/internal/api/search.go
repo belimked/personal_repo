@@ -127,5 +127,9 @@ func (a *API) search(w http.ResponseWriter, r *http.Request, uid string) {
 			break
 		}
 	}
+	if _, e := a.DB.Exec("INSERT INTO search_uses VALUES(?,?,?)", ID(), uid, Now()); e != nil {
+		a.internal(w)
+		return
+	}
 	send(w, 200, map[string]any{"said": said, "things": things, "files": files})
 }

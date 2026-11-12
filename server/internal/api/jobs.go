@@ -331,7 +331,14 @@ func (a *API) profileJob(uid string, now time.Time) (string, error) {
 	}
 	input := string(inputRunes)
 	old, _ := json.Marshal(existing)
-	text, e := a.LLM.CallWith(jobModel("XIAOHE_MODEL_PROFILE", "deepseek-v4-pro"), []map[string]string{{"role": "system", "content": "从昨天的对话和纪要提取新增的确定事实，最多5条，不猜测。只输出JSON数组：[{\"text\":\"...\",\"group\":\"工作|健康\",\"from\":\"来自：...\"}]。已有事实不得重复。已有：" + string(old)}, {"role": "user", "content": input}}, llm.Options{Timeout: 3 * time.Minute})
+	allowed := sensitiveSettings(a, uid)
+	instructions := ""
+	for key, label := range map[string]string{"health": "健康", "finance": "财务", "kids": "孩子", "location": "位置", "face": "人脸"} {
+		if !allowed[key] {
+			instructions += "不要记录" + label + "相关事实。"
+		}
+	}
+	text, e := a.LLM.CallWith(jobModel("XIAOHE_MODEL_PROFILE", "deepseek-v4-pro"), []map[string]string{{"role": "system", "content": "从昨天的对话和纪要提取新增的确定事实，最多5条，不猜测。只输出JSON数组：[{\"text\":\"...\",\"group\":\"工作|健康\",\"from\":\"来自：...\"}]。已有事实不得重复。已有：" + string(old) + instructions}, {"role": "user", "content": input}}, llm.Options{Timeout: 3 * time.Minute})
 	if e != nil {
 		return "", e
 	}
@@ -352,10 +359,13 @@ func (a *API) profileJob(uid string, now time.Time) (string, error) {
 		if f.Text == "" || existing[f.Text] {
 			continue
 		}
+		if f.Group == "健康" && !allowed["health"] {
+			continue
+		}
 		if f.Group != "工作" && f.Group != "健康" {
 			continue
 		}
-		raw, _ := json.Marshal(map[string]any{"text": f.Text, "group": f.Group, "from": f.From, "auto": true})
+		raw, _ := json.Marshal(map[string]any{"text": f.Text, "group": f.Group, "from": f.From, "auto": true, "confirmed": false})
 		if _, e = a.DB.Exec("INSERT INTO items VALUES(?,?,?,?,?,?,0)", "fact-auto-"+ID(), uid, "fact", string(raw), Now(), Now()); e != nil {
 			return "", e
 		}

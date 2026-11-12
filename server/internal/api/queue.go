@@ -290,10 +290,12 @@ func (a *API) jobError(row map[string]any, stage string, offline bool, cause err
 }
 
 type action struct {
-	Text   string `json:"text"`
-	Owner  string `json:"owner"`
-	Due    string `json:"due"`
-	IsSelf bool   `json:"is_self"`
+	Text         string `json:"text"`
+	Owner        string `json:"owner"`
+	Due          string `json:"due"`
+	IsSelf       bool   `json:"is_self"`
+	Suggest      string `json:"suggest"`
+	SuggestShort string `json:"suggest_short"`
 }
 type minutes struct {
 	Title     string   `json:"title"`
@@ -443,6 +445,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	}
 	_, e = tx.Exec("UPDATE transcripts SET minutes=? WHERE recording_id=?", string(raw), id)
 	count, total := 0, 0
+	urgentDue := false
 	var labels []string
 	keep := []string{}
 	for i, item := range min.Actions {
@@ -469,6 +472,12 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		if item.Owner != "" {
 			data["owner"] = item.Owner
 		}
+		if item.Suggest != "" {
+			data["suggest"] = clip(item.Suggest, 40)
+		}
+		if item.SuggestShort != "" {
+			data["suggest_short"] = clip(item.SuggestShort, 14)
+		}
 		b, _ := json.Marshal(data)
 		itemID := fmt.Sprintf("%s-%d", id, i)
 		var deleted, existed int
@@ -480,6 +489,9 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		if e == nil && deleted == 0 {
 			total++
 			if existed == 0 {
+				if kind == "todo" && item.Due != "" && item.Due <= time.Now().In(taipei).AddDate(0, 0, 1).Format("2006-01-02") {
+					urgentDue = true
+				}
 				count++
 				labels = append(labels, item.Text)
 			}
@@ -537,7 +549,11 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		if file {
 			doneTitle = "资料整理好了"
 		}
-		a.notify(uid, id, true, doneTitle, minutesBody(count, total))
+		if urgentDue {
+			a.pushUser(uid, doneTitle, minutesBody(count, total), map[string]string{"recording_id": id, "urgent_due": "true"})
+		} else {
+			a.notify(uid, id, true, doneTitle, minutesBody(count, total))
+		}
 	}
 	_ = ctx
 }

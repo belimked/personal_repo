@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -230,6 +231,9 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 	answer := fmt.Sprintf("找到 %d 件事、%d 条说过的话、%d 份资料。", len(things), len(said), len(files))
 	if overdue > 0 {
 		answer += fmt.Sprintf("其中 %d 件已过期。", overdue)
+	}
+	if _, e := a.DB.Exec("INSERT INTO search_uses VALUES(?,?,?)", ID(), uid, Now()); e != nil {
+		log.Printf("search_uses insert failed: %v", e)
 	}
 	send(w, 200, map[string]any{"answer": answer, "filter": f, "said": said, "things": things, "files": files, "mode": mode})
 }

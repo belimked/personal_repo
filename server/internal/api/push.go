@@ -111,7 +111,38 @@ func (a *API) notify(uid, id string, success bool, successTitle, successBody str
 	a.pushUser(uid, title, body, map[string]string{"recording_id": id})
 }
 
+func (a *API) pushAllowed(uid, title string, data map[string]string) bool {
+	mode := settingValue(a, uid, "setting-notify")
+	if mode == "off" {
+		return false
+	}
+	if mode != "urgent" {
+		return true
+	}
+	if data["type"] == "remind" || data["urgent_due"] == "true" {
+		return true
+	}
+	if data["type"] == "brief" {
+		today := time.Now().In(taipei).Format("2006-01-02")
+		rows, err := a.DB.Rows("SELECT data FROM items WHERE user_id=? AND kind='todo' AND deleted=0 AND coalesce(json_extract(data,'$.done'),0)=0 AND coalesce(json_extract(data,'$.status'),'')<>'done' AND coalesce(json_extract(data,'$.due'),json_extract(data,'$.date'))<?", uid, today)
+		if err != nil {
+			return false
+		}
+		for _, row := range rows {
+			var d map[string]any
+			if json.Unmarshal([]byte(str(row["data"])), &d) == nil && !demoItem("todo", d) {
+				return true
+			}
+		}
+		return false
+	}
+	return data["recording_id"] != "" && (strings.Contains(title, "没能") || strings.Contains(title, "失败"))
+}
+
 func (a *API) pushUser(uid, title, body string, data map[string]string) {
+	if !a.pushAllowed(uid, title, data) {
+		return
+	}
 	if a.Push == nil {
 		log.Printf("push skipped reason=not_configured")
 		return

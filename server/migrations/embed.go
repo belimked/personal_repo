@@ -16,3 +16,6 @@ var RecordingKind string
 
 //go:embed 0005_jobs.sql
 var Jobs string
+
+//go:embed 0006_search_uses.sql
+var SearchUses string

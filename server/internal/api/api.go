@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"crypto/sha256"
@@ -22,16 +23,18 @@ import (
 )
 
 type API struct {
-	DB               *store.DB
-	LLM              llm.Client
-	Version          string
-	Origins          []string
-	AudioDir         string
-	ASRURL, ASRToken string
-	OCRURL           string
-	Push             *Push
-	Jev              Jev
-	wake             chan struct{}
+	DB                *store.DB
+	LLM               llm.Client
+	Version           string
+	Origins           []string
+	AudioDir          string
+	ASRURL, ASRToken  string
+	OCRURL            string
+	Push              *Push
+	Jev               Jev
+	wake              chan struct{}
+	AllowPrivateLinks bool // Only enable in local tests.
+	suggestRunning    sync.Map
 }
 
 func Now() string { return time.Now().UTC().Format("2006-01-02T15:04:05.000Z") }
