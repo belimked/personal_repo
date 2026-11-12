@@ -7,7 +7,12 @@ import { api, ApiError, tokenStorage, type ApiItem, type Kind, type User, type M
 import { BRIEF_ITEMS, FACTS, WATCHING, type Fact, type ItemState } from './data'
 import { registerPush, unregisterPush } from './push'
 
+export type Outcome = { title: string; result: 'todo' | 'watch' | 'mine' | 'drop' | 'later'; remind?: string }
+const todayKey = () => new Date().toLocaleDateString('en-CA')
 interface Store {
+  outcomes: Record<string, Outcome>
+  recordOutcome: (id: string, outcome: Outcome) => void
+  syncedAt: string | null
   states: Record<string, ItemState>
   replies: Record<string, string>
   facts: Fact[]
@@ -30,12 +35,13 @@ interface Store {
   addItem: (kind: 'todo' | 'idea' | 'watch', title: string) => void
   setDone: (id: string, done: boolean) => void
   /** 改类型或补字段，例如把“想做的事”安排成待办 */
-  moveItem: (id: string, kind: 'todo' | 'idea' | 'watch', patch?: Record<string, unknown>) => void
+  moveItem: (id: string, kind: 'todo' | 'idea' | 'watch' | 'fact', patch?: Record<string, unknown>) => void
   remindItem: (id: string, at: string) => void
   deleteItem: (id: string) => void
   setState: (id: string, s: ItemState) => void
   setReply: (id: string, text: string) => void
   removeFact: (id: string) => void
+  confirmFact: (id: string) => Promise<void>
   setGeneralMode: (v: boolean) => void
   /** 用户偏好，存成 setting 事项，多端同步 */
   setSetting: (key: string, value: unknown) => void
@@ -62,6 +68,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [brief, setBrief] = useState<HomeData['brief']>(null)
+  const [syncedAt, setSyncedAt] = useState<string | null>(null)
+  const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({})
+  const outcomesRef = useRef<Record<string, Outcome>>({})
+  const outcomeDay = useRef(todayKey())
+  const recordOutcome = useCallback((id: string, outcome: Outcome) => {
+    const next = { ...outcomesRef.current, [id]: outcome }
+    outcomesRef.current = next; setOutcomes(next)
+    try { const f = cache(); f?.write(JSON.stringify({ ...JSON.parse(f.textSync()), outcomeDay: todayKey(), outcomes: next })) } catch { /* storage unavailable */ }
+  }, [])
   const messagesRef = useRef<Message[]>([])
   const itemsRef = useRef<ApiItem[]>([])
   const [generalMode, setGeneralModeLocal] = useState(false)
@@ -164,7 +179,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       if (home) {
         setUser(home.user); publishMessages(home.messages); setHasMore(home.has_more); setBrief(home.brief)
-        try { cache()?.write(JSON.stringify({ user: home.user, items: home.items, messages: home.messages, brief: home.brief, has_more: home.has_more })) } catch { /* storage unavailable */ }
+        const now = new Date().toISOString(); setSyncedAt(now)
+        if (todayKey() !== outcomeDay.current) { outcomeDay.current = todayKey(); outcomesRef.current = {}; setOutcomes({}) }
+        try { cache()?.write(JSON.stringify({ user: home.user, items: home.items, messages: home.messages, brief: home.brief, has_more: home.has_more, syncedAt: now, outcomeDay: todayKey(), outcomes: outcomesRef.current })) } catch { /* storage unavailable */ }
       }
       if (tokenRef.current !== auth) return
       // 只在服务端从未有过 fact（包括已删除项）时播种，避免删光后重新出现。
@@ -204,7 +221,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const cached = JSON.parse(await f.text()) as HomeData
           if (mounted && cached.user && Array.isArray(cached.items)) {
             setUser(cached.user); publish(cached.items); publishMessages(cached.messages ?? [])
-            setHasMore(cached.has_more ?? false); setBrief(cached.brief ?? null); setReady(true)
+            setHasMore(cached.has_more ?? false); setBrief(cached.brief ?? null)
+            const saved = cached as HomeData & { syncedAt?: string; outcomeDay?: string; outcomes?: Record<string, Outcome> }
+            setSyncedAt(saved.syncedAt ?? null)
+            if (saved.outcomeDay === todayKey()) { outcomesRef.current = saved.outcomes ?? {}; setOutcomes(outcomesRef.current) }
+            setReady(true)
           }
         }
       } catch { clearCache() }
@@ -224,10 +245,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => {
     setStates(initStates()); setReplies({}); setFacts(FACTS); setWatching(WATCHING); setGeneralModeLocal(false)
-    itemsRef.current = []; setItems([]); publishMessages([]); setHasMore(false); setBrief(null); pending.current.clear(); seeding.current = false; setRefreshing(false)
+    itemsRef.current = []; setItems([]); publishMessages([]); setHasMore(false); setBrief(null); setSyncedAt(null); outcomesRef.current = {}; setOutcomes({}); pending.current.clear(); seeding.current = false; setRefreshing(false)
   }, [publishMessages])
   const value = useMemo<Store>(() => ({
-    states, replies, facts, watching, items, messages, hasMore, brief, loadOlder, generalMode, token, user, ready, demo, refreshing, refresh,
+    states, replies, facts, watching, items, messages, hasMore, brief, syncedAt, outcomes, recordOutcome, loadOlder, generalMode, token, user, ready, demo, refreshing, refresh,
     login: async (email, password) => {
       const result = await api.login(email.trim(), password)
       await tokenStorage.set(result.token)
@@ -278,6 +299,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setReplies((p) => ({ ...p, [id]: text }))
       if (tokenRef.current) upsert(id, 'todo', { title: BRIEF_ITEMS.find((i) => i.id === id)?.title ?? id, state: states[id] ?? 'pending', reply: text })
     },
+    confirmFact: async (id) => {
+      const auth = tokenRef.current
+      if (!auth) return
+      await api.patchItem(auth, id, { confirmed: true })
+      publish(itemsRef.current.map((i) => i.id === id ? { ...i, data: { ...i.data, confirmed: true } } : i))
+    },
     removeFact: (id) => {
       if (tokenRef.current) {
         const item = itemsRef.current.find((i) => i.id === id)
@@ -290,7 +317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     setSetting: (key, value) => { if (tokenRef.current) upsert(`setting-${key}`, 'setting', { key, value }) },
     reset,
-  }), [states, replies, facts, watching, items, messages, hasMore, brief, loadOlder, generalMode, token, user, ready, demo, refreshing, refresh, reset, sync, upsert, publish, queue])
+  }), [states, replies, facts, watching, items, messages, hasMore, brief, syncedAt, outcomes, recordOutcome, loadOlder, generalMode, token, user, ready, demo, refreshing, refresh, reset, sync, upsert, publish, queue])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

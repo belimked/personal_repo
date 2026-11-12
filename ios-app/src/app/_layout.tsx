@@ -36,11 +36,14 @@ function Routes() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="review" options={{ gestureEnabled: true }} />
       <Stack.Screen name="privacy" />
+      <Stack.Screen name="facts" />
+      <Stack.Screen name="sensitive" />
       <Stack.Screen name="minutes" />
       <Stack.Screen name="records" />
       <Stack.Screen name="search" />
       <Stack.Screen name="schedule" />
       <Stack.Screen name="history" />
+      <Stack.Screen name="chats" />
       <Stack.Screen name="files" />
     </Stack.Protected>
     <Stack.Protected guard={!token && !demo}>

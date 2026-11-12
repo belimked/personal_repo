@@ -2,33 +2,31 @@ import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
-import { AppState, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import { api, askWithFallback, streamChat, type Recording } from '@/lib/api'
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { api, type Recording } from '@/lib/api'
 import { toast } from '@/components/Toast'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Brief } from '@/components/Brief'
+import { Brief, briefHeading, briefQueue } from '@/components/Brief'
 import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
 import { Panel } from '@/components/Panel'
 import type { Sent } from '@/lib/recorder'
 import { Switcher } from '@/components/Switcher'
 import { Button, Card, Chev, Icon, Row, ui } from '@/components/ui'
 import { BRIEF_ITEMS } from '@/lib/data'
-import { useStore } from '@/lib/store'
+import { useStore, type Outcome } from '@/lib/store'
+import { isOpen } from '@/lib/items'
 import { c, mono } from '@/lib/theme'
 
 /** 01 简报封面 / 03 结束页（3 件都过完后） */
 export default function Home() {
-  const { states, token, messages: history, hasMore, loadOlder, refresh } = useStore()
+  const { states, token, items, outcomes, messages: allHistory, hasMore, refresh } = useStore()
   const [panel, setPanel] = useState(false)
-  const input = useRef<React.ElementRef<typeof TextInput>>(null)
-  const say = () => input.current?.focus()
-  const [draft, setDraft] = useState('')
+  // 首页不放输入框（照原型）：点“说一句”去对话页打字，按住直接说
+  const say = () => router.push({ pathname: '/chats', params: { from: 'home', type: '1' } })
   const [local, setLocal] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number }; search?: string }[]>([])
+  // 首页只放最近 3 条，更早的去“我的 › 聊天记录”
+  const history = allHistory.slice(-3)
   const messages = [...history, ...local]
-  const older = async () => {
-    preserve.current = { height: scrollHeight.current, y: scrollY.current }
-    await loadOlder()
-  }
   const scrollHeight = useRef(0)
   const scrollY = useRef(0)
   const preserve = useRef<{ height: number; y: number } | null>(null)
@@ -81,36 +79,6 @@ export default function Home() {
   const voiceTip = waiting.length
     ? voices[waiting[waiting.length - 1]] === 'summarizing' ? '听清了，小禾正在想怎么回你…' : '语音已发出，正在转成文字…'
     : lastVoice && voices[lastVoice] === 'failed' ? '这条语音没能处理，点下方气泡重试' : ''
-  const [thinking, setThinking] = useState(false)
-  const send = async () => {
-    const message = draft.trim()
-    if (!message || thinking) return
-    setDraft(''); setLocal((p) => [...p, { role: 'user', content: message }]); setThinking(true)
-    scrollAfter()
-    const searching = /^(帮我)?[搜查找]/.test(message)
-    if (searching && token) {
-      try {
-        const result = await askWithFallback(token, message)
-        const reply = [result.answer || '找到这些结果：', ...result.things.slice(0, 5).map((t) => `· ${t.title}${t.due ? `（${t.due}）` : ''}`)].join('\n')
-        setLocal((p) => [...p, { role: 'assistant', content: reply, search: message }])
-      } catch { setLocal((p) => [...p, { role: 'assistant', content: '现在搜不了，稍后再试。' }]) }
-    } else if (token) {
-      let gotDelta = false
-      setLocal((p) => [...p, { role: 'assistant', content: '' }])
-      try {
-        const reply = await streamChat(token, message, (delta) => {
-          if (!gotDelta) { setThinking(false); scrollAfter() }
-          gotDelta = true
-          setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: next[next.length - 1].content + delta }; return next })
-        })
-        setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: reply }; return next })
-      } catch {
-        try { const reply = (await api.chat(token, message)).reply; setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: reply }; return next }) }
-        catch { setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content: gotDelta ? next[next.length - 1].content + '\n连接中断，请重试。' : '现在连不上，这句没发出去。稍后再试一次。' }; return next }) }
-      }
-    } else setLocal((p) => [...p, { role: 'assistant', content: BRIEF_ITEMS[0].reply }])
-    setThinking(false); scrollAfter()
-  }
   const pending = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending')
   const allDone = pending.length === 0
 
@@ -118,12 +86,11 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive"
+      <ScrollView ref={scroll} contentContainerStyle={s.body} bounces={false}
         onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y }} scrollEventThrottle={16}
         onContentSizeChange={(_, height) => { if (preserve.current !== null) { scroll.current?.scrollTo({ y: Math.max(0, preserve.current.y + height - preserve.current.height), animated: false }); preserve.current = null } scrollHeight.current = height }}>
         <Switcher onPress={() => setPanel(true)} />
-        {token ? <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
+        {token ? Object.keys(outcomes).length && briefQueue(items).every((i) => i.id in outcomes) ? <RealFinished onSay={say} onSent={voice} tip={voiceTip} /> : <Brief onSay={say} onSent={voice} tip={voiceTip} /> : allDone ? <Finished onSay={say} onSent={voice} tip={voiceTip} /> : (
           <>
             <View style={s.head}>
               <Text style={ui.title}>{pending.length} 件事等你定</Text>
@@ -155,24 +122,34 @@ export default function Home() {
           </>
         )}
         <View style={s.chat}>
-          {hasMore && history.length > 0 ? <Pressable onPress={older} style={s.older}><Text style={{ color: c.accInk, fontSize: 13 }}>查看更早的对话</Text></Pressable> : null}
+          {hasMore || allHistory.length > 3 ? <Pressable onPress={() => router.push({ pathname: '/chats', params: { from: 'home' } })} style={s.older}><Text style={{ color: c.accInk, fontSize: 13 }}>查看更早的对话</Text></Pressable> : null}
           {messages.map((m, i) => 'voice' in m && m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text>{'search' in m && m.search ? <Pressable onPress={() => router.push({ pathname: '/search', params: { q: m.search } })}><Text style={s.resultLink}>看全部结果</Text></Pressable> : null}</View>)}
-          {thinking ? <Text style={s.thinking}>小禾正在想…</Text> : null}
         </View>
       </ScrollView>
-      {/* 输入框固定在底部，不用滚到最下面找 */}
-      <View style={s.bar}>
-        <View style={s.compose}>
-          <TextInput ref={input} style={s.input} value={draft} onChangeText={setDraft} placeholder="有什么事交给我？" placeholderTextColor={c.t3} multiline
-            onFocus={() => setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 250)} />
-          <Pressable onPress={send} disabled={thinking || !draft.trim()} hitSlop={8}><Text style={[s.send, (!draft.trim() || thinking) && { color: c.t3 }]}>发送</Text></Pressable>
-        </View>
-      </View>
-      </KeyboardAvoidingView>
       <Panel visible={panel} onClose={() => setPanel(false)} onSettings={() => router.navigate('/me')} />
       <TalkOverlay />
     </SafeAreaView>
   )
+}
+
+function RealFinished({ onSay, onSent, tip }: { onSay: () => void; onSent: (s: Sent) => void; tip: string }) {
+  const { outcomes, items, brief, syncedAt } = useStore()
+  const entries = Object.values(outcomes)
+  const later = entries.filter((o) => o.result === 'later')
+  const others = items.filter(isOpen).length - briefQueue(items).filter((i) => i.kind === 'todo').length
+  const head = briefHeading(brief, syncedAt)
+  const label = (o: Outcome) => o.result === 'later' ? `${o.remind && new Date(o.remind).toDateString() !== new Date().toDateString() ? '明天 9:00' : '17:30'} 提醒` : ({ todo: '已安排', watch: '交给小禾', mine: '我自己办', drop: '不用了' } as const)[o.result]
+  return <>
+    <View style={[s.head, { paddingTop: 40 }]}><View style={s.done}><Icon name="checkmark" size={22} color={c.ok} weight="semibold" /></View>
+      <Text style={[ui.title, { marginTop: 16 }]}>今天的都过完了</Text>
+      <Text style={ui.lede}>处理了 {entries.length} 件{later.length ? `，${later.length} 件${later.some((o) => o.remind && new Date(o.remind).toDateString() !== new Date().toDateString()) ? '明天 9:00' : '17:30'} 再提醒你` : ''}</Text></View>
+    <Card><View style={s.top}><Text style={s.topText}>{head.day}</Text><Text style={[s.topText, mono, { color: c.t3 }]}>{head.time}</Text></View>
+      {entries.map((o, n) => <View key={n} style={s.item}>{n > 0 ? <View style={s.itemSep} /> : null}<Text style={[s.no, mono]}>{String(n + 1).padStart(2, '0')}</Text><Text style={[s.h, { flex: 1 }]} numberOfLines={1}>{o.title}</Text><View style={s.state}><Icon name={o.result === 'later' ? 'clock' : 'checkmark'} size={13} color={o.result === 'later' ? c.t3 : c.ok} /><Text style={[s.stateText, o.result !== 'later' && { color: c.ok }]}>{label(o)}</Text></View></View>)}
+    </Card>
+    <Card style={{ marginTop: 16 }}><Row first label={`另有 ${Math.max(0, others)} 件我在办`} value="不用你管" onPress={() => router.navigate('/watch')} left={<Icon name="shield" size={20} color={c.t2} />} /></Card>
+    <View style={{ flex: 1 }} /><View style={s.actions}><HoldToTalk title="有别的事，说一句" style={{ flex: 1 }} onTap={onSay} onSent={onSent} /></View>
+    {tip ? <Text style={[s.foot, s.tip]}>{tip}</Text> : null}
+  </>
 }
 
 function BriefTop() {
@@ -230,15 +207,10 @@ const s = StyleSheet.create({
   chat: { paddingTop: 16, paddingBottom: 12, gap: 8 },
   older: { alignSelf: 'center', padding: 10 },
   resultLink: { color: c.accInk, fontSize: 13, marginTop: 8 },
-  bar: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: c.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.line },
   bubble: { maxWidth: '85%', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14 },
   mine: { alignSelf: 'flex-end', backgroundColor: c.accTint },
   assistant: { alignSelf: 'flex-start', backgroundColor: c.card },
   bubbleText: { fontSize: 15, lineHeight: 22, color: c.t1 },
-  thinking: { color: c.t3, fontSize: 13, padding: 8 },
-  compose: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, minHeight: 50 },
-  input: { flex: 1, fontSize: 15, color: c.t1, paddingVertical: 10, maxHeight: 100 },
-  send: { fontSize: 15, color: c.accInk, paddingLeft: 12 },
   head: { paddingHorizontal: 4, paddingVertical: 24 },
   top: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.line },
   topText: { fontSize: 13, lineHeight: 18, color: c.t2 },

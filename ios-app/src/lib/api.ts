@@ -101,6 +101,14 @@ export const api = {
   removeRecording: (token: string, id: string) => request<{ ok: boolean }>(`/recordings/${encodeURIComponent(id)}`, token, 'DELETE'),
   upload: uploadAudio,
   search: (token: string, q: string) => request<SearchResult>(`/search?q=${encodeURIComponent(q)}`, token),
+  link: (token: string, url: string) => request<{ recording: Recording }>('/files/link', token, 'POST', { url }),
+  points: (token: string) => request<{ quota: number; used: number; left: number; month: string; detail: { label: string; count: number; points: number }[] }>('/points', token),
+  forget: (token: string) => request<{ deleted: number }>('/forget', token, 'POST', {}),
+  exportData: async (token: string) => {
+    const response = await fetch(`${API_BASE}/export`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!response.ok) throw new ApiError(response.status, '导出失败，请稍后再试')
+    return response.text()
+  },
 }
 
 /** Parse SSE across arbitrary byte boundaries, including multi-line data and CRLF. */

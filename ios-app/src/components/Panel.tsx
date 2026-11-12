@@ -20,7 +20,7 @@ export function Panel({ visible, onClose, onSettings }: { visible: boolean; onCl
   useEffect(() => {
     if (!visible || !token) return
     let alive = true
-    void api.recordings(token).then((r) => { if (alive) setFiles(r.recordings.length) }).catch(() => {})
+    void api.recordings(token).then((r) => { if (alive) setFiles(r.recordings.filter((rec) => rec.kind === 'file').length) }).catch(() => {})
     return () => { alive = false }
   }, [visible, token])
 
@@ -38,7 +38,7 @@ export function Panel({ visible, onClose, onSettings }: { visible: boolean; onCl
     { icon: 'calendar', label: '日程', value: dueToday ? `今天 ${dueToday} 件到期` : dueWeek ? `本周 ${dueWeek} 件` : '本周没有到期的', onPress: () => go('/schedule') },
     { icon: 'clock.arrow.circlepath', label: '历史事情', value: `本周办完 ${doneWeek} 件`, onPress: () => go('/history') },
     { icon: 'folder', label: '交给我的资料', value: files == null ? '' : `${files} 份`, onPress: () => go('/files') },
-    { icon: 'plus.circle', label: '交资料', value: '照片、文件、录音', onPress: give },
+    { icon: 'camera', label: '交资料', value: '拍照、文件、链接', onPress: give },
     { icon: 'gearshape', label: '设置', value: '', onPress: () => { onClose(); onSettings() } },
   ]
   const shown = demo ? rows.filter((r) => r.label === '设置') : rows
@@ -51,7 +51,7 @@ export function Panel({ visible, onClose, onSettings }: { visible: boolean; onCl
         <View style={s.panel}>
           {demo ? null : <Pressable style={s.search} onPress={() => go('/search')} accessibilityRole="search">
             <Icon name="magnifyingglass" size={17} color={c.t3} />
-            <Text style={s.searchText}>搜说过的话、事情、资料</Text>
+            <Text style={s.searchText}>搜索</Text>
           </Pressable>}
           {shown.map((r, i) => (
             <Row key={r.label} first={i === 0} label={r.label} value={r.value}

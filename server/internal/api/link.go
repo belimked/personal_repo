@@ -76,6 +76,7 @@ func (a *API) linkClient() *http.Client {
 		return nil
 	}}
 }
+
 // linkLookup 解析交链接的域名。65 的网关是 fake-IP DNS（返回 198.18/15），
 // 所以默认走 DoH 拿真实地址；XIAOHE_LINK_DOH=off 时用系统 DNS（测试同理）。
 func (a *API) linkLookup(ctx context.Context, host string) ([]net.IP, error) {
