@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"html"
 	"io"
@@ -48,7 +49,7 @@ func (a *API) linkClient() *http.Client {
 		if err != nil {
 			return nil, err
 		}
-		ips, err := net.DefaultResolver.LookupIP(ctx, "ip", host)
+		ips, err := a.linkLookup(ctx, host)
 		if err != nil || len(ips) == 0 {
 			return nil, errors.New("DNS 解析失败")
 		}
@@ -75,6 +76,55 @@ func (a *API) linkClient() *http.Client {
 		return nil
 	}}
 }
+// linkLookup 解析交链接的域名。65 的网关是 fake-IP DNS（返回 198.18/15），
+// 所以默认走 DoH 拿真实地址；XIAOHE_LINK_DOH=off 时用系统 DNS（测试同理）。
+func (a *API) linkLookup(ctx context.Context, host string) ([]net.IP, error) {
+	if ip := net.ParseIP(host); ip != nil {
+		return []net.IP{ip}, nil
+	}
+	doh := os.Getenv("XIAOHE_LINK_DOH")
+	if doh == "" {
+		doh = "https://1.1.1.1/dns-query"
+	}
+	if doh == "off" || a.AllowPrivateLinks {
+		return net.DefaultResolver.LookupIP(ctx, "ip", host)
+	}
+	var out []net.IP
+	for _, typ := range []string{"A", "AAAA"} {
+		req, err := http.NewRequestWithContext(ctx, "GET", doh+"?name="+url.QueryEscape(host)+"&type="+typ, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("accept", "application/dns-json")
+		resp, err := (&http.Client{Timeout: 5 * time.Second}).Do(req)
+		if err != nil {
+			continue
+		}
+		var r struct {
+			Answer []struct {
+				Type int    `json:"type"`
+				Data string `json:"data"`
+			} `json:"Answer"`
+		}
+		err = json.NewDecoder(io.LimitReader(resp.Body, 64<<10)).Decode(&r)
+		resp.Body.Close()
+		if err != nil {
+			continue
+		}
+		for _, ans := range r.Answer {
+			if ans.Type == 1 || ans.Type == 28 {
+				if ip := net.ParseIP(ans.Data); ip != nil {
+					out = append(out, ip)
+				}
+			}
+		}
+	}
+	if len(out) == 0 {
+		return nil, errors.New("DNS 解析失败")
+	}
+	return out, nil
+}
+
 func validLinkURL(u *url.URL) bool {
 	return (u.Scheme == "http" || u.Scheme == "https") && u.Hostname() != "" && u.User == nil
 }
