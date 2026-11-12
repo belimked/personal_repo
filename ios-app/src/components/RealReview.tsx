@@ -8,6 +8,7 @@ import { dueOf, recordingOf, str, titleOf, when } from '@/lib/items'
 import { sceneLabel } from '@/lib/recorder'
 import { useStore, type Outcome } from '@/lib/store'
 import { c } from '@/lib/theme'
+import { openMap } from '@/lib/location'
 import { briefQueue } from './Brief'
 import { Button, Icon, ui } from './ui'
 
@@ -93,10 +94,14 @@ export function RealReview() {
   const owner = str(item.data.owner)
   const reminder = str(item.data.remind_at)
   const due = when(dueOf(item))
+  const place = str(item.data.place)
+  const eta = item.data.eta as { minutes?: number } | undefined
+  const geo = item.data.place_geo as { lat?: number; lng?: number; name?: string; address?: string } | undefined
   const facts = [
     { k: '类别', v: sceneLabel[str(item.data.scene)] ?? '' }, { k: '谁来办', v: owner === user?.name ? '你' : owner },
     { k: '时间', v: due.text }, { k: '备注', v: str(item.data.note) },
     { k: '提醒', v: reminder ? when(reminder).text : '' },
+    { k: '地点', v: place }, { k: '路程', v: typeof eta?.minutes === 'number' ? `开车约 ${eta.minutes} 分钟` : '' },
   ].filter((f) => f.v)
   const stash = x.interpolate({ inputRange: [0, 100], outputRange: [0, 1], extrapolate: 'clamp' })
   return <SafeAreaView style={{ flex: 1 }}>
@@ -108,7 +113,7 @@ export function RealReview() {
       <View><Animated.View style={[s.stashBg, { opacity: stash }]}><Icon name="clock" size={18} color={c.accInk} /><Text style={{ color: c.accInk }}>暂存，稍后再提醒</Text></Animated.View>
         <Animated.View {...pan.panHandlers} style={[ui.card, s.task, { transform: [{ translateX: x }] }]}>
           <Text style={s.h2}>{titleOf(item)}</Text>
-          {facts.length ? <View style={{ marginTop: 16, gap: 12 }}>{facts.map((f) => <View key={f.k} style={{ flexDirection: 'row', gap: 12 }}><Text style={s.k}>{f.k}</Text><Text style={[s.v, f.k === '时间' && due.late && { color: c.bad }]}>{f.v}</Text></View>)}</View> : null}
+          {facts.length ? <View style={{ marginTop: 16, gap: 12 }}>{facts.map((f) => <View key={f.k} style={{ flexDirection: 'row', gap: 12 }}><Text style={s.k}>{f.k}</Text><Text style={[s.v, f.k === '时间' && due.late && { color: c.bad }]}>{f.v}</Text>{f.k === '地点' ? <Pressable onPress={() => openMap(geo && typeof geo.lat === 'number' && typeof geo.lng === 'number' ? { name: geo.name || place, address: geo.address || '', lat: geo.lat, lng: geo.lng } : place)}><Text style={s.navText}>导航</Text></Pressable> : null}</View>)}</View> : null}
           <View style={s.reply}><Text style={s.replyK}>建议</Text><Text style={s.replyP}>{str(item.data.suggest) || '小禾还在想办法，先按你的判断定'}</Text></View>
           <View style={s.foot}><Pressable onPress={rec ? () => router.push({ pathname: '/minutes', params: { id: rec } }) : undefined} style={ui.src}>
             <Icon name="doc.text" size={13} color={c.accInk} /><Text style={[ui.srcText, { color: c.accInk }]} numberOfLines={1}>出处：{rec ? source?.id === rec ? source.title : '录音或资料的整理' : '你记下的事'}</Text></Pressable><Text style={ui.srcText}>内容由 AI 生成</Text></View>

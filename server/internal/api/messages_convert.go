@@ -64,7 +64,7 @@ func (a *API) convertMessages(w http.ResponseWriter, b, u map[string]any) {
 		fallback = str(rows[0]["content"])
 	}
 	text, callErr := a.LLM.CallWith(jobModel("XIAOHE_MODEL_JOB", "deepseek-v4-flash"), []map[string]string{
-		{"role": "system", "content": "根据对话提炼事项。只输出JSON对象：{\"title\":\"不超过20字\",\"note\":\"不超过60字\",\"due\":\"YYYY-MM-DD或null\",\"owner\":\"人名或null\"}。不确定的日期和负责人用null，不要编造。"},
+		{"role": "system", "content": "根据对话提炼事项。只输出JSON对象：{\"title\":\"不超过20字\",\"note\":\"不超过60字\",\"due\":\"YYYY-MM-DD或null\",\"owner\":\"人名或null\",\"place\":\"明确提到的地点或null\"}。不确定的日期、负责人和地点用null，不要编造。"},
 		{"role": "user", "content": strings.Join(lines, "\n")},
 	}, llm.Options{Timeout: 20 * time.Second})
 	var result struct {
@@ -72,6 +72,7 @@ func (a *API) convertMessages(w http.ResponseWriter, b, u map[string]any) {
 		Note  string  `json:"note"`
 		Due   *string `json:"due"`
 		Owner *string `json:"owner"`
+		Place *string `json:"place"`
 	}
 	if i, j := strings.Index(text, "{"), strings.LastIndex(text, "}"); i >= 0 && j > i {
 		text = text[i : j+1]
@@ -89,6 +90,9 @@ func (a *API) convertMessages(w http.ResponseWriter, b, u map[string]any) {
 					data["due"] = due
 				}
 			}
+		}
+		if result.Place != nil && strings.TrimSpace(*result.Place) != "" {
+			data["place"] = strings.TrimSpace(*result.Place)
 		}
 		if result.Owner != nil && strings.TrimSpace(*result.Owner) != "" {
 			data["owner"] = strings.TrimSpace(*result.Owner)

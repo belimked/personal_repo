@@ -6,6 +6,7 @@ import { AppState } from 'react-native'
 import { api, ApiError, tokenStorage, type ApiItem, type Kind, type User, type Message, type HomeData } from './api'
 import { BRIEF_ITEMS, FACTS, WATCHING, type Fact, type ItemState } from './data'
 import { registerPush, unregisterPush } from './push'
+import { updateLocation } from './location'
 
 export type Outcome = { title: string; result: 'todo' | 'watch' | 'mine' | 'drop' | 'later'; remind?: string }
 const todayKey = () => new Date().toLocaleDateString('en-CA')
@@ -236,12 +237,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }).catch(() => {}).finally(() => { if (mounted) setReady(true) })
     return () => { mounted = false }
   }, [sync, publish, publishMessages])
+  const locationEnabled = (items.find((i) => i.id === 'setting-sensitive' && !i.deleted)?.data.value as { location?: boolean } | undefined)?.location !== false
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && tokenRef.current) void sync(tokenRef.current, true) })
+    if (token && !demo) void updateLocation(token, locationEnabled)
+  }, [token, demo, locationEnabled])
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active' && tokenRef.current) { void sync(tokenRef.current, true); if (!demo) void updateLocation(tokenRef.current, locationEnabled) } })
     // 收到推送（纪要、资料、语音回复整理好了）说明事项有变化，马上同步一次
     const push = Notifications.addNotificationReceivedListener(() => { if (tokenRef.current) void sync(tokenRef.current, true) })
     return () => { sub.remove(); push.remove() }
-  }, [sync])
+  }, [sync, demo, locationEnabled])
 
   const reset = useCallback(() => {
     setStates(initStates()); setReplies({}); setFacts(FACTS); setWatching(WATCHING); setGeneralModeLocal(false)

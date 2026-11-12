@@ -46,7 +46,7 @@ func (a *API) recordingRoutes(w http.ResponseWriter, r *http.Request, b, u map[s
 	}
 	if p == "/api/recordings" && m == "GET" {
 		since := r.URL.Query().Get("since")
-		rows, e := a.DB.Rows("SELECT id,title,mime,size_bytes,duration_s,status,error,recorded_at,created_at,updated_at,finished_at,audio_deleted_at,scene,kind FROM recordings WHERE user_id=? AND (?='' OR updated_at>?) ORDER BY created_at DESC", uid, since, since)
+		rows, e := a.DB.Rows("SELECT id,title,mime,size_bytes,duration_s,status,error,recorded_at,created_at,updated_at,finished_at,audio_deleted_at,scene,kind,intent,step FROM recordings WHERE user_id=? AND (?='' OR updated_at>?) ORDER BY created_at DESC", uid, since, since)
 		if e != nil {
 			a.internal(w)
 			return

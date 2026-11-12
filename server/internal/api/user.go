@@ -44,6 +44,10 @@ func (a *API) user(w http.ResponseWriter, r *http.Request, b, u map[string]any) 
 		a.briefs(w, r, str(uid))
 		return
 	}
+	if p == "/api/me/location" || p == "/api/route" {
+		a.locationRoute(w, r, b, str(uid))
+		return
+	}
 	if p == "/api/ask" && m == "POST" {
 		a.ask(w, b, str(uid))
 		return

@@ -19,7 +19,7 @@ func sse(w http.ResponseWriter, v any) {
 
 func (a *API) messagePage(uid, thread string, n int, before, q string) ([]map[string]any, bool, error) {
 	pattern := "%" + strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(q) + "%"
-	rows, e := a.DB.Rows(`SELECT messages.id,role,content,model,messages.created_at,messages.item_id,items.kind AS item_kind
+	rows, e := a.DB.Rows(`SELECT messages.id,role,content,model,messages.created_at,messages.item_id,items.kind AS item_kind,messages.meta
 		FROM messages LEFT JOIN items ON items.id=messages.item_id AND items.user_id=messages.user_id
 		WHERE messages.user_id=? AND thread=? AND (?='' OR messages.created_at<?)
 		AND (?='' OR content LIKE ? ESCAPE '\')
@@ -33,6 +33,13 @@ func (a *API) messagePage(uid, thread string, n int, before, q string) ([]map[st
 	}
 	for i, j := 0, len(rows)-1; i < j; i, j = i+1, j-1 {
 		rows[i], rows[j] = rows[j], rows[i]
+	}
+	for _, row := range rows {
+		var meta any
+		if row["meta"] != nil {
+			_ = json.Unmarshal([]byte(str(row["meta"])), &meta)
+		}
+		row["meta"] = meta
 	}
 	return rows, more, nil
 }

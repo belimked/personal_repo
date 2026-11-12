@@ -38,6 +38,14 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 		fail(w, 400, "invalid_query", "请输入要搜的内容（最多 200 字）")
 		return
 	}
+	result, err := a.askResult(uid, q)
+	if err != nil {
+		a.internal(w)
+		return
+	}
+	send(w, 200, result)
+}
+func (a *API) askResult(uid, q string) (map[string]any, error) {
 	model := os.Getenv("XIAOHE_MODEL_ASK")
 	if model == "" {
 		model = "deepseek-v4-flash"
@@ -105,16 +113,14 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 			rec := httptest.NewRecorder()
 			a.search(rec, req, uid)
 			if rec.Code != 200 {
-				a.internal(w)
-				return
+				return nil, fmt.Errorf("search failed: %d", rec.Code)
 			}
 			var result struct {
 				Said  []map[string]any `json:"said"`
 				Files []map[string]any `json:"files"`
 			}
 			if json.Unmarshal(rec.Body.Bytes(), &result) != nil {
-				a.internal(w)
-				return
+				return nil, fmt.Errorf("invalid search response")
 			}
 			said = append(said, result.Said...)
 			files = append(files, result.Files...)
@@ -123,8 +129,7 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 	if scopes["files"] && len(f.Keywords) == 0 {
 		rows, err := a.DB.Rows("SELECT id recording_id,title,kind,recorded_at,created_at,duration_s FROM recordings WHERE user_id=? ORDER BY created_at DESC LIMIT 30", uid)
 		if err != nil {
-			a.internal(w)
-			return
+			return nil, err
 		}
 		for _, r := range rows {
 			at := str(r["recorded_at"])
@@ -151,8 +156,7 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 	if scopes["things"] {
 		rows, err := a.DB.Rows("SELECT id,kind,data FROM items WHERE user_id=? AND deleted=0 AND kind IN ('todo','watch','idea')", uid)
 		if err != nil {
-			a.internal(w)
-			return
+			return nil, err
 		}
 		for _, row := range rows {
 			kind := str(row["kind"])
@@ -232,10 +236,10 @@ func (a *API) ask(w http.ResponseWriter, b map[string]any, uid string) {
 	if overdue > 0 {
 		answer += fmt.Sprintf("其中 %d 件已过期。", overdue)
 	}
-	if _, e := a.DB.Exec("INSERT INTO search_uses VALUES(?,?,?)", ID(), uid, Now()); e != nil {
+	if _, e := a.DB.Exec("INSERT INTO search_uses(id,user_id,created_at) VALUES(?,?,?)", ID(), uid, Now()); e != nil {
 		log.Printf("search_uses insert failed: %v", e)
 	}
-	send(w, 200, map[string]any{"answer": answer, "filter": f, "said": said, "things": things, "files": files, "mode": mode})
+	return map[string]any{"answer": answer, "filter": f, "said": said, "things": things, "files": files, "mode": mode}, nil
 }
 
 // mentionsFiles 判断搜索语句是否提到录音、纪要、资料等，提到了才查资料。

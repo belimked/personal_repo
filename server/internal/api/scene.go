@@ -149,7 +149,7 @@ func (j Jev) call(ctx context.Context, text string) (jevAnswers, error) {
 
 // minutesPrompt 按场合和要提取的事项类别组装纪要提示词。
 func minutesPrompt(s Scene, dateHint, name string) string {
-	format := "整理为 JSON：title 标题、summary 三到五句摘要、points 要点数组、decisions 已定事项数组、action_items 数组（text 内容、owner 负责人、due YYYY-MM-DD 日期、is_self 是否为用户本人、suggest 一句话建议怎么办（≤40字）、suggest_short 封面副标题（≤14字））。建议只依据录音内容，不编造。未提到的字段留空，勿编造。points 只写讨论过但没有落成事项或决定的内容（背景、想法、问题、数据），不要重复 action_items 和 decisions 里已有的事；没有就输出空数组。"
+	format := "整理为 JSON：title 标题、summary 三到五句摘要、points 要点数组、decisions 已定事项数组、action_items 数组（text 内容、owner 负责人、due YYYY-MM-DD 日期（明确提到具体时间则用 YYYY-MM-DDTHH:MM）、place 明确说出的地点（未提到留空）、is_self 是否为用户本人、suggest 一句话建议怎么办（≤40字）、suggest_short 封面副标题（≤14字））。建议只依据录音内容，不编造。未提到的字段留空，勿编造。points 只写讨论过但没有落成事项或决定的内容（背景、想法、问题、数据），不要重复 action_items 和 decisions 里已有的事；没有就输出空数组。"
 	var head string
 	switch s.Scene {
 	case "work":

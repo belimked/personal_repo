@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import { Icon } from '@/components/ui'
 import { clock, useRecorder, type Sent } from '@/lib/recorder'
+import type { Recording } from '@/lib/api'
 import { c, mono } from '@/lib/theme'
 
 /** “说一句”：点一下打字，按住说话、松开发送。 */
@@ -44,16 +45,22 @@ export function TalkOverlay() {
 }
 
 /** 首页里一条语音消息，点开看转写和整理结果 */
-const NOTE: Record<string, string> = {
-  queued: '正在转成文字…', transcribing: '正在转成文字…', summarizing: '听清了，正在想怎么回你…', done: '已回复', failed: '没能处理，点开重试',
+const labels: Record<string, string> = { search: '搜索', remind: '提醒', route: '路线', work: '工作', life: '生活', mixed: '混合' }
+export function voiceProgress(recording?: Pick<Recording, 'status' | 'intent' | 'step'>): string {
+  const label = recording?.intent ? labels[recording.intent] : ''
+  const status = recording?.status ?? 'queued'
+  const progress = status === 'summarizing' ? recording?.step || '正在判断是什么事'
+    : status === 'done' ? '已回复' : status === 'failed' ? '没能处理，点开重试' : '正在转成文字'
+  return [label, progress].filter(Boolean).join(' · ')
 }
 
-export function VoiceNote({ id, ms, status = 'queued' }: { id: string; ms: number; status?: string }) {
+export function VoiceNote({ id, ms, recording }: { id: string; ms: number; recording?: Recording }) {
+  const status = recording?.status ?? 'queued' 
   const failed = status === 'failed'
   return (
     <Pressable onPress={() => { Haptics.selectionAsync(); router.push({ pathname: '/minutes', params: { id } }) }} style={({ pressed }) => [s.note, pressed && { opacity: 0.6 }]}>
       <Icon name={failed ? 'exclamationmark.circle' : 'waveform'} size={16} color={failed ? c.bad : c.accInk} />
-      <Text style={[s.noteText, failed && { color: c.bad }]}>语音 {clock(ms)} · {NOTE[status] ?? NOTE.queued}</Text>
+      <Text style={[s.noteText, failed && { color: c.bad }]}>语音 {clock(ms)} · {voiceProgress(recording)}</Text>
     </Pressable>
   )
 }

@@ -8,13 +8,15 @@ const TOKEN_KEY = 'daily-assistant-token'
 export type User = { id: string; email: string; name: string; role: 'user' | 'admin' }
 export type Kind = 'todo' | 'stash' | 'watch' | 'idea' | 'file' | 'fact' | 'setting'
 export type ApiItem = { id: string; kind: Kind; data: Record<string, unknown>; created_at: string; updated_at: string; deleted: number }
-export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string; item_id: string | null; item_kind: Kind | null }
+export type RoutePlace = { name: string; address: string; lat: number; lng: number }
+export type RouteResult = { place: RoutePlace; driving_min: number; transit_min: number | null; from: 'device' | 'last'; maps_url: string }
+export type Message = { id: string; role: 'user' | 'assistant'; content: string; model: string | null; created_at: string; item_id: string | null; item_kind: Kind | null; meta?: { search?: string; route?: RoutePlace } | null }
 
 export type Minutes = {
   title?: string; summary?: string; points?: string[]; decisions?: string[]
-  action_items?: { text: string; owner?: string; due?: string; is_self?: boolean }[]
+  action_items?: { text: string; owner?: string; due?: string; place?: string; is_self?: boolean }[]
 }
-export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number; kind?: 'meeting' | 'voice' | 'file'; mime?: string | null }
+export type Recording = { id: string; title: string | null; status: 'queued' | 'transcribing' | 'summarizing' | 'done' | 'failed'; error: string | null; recorded_at: string | null; created_at: string; duration_s?: number | null; scene?: 'work' | 'life' | 'mixed' | null; queue_position?: number; intent?: 'search' | 'remind' | 'route' | 'work' | 'life' | 'mixed' | null; step?: string | null; kind?: 'meeting' | 'voice' | 'file'; mime?: string | null }
 export type Transcript = { text: string; speakers: number | null; segments: { speaker?: number; text: string; start_ms?: number; end_ms?: number; page?: number }[] | null }
 export type AudioFile = { uri: string; name: string; type: string }
 export type HomeData = { user: User; items: ApiItem[]; messages: Message[]; has_more: boolean; brief: { kind: string; text: string; created_at: string } | null }
@@ -91,6 +93,9 @@ export const api = {
   messages: (token: string, limit = 10, before?: string, q?: string) => request<{ messages: Message[]; has_more: boolean }>(`/messages?thread=home&limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`, token),
   convertMessages: (token: string, ids: string[], kind: 'todo' | 'watch' | 'idea', scene: 'work' | 'life') => request<{ item: ApiItem }>('/messages/convert', token, 'POST', { ids, kind, scene }),
   ask: (token: string, q: string) => request<AskResult>('/ask', token, 'POST', { q }),
+  putLocation: (token: string, lat: number, lng: number, accuracy: number | null) => request<{ ok: boolean; stored: boolean }>('/me/location', token, 'PUT', { lat, lng, accuracy }),
+  deleteLocation: (token: string) => request<{ ok: boolean }>('/me/location', token, 'DELETE'),
+  route: (token: string, to: string, coords?: { lat: number; lng: number }) => request<RouteResult>('/route', token, 'POST', { to, ...coords }),
   registerDevice: (token: string, device: string, env: 'production' | 'sandbox') => request<{ ok: boolean }>('/devices', token, 'POST', { token: device, platform: 'ios', env }),
   unregisterDevice: (token: string, device: string) => request<{ ok: boolean }>(`/devices/${encodeURIComponent(device)}`, token, 'DELETE'),
   recording: (token: string, id: string) => request<{ recording: Recording }>(`/recordings/${encodeURIComponent(id)}`, token),

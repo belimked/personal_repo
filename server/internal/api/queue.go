@@ -296,6 +296,7 @@ type action struct {
 	IsSelf       bool   `json:"is_self"`
 	Suggest      string `json:"suggest"`
 	SuggestShort string `json:"suggest_short"`
+	Place        string `json:"place"`
 }
 type minutes struct {
 	Title     string   `json:"title"`
@@ -343,6 +344,12 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		name = str(user["name"])
 	}
 	input := strings.Join(lines, "\n")
+	voice := str(row["kind"]) == "voice"
+	if voice {
+		a.DB.Exec("UPDATE recordings SET step=? WHERE id=?", "正在判断是什么事", id)
+	} else {
+		a.DB.Exec("UPDATE recordings SET step=? WHERE id=?", "正在整理资料", id)
+	}
 	var scene Scene
 	if manual := str(row["scene"]); str(row["scene_model"]) == "user" && (manual == "work" || manual == "life" || manual == "mixed") {
 		// 用户手动改过标签：不再让模型判断，按用户选的场合提取事项。
@@ -357,6 +364,9 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			log.Printf("recording=%s stage=scene scene=%s p=%.2f work_actions=%.2f life_actions=%.2f model=%s", id, scene.Scene, scene.P, scene.WorkActions, scene.LifeActions, scene.Model)
 		}
 	}
+	if scene.Scene != "work" && scene.Scene != "life" && scene.Scene != "mixed" {
+		scene.Scene = "mixed"
+	}
 	// 用户自己改标签触发的重新整理：人就在页面上看着，不再发首页消息和推送。
 	quiet := scene.Model == "user" && str(tr["minutes"]) != ""
 	prompt := minutesPrompt(scene, speakerHint(len(speakers))+recordingDateHint(row), name)
@@ -365,18 +375,39 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 		prompt = filePrompt(scene, row, name)
 	}
 	// 按住“说一句”的语音：首次处理时像打字一样进首页对话并由小禾回答；重新生成时不再重复对话。
-	voice := str(row["kind"]) == "voice"
 	chat := voice && str(tr["minutes"]) == ""
 	spoken := strings.TrimSpace(str(tr["text"]))
 	if spoken == "" {
 		spoken = strings.Join(lines, "")
 	}
 	var reply string
+	var meta any
+	special := false
+	intent := scene.Scene
 	if chat {
-		reply = a.voiceReply(uid, name, spoken, row)
+		v := a.classifyVoice(spoken)
+		if v.Intent == "remind" && (v.RemindAt == nil || v.Title == nil || strings.TrimSpace(*v.Title) == "" || !validRemindTime(v.RemindAt)) {
+			v.Intent = "other"
+		}
+		if v.Intent != "other" {
+			intent = v.Intent
+			step := map[string]string{"search": "正在搜集资料", "remind": "正在创建提醒", "route": "正在估算路线"}[intent]
+			a.DB.Exec("UPDATE recordings SET intent=?,step=? WHERE id=?", intent, step, id)
+			reply, meta, special = a.voiceAction(ctx, uid, id, spoken, scene.Scene, v)
+		}
+	}
+	if !special {
+		step := "正在整理资料"
+		if scene.ExtractWork || scene.ExtractLife {
+			step = "正在创建任务"
+		}
+		a.DB.Exec("UPDATE recordings SET intent=?,step=? WHERE id=?", scene.Scene, step, id)
+		if chat {
+			reply = a.voiceReply(uid, name, spoken, row)
+		}
 	}
 	var min minutes
-	if voice && !scene.ExtractWork && !scene.ExtractLife {
+	if special || voice && !scene.ExtractWork && !scene.ExtractLife {
 		min = minutes{Title: voiceTitle(spoken), Summary: spoken, Points: []string{}, Decisions: []string{}, Actions: []action{}}
 	} else {
 		if len([]rune(input)) > 40000 {
@@ -469,6 +500,9 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			data["date"] = item.Due
 			data["due"] = item.Due
 		}
+		if item.Place != "" {
+			data["place"] = item.Place
+		}
 		if item.Owner != "" {
 			data["owner"] = item.Owner
 		}
@@ -517,12 +551,17 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 	}
 	if e == nil && chat {
 		answer := reply
-		if count > 0 {
+		if count > 0 && !special {
 			answer += "\n\n已记到事项：" + strings.Join(labels, "、")
 		}
 		if _, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "user", spoken, nil, now); e == nil {
 			later, _ := time.Parse(time.RFC3339Nano, now)
-			_, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at) VALUES(?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"))
+			var rawMeta any
+			if meta != nil {
+				b, _ := json.Marshal(meta)
+				rawMeta = string(b)
+			}
+			_, e = tx.Exec("INSERT INTO messages(id,user_id,thread,role,content,model,created_at,meta) VALUES(?,?,?,?,?,?,?,?)", ID(), uid, "home", "assistant", answer, "deepseek-v4-flash", later.Add(time.Millisecond).UTC().Format("2006-01-02T15:04:05.000Z"), rawMeta)
 		}
 	} else if e == nil && !quiet {
 		msg := minutesMessage(count, total, labels)

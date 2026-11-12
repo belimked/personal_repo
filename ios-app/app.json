@@ -3,13 +3,13 @@
     "name": "DailyAssistant",
     "slug": "daily-assistant",
     "scheme": "dailyassistant",
-    "version": "0.9.7",
+    "version": "0.9.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.blk.dailyassistant",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "小禾",
@@ -35,6 +35,14 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "小禾用你的位置估算去日程地点要多久，只在你打开小禾时获取。",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
       [
         "expo-notifications",
         {

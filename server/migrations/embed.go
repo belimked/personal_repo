@@ -22,3 +22,6 @@ var SearchUses string
 
 //go:embed 0007_message_items.sql
 var MessageItems string
+
+//go:embed 0008_voice_route.sql
+var VoiceRoute string

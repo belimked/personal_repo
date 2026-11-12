@@ -3,11 +3,12 @@ import { router } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useEffect, useRef, useState } from 'react'
 import { AppState, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
-import { api, askWithFallback, streamChat, type Recording } from '@/lib/api'
+import { api, askWithFallback, streamChat, type Recording, type RoutePlace } from '@/lib/api'
 import { toast } from '@/components/Toast'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Brief, briefHeading, briefQueue } from '@/components/Brief'
-import { HoldToTalk, TalkOverlay, VoiceNote } from '@/components/HoldToTalk'
+import { HoldToTalk, TalkOverlay, VoiceNote, voiceProgress } from '@/components/HoldToTalk'
+import { currentCoordinates, openMap } from '@/lib/location'
 import { Panel } from '@/components/Panel'
 import type { Sent } from '@/lib/recorder'
 import { Switcher } from '@/components/Switcher'
@@ -25,7 +26,7 @@ export default function Home() {
   const [draft, setDraft] = useState('')
   const [thinking, setThinking] = useState(false)
   const say = () => setCompose(true)
-  const [local, setLocal] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number }; search?: string }[]>([])
+  const [local, setLocal] = useState<{ role: 'user' | 'assistant'; content: string; voice?: { id: string; ms: number }; meta?: { search?: string; route?: RoutePlace } }[]>([])
   // 首页只放最近 3 条，更早的去“我的 › 聊天记录”
   const history = allHistory.slice(-3)
   const messages = [...history, ...local.filter((m) => m.voice || !history.some((h) => h.role === m.role && h.content === m.content))]
@@ -37,33 +38,39 @@ export default function Home() {
     const message = draft.trim()
     if (!message || thinking || !token) return
     setCompose(false); setDraft(''); setThinking(true)
-    setLocal((p) => [...p, { role: 'user', content: message, search: /^(帮我)?[搜查找]/.test(message) ? message : undefined }, { role: 'assistant', content: '' }])
+    setLocal((p) => [...p, { role: 'user', content: message }, { role: 'assistant', content: '' }])
     scrollAfter()
-    const put = (content: string, search?: string) => { setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content, search }; return next }); scrollAfter() }
-    if (/^(帮我)?[搜查找]/.test(message)) {
+    const put = (content: string, meta?: { search?: string; route?: RoutePlace }) => { setLocal((p) => { const next = [...p]; next[next.length - 1] = { role: 'assistant', content, meta }; return next }); scrollAfter() }
+    const routeMatch = /^(从这里)?(去|到)(.{1,30}?)(要多久|多久|多远|怎么走)/.exec(message)
+    if (routeMatch) {
+      try {
+        const r = await api.route(token, routeMatch[3].trim(), await currentCoordinates())
+        put(`从你现在的位置去${r.place.name}，开车约 ${r.driving_min} 分钟${r.transit_min != null ? `，公交约 ${r.transit_min} 分钟` : ''}（预估）`, { route: r.place })
+      } catch { put('暂时没法估算路线，请稍后再试。') }
+    } else if (/^(帮我)?[搜查找]/.test(message)) {
       try {
         const r = await askWithFallback(token, message)
-        put([r.answer || '找到这些结果：', ...r.things.slice(0, 5).map((t) => `· ${t.title}${t.due ? `（${t.due}）` : ''}`)].join('\n'), message)
+        put([r.answer || '找到这些结果：', ...r.things.slice(0, 5).map((t) => `· ${t.title}${t.due ? `（${t.due}）` : ''}`)].join('\n'), { search: message })
       } catch { put('现在搜不了，稍后再试。') }
     } else {
       let text = ''
       try { put(await streamChat(token, message, (delta) => { text += delta; put(text) })) }
       catch { try { put((await api.chat(token, message)).reply) } catch { put(text ? `${text}\n连接中断，请重试。` : '现在连不上，这句没发出去。稍后再试一次。') } }
     }
-    setThinking(false); scrollAfter(); void refresh(true).then(() => { if (!/^(帮我)?[搜查找]/.test(message)) setLocal((p) => p.filter((m) => !!m.voice || !!m.search)) })
+    setThinking(false); scrollAfter(); void refresh(true).then(() => { if (!/^(帮我)?[搜查找]/.test(message) && !routeMatch) setLocal((p) => p.filter((m) => !!m.voice || !!m.meta)) })
   }
   // 按住说的语音：记下每条的处理状态，气泡和按钮下方的提示跟着变；处理完重新拉对话，用原话 + 小禾的回答替换气泡。
   // 失败的保留气泡，点开在纪要页重试。收到推送或回到前台时立刻查一次。
-  const [voices, setVoices] = useState<Record<string, Recording['status']>>({})
+  const [voices, setVoices] = useState<Record<string, Recording>>({})
   const [poke, setPoke] = useState(0)
   const scroll = useRef<React.ElementRef<typeof ScrollView>>(null)
   const voice = (sent: Sent) => {
     toast('收到，正在转成文字')
     setTimeout(scrollAfter, 800)
     setLocal((p) => [...p, { role: 'user', content: '', voice: { id: sent.recording.id, ms: sent.ms } }])
-    setVoices((v) => ({ ...v, [sent.recording.id]: 'queued' }))
+    setVoices((v) => ({ ...v, [sent.recording.id]: sent.recording }))
   }
-  const waiting = Object.keys(voices).filter((id) => voices[id] !== 'done' && voices[id] !== 'failed')
+  const waiting = Object.keys(voices).filter((id) => voices[id].status !== 'done' && voices[id].status !== 'failed')
   const waitKey = waiting.join(',')
   useEffect(() => {
     const a = Notifications.addNotificationReceivedListener(() => setPoke((n) => n + 1))
@@ -75,18 +82,18 @@ export default function Home() {
     const ids = waitKey.split(',')
     let alive = true
     const check = async () => {
-      const got = await Promise.all(ids.map((id) => api.recording(token, id).then((r) => r.recording.status).catch(() => null)))
+      const got = await Promise.all(ids.map((id) => api.recording(token, id).then((r) => r.recording).catch(() => null)))
       if (!alive) return
-      const done = ids.filter((_, i) => got[i] === 'done')
+      const done = ids.filter((_, i) => got[i]?.status === 'done')
       // 先把对话拉回来再改状态：改状态会让这个 effect 重跑，先改的话下面的替换会被丢掉（0.9.3 里“已回复”但文字不变的原因）
       const r = done.length ? await api.messages(token, 10).catch(() => null) : null
       if (!alive) return
       setVoices((v) => {
         const next = { ...v }
-        ids.forEach((id, i) => { const st = got[i]; if (st && !(st === 'done' && !r)) next[id] = st })
+        ids.forEach((id, i) => { const st = got[i]; if (st && !(st.status === 'done' && !r)) next[id] = st })
         return next
       })
-      if (got.some((st) => st === 'failed')) toast('这条语音没能处理，点气泡重试')
+      if (got.some((st) => st?.status === 'failed')) toast('这条语音没能处理，点气泡重试')
       if (!r) return
       setLocal((p) => p.filter((m) => !m.voice || !done.includes(m.voice.id)).filter((m) => !r.messages.some((x) => x.role === m.role && x.content === m.content)))
       void refresh(true).then(() => { toast('小禾回复了'); scrollAfter() })
@@ -97,9 +104,8 @@ export default function Home() {
     return () => { alive = false; clearInterval(t) }
   }, [waitKey, token, poke, refresh])
   const lastVoice = Object.keys(voices).at(-1)
-  const voiceTip = waiting.length
-    ? voices[waiting[waiting.length - 1]] === 'summarizing' ? '听清了，小禾正在想怎么回你…' : '语音已发出，正在转成文字…'
-    : lastVoice && voices[lastVoice] === 'failed' ? '这条语音没能处理，点下方气泡重试' : ''
+  const voiceTip = waiting.length ? `${voiceProgress(voices[waiting[waiting.length - 1]])}…`
+    : lastVoice && voices[lastVoice].status === 'failed' ? '这条语音没能处理，点下方气泡重试' : ''
   const pending = BRIEF_ITEMS.filter((i) => states[i.id] === 'pending')
   const allDone = pending.length === 0
 
@@ -144,7 +150,7 @@ export default function Home() {
         )}
         <View style={s.chat}>
           {hasMore || allHistory.length > 3 ? <Pressable onPress={() => router.push({ pathname: '/chats', params: { from: 'home' } })} style={s.older}><Text style={{ color: c.accInk, fontSize: 13 }}>查看更早的对话</Text></Pressable> : null}
-          {messages.map((m, i) => 'voice' in m && m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} status={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text>{'search' in m && m.search ? <Pressable onPress={() => router.push({ pathname: '/search', params: { q: m.search } })}><Text style={s.resultLink}>看全部结果</Text></Pressable> : null}</View>)}
+          {messages.map((m, i) => 'voice' in m && m.voice ? <VoiceNote key={i} id={m.voice.id} ms={m.voice.ms} recording={voices[m.voice.id]} /> : <View key={i} style={[s.bubble, m.role === 'user' ? s.mine : s.assistant]}><Text style={s.bubbleText}>{m.content}</Text>{m.meta?.search ? <Pressable onPress={() => router.push({ pathname: '/search', params: { q: m.meta!.search } })}><Text style={s.resultLink}>看全部结果</Text></Pressable> : null}{m.meta?.route ? <Pressable onPress={() => openMap(m.meta!.route!)}><Text style={s.resultLink}>在地图中打开</Text></Pressable> : null}</View>)}
         </View>
       </ScrollView>
       <Modal visible={compose} transparent animationType="slide" onRequestClose={() => setCompose(false)}>

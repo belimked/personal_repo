@@ -8,6 +8,7 @@ import type { ApiItem } from '@/lib/api'
 import { dayLabel, dayOf, dueOf, isOpen, recordingOf, str, titleOf } from '@/lib/items'
 import { useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
+import { openMap } from '@/lib/location'
 
 /** 日程：过期、今天起两周内到期的事，按天分组；没日期的不在这里（在“盯着”） */
 export default function Schedule() {
@@ -26,6 +27,9 @@ export default function Schedule() {
   const row = (i: ApiItem, n: number) => {
     const owner = str(i.data.owner)
     const mine = i.kind === 'todo'
+    const place = str(i.data.place)
+    const eta = i.data.eta as { minutes?: number } | undefined
+    const geo = i.data.place_geo as { lat?: number; lng?: number; name?: string; address?: string } | undefined
     const meta = [i.kind === 'watch' ? (owner && owner !== user?.name ? `等${owner}，到期提醒你` : '我在盯') : owner && owner !== user?.name ? owner : '', recordingOf(i) ? '来自录音' : ''].filter(Boolean).join(' · ')
     return (
       <Pressable key={i.id} onPress={() => { const r = recordingOf(i); if (r) router.push({ pathname: '/minutes', params: { id: r } }) }} style={({ pressed }) => [s.row, pressed && { backgroundColor: c.raised }]}>
@@ -35,6 +39,7 @@ export default function Schedule() {
         <View style={{ flex: 1 }}>
           <Text style={s.t} numberOfLines={2}>{titleOf(i)}</Text>
           {meta ? <Text style={s.meta}>{meta}</Text> : null}
+          {place ? <View style={s.place}><Text style={s.meta}>{place}{typeof eta?.minutes === 'number' ? ` · 开车约 ${eta.minutes} 分钟` : ''}</Text><Pressable onPress={() => openMap(geo && typeof geo.lat === 'number' && typeof geo.lng === 'number' ? { name: geo.name || place, address: geo.address || '', lat: geo.lat, lng: geo.lng } : place)}><Text style={s.navLink}>导航</Text></Pressable></View> : null}
         </View>
       </Pressable>
     )
@@ -69,6 +74,8 @@ const s = StyleSheet.create({
   check: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: c.chev },
   t: { fontSize: 17, lineHeight: 24, color: c.t1 },
   meta: { fontSize: 13, lineHeight: 18, color: c.t3, marginTop: 2 },
+  place: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  navLink: { color: c.accInk, fontSize: 13, paddingVertical: 4 },
   empty: { alignItems: 'center', gap: 8, paddingTop: 48 },
   emptyText: { fontSize: 15, color: c.t3 },
   note: { fontSize: 13, lineHeight: 18, color: c.t3, paddingHorizontal: 16, paddingTop: 12 },

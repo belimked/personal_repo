@@ -84,6 +84,7 @@ func (a *API) exportData(w http.ResponseWriter, u map[string]any) {
 		{"messages", "SELECT * FROM messages WHERE user_id=?"},
 		{"recordings", "SELECT r.id,r.title,r.mime,r.size_bytes,r.duration_s,r.status,r.error,r.recorded_at,r.created_at,r.updated_at,r.finished_at,r.scene,r.kind,r.source_url,t.text,t.segments,t.minutes FROM recordings r LEFT JOIN transcripts t ON t.recording_id=r.id WHERE r.user_id=?"},
 		{"briefs", "SELECT * FROM briefs WHERE user_id=?"},
+		{"user_locations", "SELECT * FROM user_locations WHERE user_id=?"},
 	} {
 		rows, err := a.DB.Rows(x.query, uid)
 		if err != nil {

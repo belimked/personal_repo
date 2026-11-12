@@ -220,6 +220,9 @@ func (a *API) runJobUser(name, uid string, now time.Time) (string, error) {
 		return "skipped: off", nil
 	}
 	if name == "remind" {
+		if e := a.departureReminders(uid, now); e != nil {
+			log.Printf("departure user=%s: %v", uid, e)
+		}
 		rows, e := a.DB.Rows("SELECT id,data FROM items WHERE user_id=? AND deleted=0 AND datetime(json_extract(data,'$.remind_at'))<=datetime(?) AND coalesce(json_extract(data,'$.reminded_at'),'')='' AND coalesce(json_extract(data,'$.done'),0)=0 AND coalesce(json_extract(data,'$.status'),'')<>'done'", uid, Now())
 		if e != nil {
 			return "", e

@@ -43,6 +43,7 @@ export default function Privacy() {
       <Text style={s.note}>健康、财务、孩子、位置、人脸</Text>
       <GroupLabel>客服查看记录</GroupLabel><Card><Row first label="没有授权" chevron={false} /></Card><Text style={s.note}>除非你授权，我们的工作人员看不到你的记录</Text>
       <Card style={{ marginTop: 32 }}><Row first label="导出全部数据" labelColor={c.accInk} chevron={false} onPress={() => { void exportAll() }} /><Row label="忘掉我" labelColor={c.bad} chevron={false} onPress={forget} /></Card>
+      <Text style={s.note}>位置只在打开小禾时获取，只保留最近一次，用来估算路线</Text>
     </ScrollView>
   </SafeAreaView>
 }
