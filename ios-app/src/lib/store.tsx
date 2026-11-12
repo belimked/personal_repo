@@ -42,8 +42,10 @@ interface Store {
   reset: () => void
 }
 
-const cache = new File(Paths.document, 'cache-home.json')
-const clearCache = () => { try { if (cache.exists) cache.delete() } catch { /* unavailable */ } }
+// 缓存文件延迟创建：模块加载时就碰原生模块，一旦抛错会在启动前闪退
+let cacheFile: File | null = null
+const cache = () => { try { return (cacheFile ??= new File(Paths.document, 'cache-home.json')) } catch { return null } }
+const clearCache = () => { try { const f = cache(); if (f?.exists) f.delete() } catch { /* unavailable */ } }
 const resetAuth = () => { clearCache(); void tokenStorage.clear().catch(() => {}) }
 const Ctx = createContext<Store | null>(null)
 const initStates = () => Object.fromEntries(BRIEF_ITEMS.map((i) => [i.id, 'pending' as ItemState]))
@@ -162,7 +164,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       if (home) {
         setUser(home.user); publishMessages(home.messages); setHasMore(home.has_more); setBrief(home.brief)
-        try { cache.write(JSON.stringify({ user: home.user, items: home.items, messages: home.messages, brief: home.brief, has_more: home.has_more })) } catch { /* storage unavailable */ }
+        try { cache()?.write(JSON.stringify({ user: home.user, items: home.items, messages: home.messages, brief: home.brief, has_more: home.has_more })) } catch { /* storage unavailable */ }
       }
       if (tokenRef.current !== auth) return
       // 只在服务端从未有过 fact（包括已删除项）时播种，避免删光后重新出现。
@@ -197,8 +199,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     tokenStorage.get().then(async (saved) => {
       if (!saved || !mounted) return
       try {
-        if (cache.exists) {
-          const cached = JSON.parse(await cache.text()) as HomeData
+        const f = cache()
+          if (f?.exists) {
+          const cached = JSON.parse(await f.text()) as HomeData
           if (mounted && cached.user && Array.isArray(cached.items)) {
             setUser(cached.user); publish(cached.items); publishMessages(cached.messages ?? [])
             setHasMore(cached.has_more ?? false); setBrief(cached.brief ?? null); setReady(true)
