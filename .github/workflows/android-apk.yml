@@ -146,7 +146,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Merge with live site
-        run: bash ios-app/ci/pages-merge.sh "${{ steps.pages.outputs.base_url }}" "$RUNNER_TEMP/new" "$RUNNER_TEMP/site"
+        run: bash ci/pages-merge.sh "${{ steps.pages.outputs.base_url }}" "$RUNNER_TEMP/new" "$RUNNER_TEMP/site"
 
       - uses: actions/upload-pages-artifact@v3
         with:
