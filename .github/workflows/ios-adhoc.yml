@@ -128,7 +128,7 @@ jobs:
           cp "$RUNNER_TEMP/$APP.ipa" "$OUT/"
           sips -z 57 57 assets/icon.png --out "$OUT/icon-57.png" > /dev/null
           sips -z 512 512 assets/icon.png --out "$OUT/icon-512.png" > /dev/null
-          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          BASE_URL="https://personal-app.saulxj.ggff.net"
           sed -e "s#__BASE_URL__#$BASE_URL#g" -e "s#__VERSION__#$APP_VERSION#g" -e "s#__BUNDLE_ID__#$BUNDLE_ID#g" -e "s#__APP__#$APP#g" \
             ci/install/manifest.plist > "$OUT/manifest.plist"
           DATE=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')
