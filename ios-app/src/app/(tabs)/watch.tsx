@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { ActionSheetIOS, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showSheet } from '@/components/Sheet'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
 import type { ApiItem } from '@/lib/api'
 import { dueOf, recordingOf, str, titleOf, weekStart, when } from '@/lib/items'
@@ -51,7 +52,7 @@ export default function Watch() {
     }
     if (recordingOf(i)) acts.push({ text: '看录音纪要', run: () => router.push({ pathname: '/minutes', params: { id: recordingOf(i) } }) })
     acts.push({ text: i.kind === 'stash' ? '拿回来' : i.kind === 'idea' ? '不用了' : '删除', run: () => deleteItem(i.id), bad: true })
-    ActionSheetIOS.showActionSheetWithOptions(
+    showSheet(
       { title: titleOf(i), options: [...acts.map((a) => a.text), '取消'], cancelButtonIndex: acts.length, destructiveButtonIndex: acts.findIndex((a) => a.bad) },
       (n) => { if (n < acts.length) { Haptics.selectionAsync(); acts[n].run() } },
     )

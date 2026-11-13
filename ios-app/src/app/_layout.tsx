@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { recordingIdOf } from '@/lib/push'
 import { Toast } from '@/components/Toast'
+import { SheetHost } from '@/components/Sheet'
 import { RecorderProvider } from '@/lib/recorder'
 import { StoreProvider, useStore } from '@/lib/store'
 import { c } from '@/lib/theme'
@@ -60,6 +61,7 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <Routes />
           <Toast />
+          <SheetHost />
         </RecorderProvider>
       </StoreProvider>
     </SafeAreaProvider>

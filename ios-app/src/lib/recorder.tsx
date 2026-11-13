@@ -3,7 +3,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Alert } from 'react-native'
+import { Alert, Linking } from 'react-native'
 import { api, type AudioFile, type Recording } from './api'
 import { useStore } from './store'
 
@@ -36,6 +36,11 @@ interface Recorder {
 }
 
 const Ctx = createContext<Recorder | null>(null)
+
+// 拒绝过一次后系统不再弹窗（安卓尤其如此），给个直达系统设置的按钮
+const denied = (title: string, what: string) => Alert.alert(title, `在系统设置的小禾权限里打开${what}。`, [
+  { text: '取消', style: 'cancel' }, { text: '去设置', onPress: () => { void Linking.openSettings() } },
+])
 
 export const clock = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000))
@@ -80,7 +85,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     starting.current = (async () => {
       const perm = await requestRecordingPermissionsAsync()
       if (!perm.granted) {
-        Alert.alert('需要麦克风权限', '在“设置 > 小禾”里打开麦克风，才能录音。')
+        denied('需要麦克风权限', '麦克风')
         return false
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, allowsBackgroundRecording: true })
@@ -150,7 +155,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     } else {
       const perm = from === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (!perm.granted) {
-        Alert.alert(from === 'camera' ? '需要相机权限' : '需要照片权限', `在“设置 > 小禾”里打开${from === 'camera' ? '相机' : '照片'}，才能把图片交给小禾。`)
+        denied(from === 'camera' ? '需要相机权限' : '需要照片权限', from === 'camera' ? '相机' : '照片')
         return null
       }
       // compatible + quality<1：iOS 把 HEIC 转成 JPEG 交出来，后台 OCR 直接能读

@@ -70,7 +70,7 @@
         {
           "photosPermission": "小禾需要读取你选的照片，认出里面的文字，整理成摘要和要办的事。",
           "cameraPermission": "小禾需要用相机拍下通知、票据等资料，认出里面的文字。",
-          "microphonePermission": false
+          "microphonePermission": "小禾需要用麦克风录下你说的话和会议，转成文字和纪要。"
         }
       ]
     ]

@@ -3,8 +3,9 @@ import * as Haptics from 'expo-haptics'
 import * as Notifications from 'expo-notifications'
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { ActionSheetIOS, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showSheet } from '@/components/Sheet'
 import { Card, Chev, GroupLabel, Row, ui } from '@/components/ui'
 import { api } from '@/lib/api'
 import { useStore } from '@/lib/store'
@@ -30,14 +31,14 @@ export default function Me() {
   const setting = (key: string) => items.find((i) => i.id === `setting-${key}` && !i.deleted)?.data.value
   const proactive = PROACTIVE.find((p) => p.value === setting('proactive')) ?? PROACTIVE[0]
   const notify = NOTIFY.find((p) => p.value === setting('notify')) ?? NOTIFY[0]
-  const pickProactive = () => ActionSheetIOS.showActionSheetWithOptions({ title: '主动服务', message: PROACTIVE.map((p) => `${p.label}：${p.note}`).join('\n'), options: [...PROACTIVE.map((p) => p.label), '取消'], cancelButtonIndex: PROACTIVE.length }, (n) => { if (n < PROACTIVE.length) { void Haptics.selectionAsync(); setSetting('proactive', PROACTIVE[n].value) } })
+  const pickProactive = () => showSheet({ title: '主动服务', message: PROACTIVE.map((p) => `${p.label}：${p.note}`).join('\n'), options: [...PROACTIVE.map((p) => p.label), '取消'], cancelButtonIndex: PROACTIVE.length }, (n) => { if (n < PROACTIVE.length) { void Haptics.selectionAsync(); setSetting('proactive', PROACTIVE[n].value) } })
   const openNotify = () => {
     if (!permission) { Alert.alert('系统已关闭通知', '请先去系统设置打开通知。', [{ text: '取消', style: 'cancel' }, { text: '去设置', onPress: () => { void Linking.openSettings() } }]); return }
-    ActionSheetIOS.showActionSheetWithOptions({ title: '通知', options: [...NOTIFY.map((p) => p.label), '取消'], cancelButtonIndex: NOTIFY.length }, (n) => { if (n < NOTIFY.length) setSetting('notify', NOTIFY[n].value) })
+    showSheet({ title: '通知', options: [...NOTIFY.map((p) => p.label), '取消'], cancelButtonIndex: NOTIFY.length }, (n) => { if (n < NOTIFY.length) setSetting('notify', NOTIFY[n].value) })
   }
   const quit = () => Alert.alert(demo ? '退出演示？' : '退出登录？', demo ? undefined : '退出后这台手机不再收到通知。', [{ text: '取消', style: 'cancel' }, { text: '退出', style: 'destructive', onPress: () => { void logout() } }])
   const profile = () => Alert.alert('账号信息', [user?.name, user?.email, '名字和邮箱由管理员设置，需要改请联系管理员。'].filter(Boolean).join('\n'), [{ text: '退出登录', style: 'destructive', onPress: quit }, { text: '好' }])
-  const general = () => ActionSheetIOS.showActionSheetWithOptions({ title: '通用', options: ['录音', '清除本机缓存并重新同步', '退出登录', '取消'], cancelButtonIndex: 3, destructiveButtonIndex: 2 }, (n) => { if (n === 0) router.push('/records'); if (n === 1) { reset(); router.navigate('/') } if (n === 2) quit() })
+  const general = () => showSheet({ title: '通用', options: ['录音', '清除本机缓存并重新同步', '退出登录', '取消'], cancelButtonIndex: 3, destructiveButtonIndex: 2 }, (n) => { if (n === 0) router.push('/records'); if (n === 1) { reset(); router.navigate('/') } if (n === 2) quit() })
   const showPoints = () => Alert.alert('会员与点数', points ? `${points.month} 用量\n${points.detail.map((d) => `${d.label}：${d.count} 次，${d.points} 点`).join('\n')}\n已用 ${points.used} / ${points.quota} 点\n内测期间不扣费` : '点数暂时无法获取，请稍后再试。')
   return <SafeAreaView edges={['top']} style={{ flex: 1 }}><ScrollView contentContainerStyle={s.body}>
     <View style={{ paddingHorizontal: 4, paddingTop: 12, paddingBottom: 16 }}><Text style={ui.title}>我的</Text></View>

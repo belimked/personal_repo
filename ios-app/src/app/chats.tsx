@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { ActionSheetIOS, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showSheet } from '@/components/Sheet'
 import { NavBar } from '@/components/NavBar'
 import { Icon } from '@/components/ui'
 import { toast } from '@/components/Toast'
@@ -51,7 +52,7 @@ export default function Chats() {
   }
   const toggle = (id: string) => setSelected((p) => p.includes(id) ? p.filter((x) => x !== id) : p.length >= 50 ? (toast('最多选择 50 条'), p) : [...p, id])
   const exit = () => { setSelecting(false); setSelected([]) }
-  const convert = () => ActionSheetIOS.showActionSheetWithOptions({ options: ['工作待办', '生活待办', '交给小禾盯着', '记成想法', '取消'], cancelButtonIndex: 4 }, (index) => {
+  const convert = () => showSheet({ options: ['工作待办', '生活待办', '交给小禾盯着', '记成想法', '取消'], cancelButtonIndex: 4 }, (index) => {
     if (index === 4 || !token || busy || !selected.length) return
     const kind = index === 2 ? 'watch' : index === 3 ? 'idea' : 'todo'
     const scene = index === 1 ? 'life' : 'work'

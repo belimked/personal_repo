@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Animated, Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { prompt } from '@/components/Sheet'
 import { RealReview } from '@/components/RealReview'
 import { Button, Icon, ui } from '@/components/ui'
 import { BRIEF_ITEMS, type ItemState } from '@/lib/data'
@@ -52,7 +53,7 @@ function DemoReview() {
   if (!item) return null
   const pos = BRIEF_ITEMS.findIndex((i) => i.id === item.id)
   const reply = replies[item.id] ?? item.reply
-  const edit = () => Alert.prompt('改一改', undefined, [{ text: '取消', style: 'cancel' }, { text: '保存', onPress: (t?: string) => { if (t?.trim()) setReply(item.id, t.trim()) } }], 'plain-text', reply)
+  const edit = () => prompt('改一改', undefined, [{ text: '取消', style: 'cancel' }, { text: '保存', onPress: (t?: string) => { if (t?.trim()) setReply(item.id, t.trim()) } }], 'plain-text', reply)
   const stash = x.interpolate({ inputRange: [0, 120], outputRange: [0, 1], extrapolate: 'clamp' })
 
   return (

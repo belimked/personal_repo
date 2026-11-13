@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { ActionSheetIOS, Alert, Animated, Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Animated, Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { prompt, showSheet } from '@/components/Sheet'
 import { api } from '@/lib/api'
 import { dueOf, recordingOf, str, titleOf, when } from '@/lib/items'
 import { sceneLabel } from '@/lib/recorder'
@@ -77,7 +78,7 @@ export function RealReview() {
     else moveItem(item.id, result === 'watch' ? 'watch' : 'todo', { done: false, state: null, ...(result === 'mine' ? { owner: user?.name ?? '' } : {}) })
     finish(result)
   }
-  const editTime = () => Alert.prompt('改时间', '请输入 MM-DD', [
+  const editTime = () => prompt('改时间', '请输入 MM-DD', [
     { text: '取消', style: 'cancel' },
     { text: '保存', onPress: (value?: string) => {
       const match = /^(\d{1,2})-(\d{1,2})$/.exec(value?.trim() ?? '')
@@ -87,7 +88,7 @@ export function RealReview() {
       moveItem(item.id, item.kind === 'todo' ? 'todo' : 'idea', { due: `${date.getFullYear()}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` })
     } },
   ], 'plain-text')
-  const edit = () => ActionSheetIOS.showActionSheetWithOptions({ title: '改一改', options: ['安排成待办', '交给小禾盯着', '我自己办', '改时间', '取消'], cancelButtonIndex: 4 }, (n) => {
+  const edit = () => showSheet({ title: '改一改', options: ['安排成待办', '交给小禾盯着', '我自己办', '改时间', '取消'], cancelButtonIndex: 4 }, (n) => {
     if (n === 0) action('todo'); if (n === 1) action('watch'); if (n === 2) action('mine'); if (n === 3) editTime()
   })
   if (!item) return <SafeAreaView style={{ flex: 1 }}><Button title="返回简报" onPress={back} /></SafeAreaView>

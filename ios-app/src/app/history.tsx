@@ -1,7 +1,8 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import { ActionSheetIOS, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showSheet } from '@/components/Sheet'
 import { NavBar } from '@/components/NavBar'
 import { Card, GroupLabel, Icon, ui } from '@/components/ui'
 import type { ApiItem } from '@/lib/api'
@@ -25,7 +26,7 @@ export default function History() {
   const more = (i: ApiItem) => {
     const acts = [{ text: '还没办完', run: () => setDone(i.id, false) }]
     if (recordingOf(i)) acts.push({ text: '看录音纪要', run: () => router.push({ pathname: '/minutes', params: { id: recordingOf(i) } }) })
-    ActionSheetIOS.showActionSheetWithOptions({ title: titleOf(i), options: [...acts.map((a) => a.text), '取消'], cancelButtonIndex: acts.length },
+    showSheet({ title: titleOf(i), options: [...acts.map((a) => a.text), '取消'], cancelButtonIndex: acts.length },
       (n) => { if (n < acts.length) { Haptics.selectionAsync(); acts[n].run() } })
   }
 

@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
-import { ActionSheetIOS, ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { showSheet } from '@/components/Sheet'
 import { Button, Card, GroupLabel, Icon, ui } from '@/components/ui'
 import { api, ApiError, type Minutes, type Recording, type Transcript } from '@/lib/api'
 import { clock, fileType, isFile, sceneLabel } from '@/lib/recorder'
@@ -64,7 +65,7 @@ export default function MinutesScreen() {
   const relabel = () => {
     if (!token || !rec || rec.status !== 'done') return
     const opts = (['work', 'life', 'mixed'] as const).filter((k) => k !== rec.scene)
-    ActionSheetIOS.showActionSheetWithOptions({
+    showSheet({
       title: '这份内容算哪一类？', message: '改了以后，我会按新的类别重新整理要办的事。',
       options: [...opts.map((k) => sceneLabel[k]), '取消'], cancelButtonIndex: opts.length,
     }, (n) => {
