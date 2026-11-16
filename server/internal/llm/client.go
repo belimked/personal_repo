@@ -21,8 +21,40 @@ type Client struct {
 // Options overrides per-call limits. Zero values keep the chat defaults
 // (25s timeout; 800 tokens for flash, 3000 for pro).
 type Options struct {
-	Timeout   time.Duration
-	MaxTokens int
+	Timeout    time.Duration
+	MaxTokens  int
+	JSON       bool
+	NoThinking bool
+}
+
+var ErrTruncated = errors.New("truncated: max_tokens reached")
+
+type Usage struct {
+	PromptTokens     int
+	CompletionTokens int
+	ReasoningTokens  int
+}
+
+func requestBody(model string, messages []map[string]string, o Options, stream bool) []byte {
+	tokens, thinking := 800, "disabled"
+	if model == "deepseek-v4-pro" {
+		tokens, thinking = 3000, "enabled"
+	}
+	if o.NoThinking {
+		thinking = "disabled"
+	}
+	if o.MaxTokens > 0 {
+		tokens = o.MaxTokens
+	}
+	body := map[string]any{"model": model, "messages": messages, "max_tokens": tokens, "thinking": map[string]string{"type": thinking}}
+	if o.JSON {
+		body["response_format"] = map[string]string{"type": "json_object"}
+	}
+	if stream {
+		body["stream"] = true
+	}
+	b, _ := json.Marshal(body)
+	return b
 }
 
 func (c Client) Call(model string, messages []map[string]string) (string, error) {
@@ -30,30 +62,29 @@ func (c Client) Call(model string, messages []map[string]string) (string, error)
 }
 
 func (c Client) CallWith(model string, messages []map[string]string, o Options) (string, error) {
+	content, _, err := c.CallUsage(model, messages, o)
+	return content, err
+}
+
+func (c Client) CallUsage(model string, messages []map[string]string, o Options) (string, Usage, error) {
+	var usage Usage
 	if c.Key == "" {
-		return "", errors.New("missing key")
+		return "", usage, errors.New("missing key")
 	}
 	base := c.Base
 	if base == "" {
 		base = "https://api.belimked.com/v1"
 	}
-	tokens, thinking := 800, "disabled"
-	if model == "deepseek-v4-pro" {
-		tokens, thinking = 3000, "enabled"
-	}
-	if o.MaxTokens > 0 {
-		tokens = o.MaxTokens
-	}
 	timeout := 25 * time.Second
 	if o.Timeout > 0 {
 		timeout = o.Timeout
 	}
-	b, _ := json.Marshal(map[string]any{"model": model, "messages": messages, "max_tokens": tokens, "thinking": map[string]string{"type": thinking}})
+	b := requestBody(model, messages, o, false)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req, e := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(base, "/")+"/chat/completions", bytes.NewReader(b))
 	if e != nil {
-		return "", e
+		return "", usage, e
 	}
 	req.Header.Set("Authorization", "Bearer "+c.Key)
 	req.Header.Set("Content-Type", "application/json")
@@ -63,26 +94,41 @@ func (c Client) CallWith(model string, messages []map[string]string, o Options) 
 	}
 	r, e := client.Do(req)
 	if e != nil {
-		return "", e
+		return "", usage, e
 	}
 	defer r.Body.Close()
 	if r.StatusCode/100 != 2 {
-		return "", fmt.Errorf("upstream %d", r.StatusCode)
+		return "", usage, fmt.Errorf("upstream %d", r.StatusCode)
 	}
 	var v struct {
 		Choices []struct {
 			Message struct {
 				Content string `json:"content"`
 			} `json:"message"`
+			FinishReason string `json:"finish_reason"`
 		} `json:"choices"`
+		Usage struct {
+			PromptTokens     int `json:"prompt_tokens"`
+			CompletionTokens int `json:"completion_tokens"`
+			Details          struct {
+				ReasoningTokens int `json:"reasoning_tokens"`
+			} `json:"completion_tokens_details"`
+		} `json:"usage"`
 	}
 	if e = json.NewDecoder(r.Body).Decode(&v); e != nil {
-		return "", e
+		return "", usage, e
 	}
-	if len(v.Choices) == 0 || v.Choices[0].Message.Content == "" {
-		return "", errors.New("empty response")
+	usage = Usage{v.Usage.PromptTokens, v.Usage.CompletionTokens, v.Usage.Details.ReasoningTokens}
+	if len(v.Choices) == 0 {
+		return "", usage, errors.New("empty response")
 	}
-	return v.Choices[0].Message.Content, nil
+	if v.Choices[0].FinishReason == "length" {
+		return "", usage, ErrTruncated
+	}
+	if v.Choices[0].Message.Content == "" {
+		return "", usage, errors.New("empty response")
+	}
+	return v.Choices[0].Message.Content, usage, nil
 }
 
 // Stream reads OpenAI-compatible SSE chunks and forwards content as it arrives.
@@ -94,18 +140,11 @@ func (c Client) Stream(model string, messages []map[string]string, o Options, on
 	if base == "" {
 		base = "https://api.belimked.com/v1"
 	}
-	tokens, thinking := 800, "disabled"
-	if model == "deepseek-v4-pro" {
-		tokens, thinking = 3000, "enabled"
-	}
-	if o.MaxTokens > 0 {
-		tokens = o.MaxTokens
-	}
 	timeout := 25 * time.Second
 	if o.Timeout > 0 {
 		timeout = o.Timeout
 	}
-	b, _ := json.Marshal(map[string]any{"model": model, "messages": messages, "max_tokens": tokens, "thinking": map[string]string{"type": thinking}, "stream": true})
+	b := requestBody(model, messages, o, true)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(base, "/")+"/chat/completions", bytes.NewReader(b))

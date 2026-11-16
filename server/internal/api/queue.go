@@ -306,6 +306,28 @@ type minutes struct {
 	Actions   []action `json:"action_items"`
 }
 
+// minutesCall logs aggregate usage and elapsed time for both attempts, without content.
+func (a *API) minutesCall(id, stage string, messages []map[string]string) (string, error) {
+	o := minutesLLM
+	o.JSON = true
+	started := time.Now()
+	content, usage, err := a.LLM.CallUsage("deepseek-v4-pro", messages, o)
+	retried := errors.Is(err, llm.ErrTruncated)
+	if retried {
+		o.NoThinking = true
+		var retryUsage llm.Usage
+		content, retryUsage, err = a.LLM.CallUsage("deepseek-v4-pro", messages, o)
+		usage.PromptTokens += retryUsage.PromptTokens
+		usage.CompletionTokens += retryUsage.CompletionTokens
+		usage.ReasoningTokens += retryUsage.ReasoningTokens
+		if err != nil && !errors.Is(err, llm.ErrTruncated) {
+			err = fmt.Errorf("after %w, retry: %v", llm.ErrTruncated, err)
+		}
+	}
+	log.Printf("recording=%s stage=%s elapsed=%s prompt_tokens=%d completion_tokens=%d reasoning_tokens=%d truncated_retry_no_thinking=%t", id, stage, time.Since(started), usage.PromptTokens, usage.CompletionTokens, usage.ReasoningTokens, retried)
+	return content, err
+}
+
 func (a *API) summarize(ctx context.Context, id, uid string) {
 	row, e := a.DB.One("SELECT * FROM recordings WHERE id=? AND user_id=?", id, uid)
 	if e != nil || row == nil || row["status"] != "summarizing" {
@@ -418,7 +440,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 				if end > len(runes) {
 					end = len(runes)
 				}
-				piece, err := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}}, minutesLLM)
+				piece, err := a.minutesCall(id, fmt.Sprintf("piece %d/%d", start/30000+1, (len(runes)+29999)/30000), []map[string]string{{"role": "system", "content": prompt + " 这是会议的一部分，请先按相同 JSON 格式提取本段信息。"}, {"role": "user", "content": string(runes[start:end])}})
 				if err != nil {
 					a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", err))
 					return
@@ -427,7 +449,7 @@ func (a *API) summarize(ctx context.Context, id, uid string) {
 			}
 			input = "以下是各段整理结果，请合并去重并输出同样格式的最终 JSON：\n" + strings.Join(partial, "\n")
 		}
-		content, e := a.LLM.CallWith("deepseek-v4-pro", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}}, minutesLLM)
+		content, e := a.minutesCall(id, "final", []map[string]string{{"role": "system", "content": prompt}, {"role": "user", "content": input}})
 		if e != nil {
 			a.jobError(row, "summarizing", false, fmt.Errorf("llm: %w", e))
 			return
